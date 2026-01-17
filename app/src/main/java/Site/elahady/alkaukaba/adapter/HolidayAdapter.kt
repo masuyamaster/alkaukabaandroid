@@ -31,7 +31,7 @@ class HolidayAdapter : RecyclerView.Adapter<HolidayAdapter.ViewHolder>() {
             binding.tvName.text = item.keterangan
 
             // Logika sederhana untuk label tipe (API ini dominan nasional/cuti bersama)
-            binding.tvType.text = if (item.is_cuti) "Cuti Bersama" else "Hari Libur Nasional"
+            binding.tvType.text = item.tanggalHijriah
         }
     }
 

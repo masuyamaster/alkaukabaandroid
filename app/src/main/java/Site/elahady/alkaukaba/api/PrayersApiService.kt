@@ -14,6 +14,7 @@ data class DateInfo(val readable: String, val hijri: Hijri)
 data class Hijri(val day: String, val month: HijriMonth, val year: String, val holidays: List<String>)
 data class HijriMonth(val en: String, val ar: String)
 data class Meta(val timezone: String)
+data class CalendarResponse(val code: Int,val status: String,val data: List<PrayerData>)
 
 data class QiblaResponse(
     val data: QiblaData
@@ -34,11 +35,21 @@ interface AladhanApi {
         @Query("method") method: Int = 20
     ): Response<PrayerResponse>
 
+    @GET("v1/calendar")
+    suspend fun getCalendar(
+        @Query("latitude") lat: Double,
+        @Query("longitude") lng: Double,
+        @Query("method") method: Int = 20,
+        @Query("month") month: Int,
+        @Query("year") year: Int
+    ): Response<CalendarResponse>
+
     @GET("v1/qibla/{latitude}/{longitude}")
     suspend fun getQiblaDirection(
         @Path("latitude") latitude: Double,
         @Path("longitude") longitude: Double
     ): QiblaResponse
+
 }
 
 object RetrofitClient {

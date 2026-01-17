@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.core.view.WindowCompat
 
 class Splashscreen : AppCompatActivity() {
 
@@ -16,6 +17,8 @@ class Splashscreen : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
 
         // 3000L artinya 3000 milidetik (3 detik)
         Handler(Looper.getMainLooper()).postDelayed({

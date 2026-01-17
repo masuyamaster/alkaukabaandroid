@@ -64,4 +64,5 @@ dependencies {
 
     // Lifecycle Scope (untuk launch coroutine di Activity)
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }
