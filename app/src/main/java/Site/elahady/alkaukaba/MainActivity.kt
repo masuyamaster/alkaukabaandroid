@@ -1,6 +1,7 @@
 package Site.elahady.alkaukaba
 
 import PrayerRepository
+import Site.elahady.alkaukaba.adapter.CalendarAdapter
 import Site.elahady.alkaukaba.adapter.HolidayAdapter
 import Site.elahady.alkaukaba.api.RetrofitClient
 import Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
@@ -16,11 +17,13 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -33,6 +36,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var holidayAdapter: HolidayAdapter
+    private lateinit var calendarAdapter: CalendarAdapter
+    var latitude  = 0.0
+    var longitude  = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +54,9 @@ class MainActivity : AppCompatActivity() {
         setupObservers()
         setupNavigation()
         setupHolidayPreview()
-        viewModel.fetchUpcomingHolidays()
+        setupMonthlyCalendar()
+        setupCalendarNavigation()
+
     }
 
     private fun setupViewModel() {
@@ -123,6 +131,10 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
                 // Fallback Logic: Panggil ViewModel dengan koordinat Jakarta
                 viewModel.fetchPrayerData(-6.2088, 106.8456)
+                viewModel.fetchUpcomingIslamicHolidays(-6.2088, 106.8456)
+                viewModel.initCalendar(-6.2088, 106.8456)
+                latitude = -6.2088
+                longitude = 106.8456
             }
         }
 
@@ -141,6 +153,10 @@ class MainActivity : AppCompatActivity() {
             if (location != null) {
                 // Beri tahu ViewModel ada koordinat baru
                 viewModel.fetchPrayerData(location.latitude, location.longitude)
+                viewModel.fetchUpcomingIslamicHolidays(location.latitude, location.longitude)
+                viewModel.initCalendar(location.latitude, location.longitude)
+                latitude = location.latitude
+                longitude =location.longitude
 
                 // Beri tahu ViewModel untuk cari nama jalan (Geocoder)
                 val geocoder = Geocoder(this, Locale("id", "ID"))
@@ -157,17 +173,15 @@ class MainActivity : AppCompatActivity() {
         binding.tvLabelCalendar.setOnClickListener {
             openCalendarPage()
         }
-
-        // Membuat area bulan/kalender card bisa diklik
-        // Asumsi ID parent layout kalender di XML (Anda perlu tambahkan ID jika belum ada)
-        // Lihat XML di bawah untuk penambahan ID
-        binding.layoutCalendarContainer.setOnClickListener {
+        binding.tvLabelDetailCalendar.setOnClickListener {
             openCalendarPage()
         }
     }
 
     private fun openCalendarPage() {
         val intent = Intent(this, CalendarActivity::class.java)
+        intent.putExtra("LATITUDE", latitude)
+        intent.putExtra("LONGITUDE", longitude)
         startActivity(intent)
     }
 
@@ -186,7 +200,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 is Resource.Error -> {
-                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
+                    println("error :: " + resource.message)
                 }
                 is Resource.Loading -> {
                 }
@@ -196,6 +210,69 @@ class MainActivity : AppCompatActivity() {
         binding.btnSeeAllHolidays.setOnClickListener {
             val intent = Intent(this, CalendarActivity::class.java)
             startActivity(intent)
+        }
+    }
+
+    private fun setupMonthlyCalendar() {
+        calendarAdapter = CalendarAdapter()
+        binding.rvWeeklyCalendar.apply { // ID layout tetap bisa rvWeeklyCalendar atau ganti
+            layoutManager = GridLayoutManager(this@MainActivity, 7) // Grid 7 Kolom
+            adapter = calendarAdapter
+            isNestedScrollingEnabled = false
+        }
+
+        // 1. Observe Judul Hijriah
+        viewModel.hijriTitle.observe(this) { hijriText ->
+            binding.tvHijriMonthYear.text = hijriText
+        }
+
+        // 2. Observe Data Kalender & Loading State
+        viewModel.calendarData.observe(this) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    // Tampilkan Loading, Sembunyikan Grid
+                    binding.progressCalendar.visibility = View.VISIBLE
+                    binding.rvWeeklyCalendar.visibility = View.INVISIBLE
+                }
+                is Resource.Success -> {
+                    binding.progressCalendar.visibility = View.GONE
+                    binding.rvWeeklyCalendar.visibility = View.VISIBLE
+                    resource.data?.let { calendarAdapter.setData(it) }
+                }
+                is Resource.Error -> {
+                    binding.progressCalendar.visibility = View.GONE
+                    binding.rvWeeklyCalendar.visibility = View.VISIBLE
+                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Observe Data Grid
+        viewModel.calendarData.observe(this) { resource ->
+            if (resource is Resource.Success) {
+                resource.data?.let { calendarAdapter.setData(it) }
+            }
+        }
+
+        // Observe Judul Bulan & Tahun
+        viewModel.monthYearTitle.observe(this) { title ->
+            // Pecah string "Januari 2026" jika view dipisah
+            val parts = title.split(" ")
+            if (parts.size >= 2) {
+                binding.tvMonth.text = parts[0]
+                binding.tvYear.text = parts[1]
+            } else {
+                binding.tvMonth.text = title
+            }
+        }
+    }
+
+    private fun setupCalendarNavigation() {
+        binding.btnPrevMonth.setOnClickListener {
+            viewModel.changeMonth(-1) // Mundur 1 bulan
+        }
+        binding.btnNextMonth.setOnClickListener {
+            viewModel.changeMonth(1) // Maju 1 bulan
         }
     }
 }

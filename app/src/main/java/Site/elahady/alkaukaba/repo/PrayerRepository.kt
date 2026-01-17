@@ -2,6 +2,7 @@
 
 // Tambahkan import ini
 import Site.elahady.alkaukaba.api.AladhanApi
+import Site.elahady.alkaukaba.api.CalendarResponse
 import Site.elahady.alkaukaba.api.PrayerResponse
 import retrofit2.Response
 import java.text.SimpleDateFormat
@@ -14,5 +15,9 @@ class PrayerRepository(private val api: AladhanApi) {
         val today = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         val method = 20
         return api.getTimings(today, lat, lng,method)
+    }
+
+    suspend fun getIslamicHolidays(lat: Double, lng: Double, month: Int, year: Int): Response<CalendarResponse> {
+        return api.getCalendar(lat, lng, 20, month, year)
     }
 }

@@ -38,7 +38,6 @@
             android:text="Nasional"
             android:textSize="10sp"
             android:background="@drawable/bg_card_rounded"
-            android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

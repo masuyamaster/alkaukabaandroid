@@ -14,6 +14,7 @@ data class DateInfo(val readable: String, val hijri: Hijri)
 data class Hijri(val day: String, val month: HijriMonth, val year: String, val holidays: List<String>)
 data class HijriMonth(val en: String, val ar: String)
 data class Meta(val timezone: String)
+data class CalendarResponse(val code: Int,val status: String,val data: List<PrayerData>)
 
 interface AladhanApi {
     @GET("v1/timings/{date}")
@@ -23,6 +24,15 @@ interface AladhanApi {
         @Query("longitude") lng: Double,
         @Query("method") method: Int = 20
     ): Response<PrayerResponse>
+
+    @GET("v1/calendar")
+    suspend fun getCalendar(
+        @Query("latitude") lat: Double,
+        @Query("longitude") lng: Double,
+        @Query("method") method: Int = 20,
+        @Query("month") month: Int,
+        @Query("year") year: Int
+    ): Response<CalendarResponse>
 }
 
 object RetrofitClient {

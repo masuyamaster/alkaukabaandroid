@@ -3,12 +3,16 @@ package Site.elahady.alkaukaba.api
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import com.google.gson.annotations.SerializedName
+
 
 data class HolidayItem(
-    val tanggal: String, // Format: YYYY-MM-DD
+    val tanggal: String,
+    val tanggalHijriah: String,
     val keterangan: String,
-    val is_cuti: Boolean
+    val is_cuti: Boolean = true
 )
+
 
 interface HolidayApi {
     @GET("api")

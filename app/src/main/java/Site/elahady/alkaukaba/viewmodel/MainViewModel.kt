@@ -1,6 +1,7 @@
 package Site.elahady.alkaukaba.viewmodel
 
 import PrayerRepository
+import Site.elahady.alkaukaba.adapter.DayUIModel
 import Site.elahady.alkaukaba.api.HolidayItem
 import Site.elahady.alkaukaba.api.HolidayRetrofitClient
 import Site.elahady.alkaukaba.api.Timings
@@ -31,6 +32,25 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
 
     private val _holidayPreview = MutableLiveData<Resource<List<HolidayItem>>>()
     val holidayPreview: LiveData<Resource<List<HolidayItem>>> = _holidayPreview
+
+    private val _weeklyCalendar = MutableLiveData<Resource<List<DayUIModel>>>()
+    val weeklyCalendar: LiveData<Resource<List<DayUIModel>>> = _weeklyCalendar
+
+    private var currentCalendar = Calendar.getInstance()
+    private var lastLat = 0.0
+    private var lastLng = 0.0
+
+    private val _hijriTitle = MutableLiveData<String>()
+    val hijriTitle: LiveData<String> = _hijriTitle
+
+    // LiveData Nama Bulan & Tahun (untuk UI Header)
+    private val _monthYearTitle = MutableLiveData<String>()
+    val monthYearTitle: LiveData<String> = _monthYearTitle
+
+    // LiveData List Tanggal
+    private val _calendarData = MutableLiveData<Resource<List<DayUIModel>>>()
+    val calendarData: LiveData<Resource<List<DayUIModel>>> = _calendarData
+
 
     fun fetchPrayerData(lat: Double, lng: Double) {
         _prayerState.value = Resource.Loading()
@@ -151,27 +171,176 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         return cal.time
     }
 
-    fun fetchUpcomingHolidays() {
+    fun fetchUpcomingIslamicHolidays(lat: Double, lng: Double) {
         _holidayPreview.postValue(Resource.Loading())
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response = HolidayRetrofitClient.instance.getNationalHolidays()
+                val cal = Calendar.getInstance()
+                val currentMonth = cal.get(Calendar.MONTH) + 1
+                val currentYear = cal.get(Calendar.YEAR)
 
-                // 2. Filter & Sort Logic
-                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val response = repository.getIslamicHolidays(lat, lng, currentMonth, currentYear)
 
-                val upcomingItems = response
-                    .filter { it.tanggal >= today }
-                    .sortedBy { it.tanggal }
-                    .take(3)
+                if (response.isSuccessful && response.body() != null) {
+                    val rawData = response.body()!!.data
+                    val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
+                    val outputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-                _holidayPreview.postValue(Resource.Success(upcomingItems))
+                    val today = Date()
 
+                    val islamicHolidays = rawData
+                        .asSequence()
+                        .filter {
+                            it.date.hijri.holidays.isNotEmpty()
+                        }
+                        .map { data ->
+                            val dateObj = try {
+                                apiDateFormat.parse(data.date.readable)
+                            } catch (e: Exception) { null }
+
+                            if (dateObj == null) return@map null
+
+                            val holidayNames = data.date.hijri.holidays.joinToString(", ")
+                            val hijriDay = data.date.hijri.day
+                            val hijriMonth = data.date.hijri.month.en
+                            val hijriYear = data.date.hijri.year
+                            val hijriString = "$hijriDay $hijriMonth $hijriYear H"
+
+                            HolidayItem(
+                                tanggal = outputDateFormat.format(dateObj),
+                                tanggalHijriah = hijriString,
+                                keterangan = holidayNames,
+                                is_cuti = true
+                            )
+                        }
+                        .filterNotNull() // Hapus data yang null akibat gagal parsing
+                        .filter {
+                            // Logic filter tanggal (Convert string balik ke Date untuk compare)
+                            val itemDate = outputDateFormat.parse(it.tanggal)
+                            itemDate != null && !itemDate.before(today)
+                        }
+                        .sortedBy { it.tanggal }
+                        .take(3)
+                        .toList()
+
+                    if (islamicHolidays.isEmpty()) {
+                        _holidayPreview.postValue(Resource.Error("Tidak ada hari besar Islam bulan ini."))
+                    } else {
+                        _holidayPreview.postValue(Resource.Success(islamicHolidays))
+                    }
+
+                } else {
+                    _holidayPreview.postValue(Resource.Error(response.message()))
+                }
             } catch (e: Exception) {
-                _holidayPreview.postValue(Resource.Error(e.message ?: "Gagal memuat libur"))
+                e.printStackTrace()
+                _holidayPreview.postValue(Resource.Error(e.message ?: "Gagal memuat data"))
+                println("error vm :: " + e.message)
             }
         }
+    }
+
+    // Fungsi awal dipanggil dari MainActivity saat dapat lokasi
+    fun initCalendar(lat: Double, lng: Double) {
+        lastLat = lat
+        lastLng = lng
+        fetchMonthlyCalendar()
+    }
+
+    // Fungsi Navigasi (Next/Prev)
+    fun changeMonth(amount: Int) {
+        currentCalendar.add(Calendar.MONTH, amount)
+        fetchMonthlyCalendar()
+    }
+
+    private fun fetchMonthlyCalendar() {
+        // Post Loading State
+        _calendarData.postValue(Resource.Loading())
+        updateTitle() // Update judul Masehi dulu
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // ... (Setup Calendar Logic seperti sebelumnya) ...
+                val processingCal = currentCalendar.clone() as Calendar
+                processingCal.set(Calendar.DAY_OF_MONTH, 1)
+
+                val month = processingCal.get(Calendar.MONTH) + 1
+                val year = processingCal.get(Calendar.YEAR)
+                val daysInMonth = processingCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+                val startDayOfWeek = processingCal.get(Calendar.DAY_OF_WEEK)
+                val emptySlots = startDayOfWeek - 1
+
+                val response = repository.getIslamicHolidays(lastLat, lastLng, month, year)
+
+                // ... (Setup DateFormatters) ...
+                val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
+                val localDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val todayStr = localDateFormat.format(Date())
+
+                val uiList = mutableListOf<DayUIModel>()
+
+                // -- LOGIC JUDUL HIJRIAH --
+                // Ambil data Hijriah dari item pertama yang valid di API response
+                // untuk dijadikan judul bulan ini (Contoh: "Rajab 1447 H")
+                if (response.isSuccessful && response.body()?.data?.isNotEmpty() == true) {
+                    val firstItem = response.body()!!.data[0]
+                    val hijriMonthName = firstItem.date.hijri.month.en // "Rajab"
+                    val hijriYearVal = firstItem.date.hijri.year       // "1447"
+
+                    _hijriTitle.postValue("$hijriMonthName $hijriYearVal H")
+                } else {
+                    _hijriTitle.postValue("-")
+                }
+                // -------------------------
+
+                // A. Slot Kosong
+                for (i in 0 until emptySlots) {
+                    uiList.add(DayUIModel(null, "", "", false, false, true))
+                }
+
+                // B. Isi Tanggal
+                val apiDataList = response.body()?.data ?: emptyList()
+                for (day in 1..daysInMonth) {
+                    // ... (Logic looping pencocokan tanggal sama seperti sebelumnya) ...
+                    // (Copy paste logic loop dari jawaban sebelumnya)
+                    processingCal.set(Calendar.DAY_OF_MONTH, day)
+                    val date = processingCal.time
+                    val dateStr = localDateFormat.format(date)
+
+                    val matchData = apiDataList.find {
+                        try {
+                            val apiDate = apiDateFormat.parse(it.date.readable)
+                            val apiDateStr = localDateFormat.format(apiDate!!)
+                            apiDateStr == dateStr
+                        } catch (e: Exception) { false }
+                    }
+
+                    val hijriDay = matchData?.date?.hijri?.day ?: "-"
+                    val hasHoliday = matchData?.date?.hijri?.holidays?.isNotEmpty() == true
+                    val isToday = dateStr == todayStr
+
+                    uiList.add(DayUIModel(
+                        date = date,
+                        dayValue = day.toString(),
+                        hijriDay = hijriDay,
+                        isHoliday = hasHoliday,
+                        isToday = isToday,
+                        isEmpty = false
+                    ))
+                }
+
+                _calendarData.postValue(Resource.Success(uiList))
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _calendarData.postValue(Resource.Error("Gagal"))
+            }
+        }
+    }
+    private fun updateTitle() {
+        val format = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
+        _monthYearTitle.postValue(format.format(currentCalendar.time))
     }
 
 }
