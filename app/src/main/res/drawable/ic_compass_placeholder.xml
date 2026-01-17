@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer Circle -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M100,10
+                          A90,90 0 1,1 99.9,10 Z"/>
+
+    <!-- Inner Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M100,40
+                          A60,60 0 1,1 99.9,40 Z"/>
+
+    <!-- Compass Cross -->
+    <path
+        android:strokeColor="#B0B0B0"
+        android:strokeWidth="4"
+        android:pathData="M100,50 L100,150
+                          M50,100 L150,100"/>
+</vector>

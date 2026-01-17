@@ -1,5 +1,6 @@
 package Site.elahady.alkaukaba.ui.arahkiblat
 
+import Site.elahady.alkaukaba.R
 import Site.elahady.alkaukaba.databinding.ActivityKiblatBinding
 import Site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModel
 import Site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModelFactory
@@ -18,6 +19,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import java.util.*
 
@@ -136,12 +138,12 @@ class KiblatActivity : AppCompatActivity() {
         }
     }
     private fun onLocationReady(lat: Double, lon: Double) {
-        binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
+//        binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
         getAddressFromLatLong(lat, lon)
-        viewModel.fetchQiblaAngle(lat, lon)
-        // NEXT:
         // hitung Qibla Angle
+        viewModel.fetchQiblaAngle(lat, lon)
         // update compass
+        loadQiblaCompass(lat, lon)
     }
     private fun getAddressFromLatLong(lat: Double, lon: Double) {
 
@@ -163,5 +165,17 @@ class KiblatActivity : AppCompatActivity() {
             e.printStackTrace()
             binding.txtLocation.text = "Lokasi tidak diketahui"
         }
+    }
+
+    private fun loadQiblaCompass(lat: Double, lon: Double) {
+
+        val url =
+            "https://api.aladhan.com/v1/qibla/$lat/$lon/compass"
+
+        Glide.with(this)
+            .load(url)
+            .placeholder(R.drawable.ic_compass_placeholder)
+            .error(R.drawable.ic_compass_error)
+            .into(binding.imgCompass)
     }
 }
