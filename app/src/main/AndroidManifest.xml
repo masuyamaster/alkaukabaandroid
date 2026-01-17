@@ -32,7 +32,7 @@
 
         </activity>
         <activity
-            android:name=".arahkiblat.ArahKiblatActivity"
+            android:name=".arahkiblat.KiblatActivity"
             android:exported="false">
 
         </activity>

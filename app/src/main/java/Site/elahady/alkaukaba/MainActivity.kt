@@ -3,6 +3,7 @@ package Site.elahady.alkaukaba
 import PrayerRepository
 import Site.elahady.alkaukaba.api.RetrofitClient
 import Site.elahady.alkaukaba.arahkiblat.ArahKiblatActivity
+import Site.elahady.alkaukaba.arahkiblat.KiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
 import Site.elahady.alkaukaba.viewmodel.MainViewModel
 import Site.elahady.alkaukaba.viewmodel.MainViewModelFactory
@@ -146,7 +147,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         binding.btKiblat.setOnClickListener {
-            val intentKiblat = Intent(this@MainActivity, ArahKiblatActivity::class.java)
+            val intentKiblat = Intent(this@MainActivity, KiblatActivity::class.java)
             startActivity(intentKiblat)
         }
         // Tombol lainnya...
