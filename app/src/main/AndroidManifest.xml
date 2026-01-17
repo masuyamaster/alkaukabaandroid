@@ -23,6 +23,8 @@
         <activity
             android:name=".LoginActivity"
             android:exported="false" />
+        <activity android:name=".ui.arahkiblat.KiblatActivity"
+            android:exported="false"/>
         <activity
             android:name=".Splashscreen"
             android:exported="true">
@@ -36,20 +38,11 @@
             android:name=".MainActivity"
             android:exported="true"></activity>
         <activity
-            android:name=".arahkiblat.ArahKiblatActivity"
-            android:exported="false" />
-        <activity
             android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
             android:exported="false" />
         <activity
             android:name="Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
             android:exported="false" />
-        <activity
-            android:name="Site.elahady.alkaukaba.ui.arahkiblat.ArahKiblatActivity"
-            android:exported="false"/>
-        <activity
-            android:name="Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity"
-            android:exported="false"/>
     </application>
 
 </manifest>
