@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileSdk 33
-
+    buildFeatures { viewBinding true }
     defaultConfig {
         applicationId "Site.elahady.alkaukaba"
         minSdk 21
