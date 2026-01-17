@@ -9,6 +9,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Geocoder
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
@@ -27,12 +31,25 @@ class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var viewModel: KiblatViewModel
+
+    private lateinit var sensorManager: SensorManager
+    private var rotationSensor: Sensor? = null
+
+    private var currentAzimuth = 0f
+    private var qiblaAngle = 0f
+
+    private var smoothedAzimuth = 0f
+    private var lastRotation = 0f
+
+    private val SMOOTHING_FACTOR = 0.15f   // 0.1 – 0.2 ideal
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityKiblatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
         viewModel = ViewModelProvider(
             this,
@@ -42,6 +59,12 @@ class KiblatActivity : AppCompatActivity() {
         observeViewModel()
         checkLocationPermission()
 
+        viewModel.qiblaAngle.observe(this) { angle ->
+
+            qiblaAngle = angle.toFloat()   // <-- penting
+            binding.txtQiblaValue.text = "${angle.toInt()}°"
+            rotateCompass()
+        }
     }
     private fun observeViewModel() {
         viewModel.qiblaAngle.observe(this) { angle ->
@@ -177,5 +200,84 @@ class KiblatActivity : AppCompatActivity() {
             .placeholder(R.drawable.ic_compass_placeholder)
             .error(R.drawable.ic_compass_error)
             .into(binding.imgCompass)
+    }
+
+    private fun lowPassFilter(input: Float, output: Float): Float {
+        return output + SMOOTHING_FACTOR * (input - output)
+    }
+
+    private val sensorListener = object : SensorEventListener {
+
+        override fun onSensorChanged(event: SensorEvent) {
+
+            if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+
+                val rotationMatrix = FloatArray(9)
+                SensorManager.getRotationMatrixFromVector(
+                    rotationMatrix,
+                    event.values
+                )
+
+                val orientationAngles = FloatArray(3)
+                SensorManager.getOrientation(rotationMatrix, orientationAngles)
+
+                val azimuthRad = orientationAngles[0]
+                val azimuthDeg =
+                    Math.toDegrees(azimuthRad.toDouble()).toFloat()
+
+                val normalizedAzimuth = (azimuthDeg + 360) % 360
+
+                smoothedAzimuth = lowPassFilter(normalizedAzimuth, smoothedAzimuth)
+
+                currentAzimuth = smoothedAzimuth
+
+                rotateCompassSmooth()
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    }
+
+    private fun getShortestRotation(target: Float, current: Float): Float {
+        var diff = target - current
+        while (diff > 180) diff -= 360
+        while (diff < -180) diff += 360
+        return current + diff
+    }
+
+    private fun rotateCompassSmooth() {
+
+        val target = qiblaAngle - currentAzimuth
+        val smoothTarget = getShortestRotation(target, lastRotation)
+
+        lastRotation = smoothTarget
+
+        binding.imgCompass.rotation = smoothTarget
+    }
+
+    private fun rotateCompass() {
+
+        val targetRotation = qiblaAngle - currentAzimuth
+
+        binding.imgCompass.animate()
+            .rotation(targetRotation)
+            .setDuration(200)
+            .start()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        rotationSensor?.also {
+            sensorManager.registerListener(
+                sensorListener,
+                it,
+                SensorManager.SENSOR_DELAY_GAME
+            )
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(sensorListener)
     }
 }
