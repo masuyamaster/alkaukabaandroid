@@ -1,6 +1,8 @@
 package Site.elahady.alkaukaba.ui.arahkiblat
 
 import Site.elahady.alkaukaba.databinding.ActivityKiblatBinding
+import Site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModel
+import Site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModelFactory
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -15,12 +17,14 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.*
 import java.util.*
 
 class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var viewModel: KiblatViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityKiblatBinding.inflate(layoutInflater)
@@ -28,8 +32,23 @@ class KiblatActivity : AppCompatActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        viewModel = ViewModelProvider(
+            this,
+            KiblatViewModelFactory()
+        )[KiblatViewModel::class.java]
+
+        observeViewModel()
         checkLocationPermission()
 
+    }
+    private fun observeViewModel() {
+        viewModel.qiblaAngle.observe(this) { angle ->
+            binding.txtQiblaValue.text = "${angle.toInt()}°"
+        }
+
+        viewModel.error.observe(this) {
+            Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+        }
     }
     private fun hasLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
@@ -119,6 +138,7 @@ class KiblatActivity : AppCompatActivity() {
     private fun onLocationReady(lat: Double, lon: Double) {
         binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
         getAddressFromLatLong(lat, lon)
+        viewModel.fetchQiblaAngle(lat, lon)
         // NEXT:
         // hitung Qibla Angle
         // update compass
