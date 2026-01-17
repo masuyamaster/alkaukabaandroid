@@ -31,10 +31,10 @@
             </intent-filter>
 
         </activity>
-
         <activity
             android:name=".arahkiblat.ArahKiblatActivity"
             android:exported="false">
+
         </activity>
     </application>
 
