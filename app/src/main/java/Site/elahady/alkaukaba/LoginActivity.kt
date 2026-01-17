@@ -4,6 +4,7 @@ import Site.elahady.alkaukaba.databinding.ActivityLoginBinding
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.core.view.WindowCompat
 
 class LoginActivity : AppCompatActivity() {
 
@@ -14,6 +15,8 @@ class LoginActivity : AppCompatActivity() {
         // Setup View Binding
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
 
         // --- TOMBOL SIGN IN ---
         binding.btnSignIn.setOnClickListener {

@@ -36,7 +36,7 @@
         </activity>
         <activity
             android:name=".MainActivity"
-            android:exported="true"></activity>
+            android:exported="false" />
         <activity
             android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
             android:exported="false" />

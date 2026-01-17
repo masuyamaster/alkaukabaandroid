@@ -4,13 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
+    android:paddingTop="30dp"
+    android:paddingBottom="30dp"
     tools:context=".ui.arahkiblat.KiblatActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:background="@color/toolbarColor"
+        android:background="@color/white"
         app:title="Qibla Compass"
         app:titleTextColor="@color/textToolbarColor"
         app:navigationIcon="@drawable/ic_back"

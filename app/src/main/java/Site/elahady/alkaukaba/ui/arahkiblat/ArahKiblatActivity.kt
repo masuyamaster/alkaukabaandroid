@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
@@ -31,6 +32,8 @@ class ArahKiblatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityArahKiblatBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
         this.title = "Arah Kiblat"
 
         setSupportActionBar(binding.toolbar)

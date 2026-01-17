@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,30 +38,58 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var holidayAdapter: HolidayAdapter
     private lateinit var calendarAdapter: CalendarAdapter
+
     var latitude  = 0.0
     var longitude  = 0.0
+
+    private val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+                permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+            ) {
+                getUserLocation()
+            } else {
+                useDefaultLocation()
+            }
+        } else {
+            // Fallback simpel untuk Android < N
+            useDefaultLocation()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
 
         setupViewModel()
         setupHeaderDate()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        checkLocationPermission()
+        checkLocationPermission() // Aman dipanggil di sini
         setupObservers()
         setupNavigation()
         setupHolidayPreview()
         setupMonthlyCalendar()
         setupCalendarNavigation()
 
+        // Setup Swipe Refresh
+        binding.swipeRefresh.setOnRefreshListener {
+            refreshData()
+        }
+    }
+
+    private fun refreshData() {
+        setupHeaderDate()
+        checkLocationPermission() // Sekarang AMAN dipanggil berulang kali
     }
 
     private fun setupViewModel() {
-        // Inisialisasi Repository & ViewModel
         val apiService = RetrofitClient.instance
         val repository = PrayerRepository(apiService)
         val factory = MainViewModelFactory(repository)
@@ -75,6 +104,7 @@ class MainActivity : AppCompatActivity() {
                     binding.tvStatus.text = "Memuat data..."
                 }
                 is Resource.Success -> {
+                    binding.swipeRefresh.isRefreshing = false // Stop loading
                     val data = resource.data
                     if (data != null) {
                         binding.tvPrayerName.text = data.prayerName
@@ -89,6 +119,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 is Resource.Error -> {
+                    binding.swipeRefresh.isRefreshing = false // Stop loading
                     binding.tvStatus.text = "Error: ${resource.message}"
                     Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
                 }
@@ -104,7 +135,6 @@ class MainActivity : AppCompatActivity() {
         viewModel.holidayAlert.observe(this) { holidayName ->
             if (holidayName != null) {
                 Toast.makeText(this, "Hari Besar: $holidayName", Toast.LENGTH_LONG).show()
-                // Opsional: binding.tvDateNow.setTextColor(...)
             }
         }
     }
@@ -114,55 +144,50 @@ class MainActivity : AppCompatActivity() {
         binding.tvDateNow.text = dateFormatFull.format(Date())
     }
 
-    // --- Location Logic (View Layer karena butuh Permission Activity) ---
     private fun checkLocationPermission() {
-        val locationPermissionRequest = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
-                        permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
-                } else {
-                    TODO("VERSION.SDK_INT < N")
-                }
-            ) {
-                getUserLocation()
-            } else {
-                Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
-                // Fallback Logic: Panggil ViewModel dengan koordinat Jakarta
-                viewModel.fetchPrayerData(-6.2088, 106.8456)
-                viewModel.fetchUpcomingIslamicHolidays(-6.2088, 106.8456)
-                viewModel.initCalendar(-6.2088, 106.8456)
-                latitude = -6.2088
-                longitude = 106.8456
-            }
-        }
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
-            locationPermissionRequest.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            locationPermissionRequest.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
         } else {
+            // Jika sudah diizinkan, langsung ambil lokasi
             getUserLocation()
         }
+    }
+
+    private fun useDefaultLocation() {
+        Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
+        fetchDataByCoordinate(-6.2088, 106.8456)
+        binding.swipeRefresh.isRefreshing = false
     }
 
     @SuppressLint("MissingPermission")
     private fun getUserLocation() {
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
-                // Beri tahu ViewModel ada koordinat baru
-                viewModel.fetchPrayerData(location.latitude, location.longitude)
-                viewModel.fetchUpcomingIslamicHolidays(location.latitude, location.longitude)
-                viewModel.initCalendar(location.latitude, location.longitude)
-                latitude = location.latitude
-                longitude =location.longitude
+                fetchDataByCoordinate(location.latitude, location.longitude)
 
-                // Beri tahu ViewModel untuk cari nama jalan (Geocoder)
                 val geocoder = Geocoder(this, Locale("id", "ID"))
                 viewModel.fetchAddressName(geocoder, location.latitude, location.longitude)
+            } else {
+                Toast.makeText(this, "Lokasi tidak ditemukan, coba refresh", Toast.LENGTH_SHORT).show()
+                binding.swipeRefresh.isRefreshing = false
             }
+        }.addOnFailureListener {
+            binding.swipeRefresh.isRefreshing = false
+            Toast.makeText(this, "Gagal mendapatkan lokasi", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun fetchDataByCoordinate(lat: Double, lon: Double) {
+        latitude = lat
+        longitude = lon
+        viewModel.fetchPrayerData(lat, lon)
+        viewModel.fetchUpcomingIslamicHolidays(lat, lon)
+        viewModel.initCalendar(lat, lon)
     }
 
     private fun setupNavigation() {
@@ -170,12 +195,8 @@ class MainActivity : AppCompatActivity() {
             val intentKiblat = Intent(this@MainActivity, KiblatActivity::class.java)
             startActivity(intentKiblat)
         }
-        binding.tvLabelCalendar.setOnClickListener {
-            openCalendarPage()
-        }
-        binding.tvLabelDetailCalendar.setOnClickListener {
-            openCalendarPage()
-        }
+        binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
+        binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
     }
 
     private fun openCalendarPage() {
@@ -195,15 +216,10 @@ class MainActivity : AppCompatActivity() {
         viewModel.holidayPreview.observe(this) { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    resource.data?.let { items ->
-                        holidayAdapter.setData(items)
-                    }
+                    resource.data?.let { items -> holidayAdapter.setData(items) }
                 }
-                is Resource.Error -> {
-                    println("error :: " + resource.message)
-                }
-                is Resource.Loading -> {
-                }
+                is Resource.Error -> println("error :: " + resource.message)
+                is Resource.Loading -> {}
             }
         }
 
@@ -215,22 +231,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMonthlyCalendar() {
         calendarAdapter = CalendarAdapter()
-        binding.rvWeeklyCalendar.apply { // ID layout tetap bisa rvWeeklyCalendar atau ganti
-            layoutManager = GridLayoutManager(this@MainActivity, 7) // Grid 7 Kolom
+        binding.rvWeeklyCalendar.apply {
+            layoutManager = GridLayoutManager(this@MainActivity, 7)
             adapter = calendarAdapter
             isNestedScrollingEnabled = false
         }
 
-        // 1. Observe Judul Hijriah
         viewModel.hijriTitle.observe(this) { hijriText ->
             binding.tvHijriMonthYear.text = hijriText
         }
 
-        // 2. Observe Data Kalender & Loading State
         viewModel.calendarData.observe(this) { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    // Tampilkan Loading, Sembunyikan Grid
                     binding.progressCalendar.visibility = View.VISIBLE
                     binding.rvWeeklyCalendar.visibility = View.INVISIBLE
                 }
@@ -242,21 +255,11 @@ class MainActivity : AppCompatActivity() {
                 is Resource.Error -> {
                     binding.progressCalendar.visibility = View.GONE
                     binding.rvWeeklyCalendar.visibility = View.VISIBLE
-                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        // Observe Data Grid
-        viewModel.calendarData.observe(this) { resource ->
-            if (resource is Resource.Success) {
-                resource.data?.let { calendarAdapter.setData(it) }
-            }
-        }
-
-        // Observe Judul Bulan & Tahun
         viewModel.monthYearTitle.observe(this) { title ->
-            // Pecah string "Januari 2026" jika view dipisah
             val parts = title.split(" ")
             if (parts.size >= 2) {
                 binding.tvMonth.text = parts[0]
@@ -268,11 +271,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupCalendarNavigation() {
-        binding.btnPrevMonth.setOnClickListener {
-            viewModel.changeMonth(-1) // Mundur 1 bulan
-        }
-        binding.btnNextMonth.setOnClickListener {
-            viewModel.changeMonth(1) // Maju 1 bulan
-        }
+        binding.btnPrevMonth.setOnClickListener { viewModel.changeMonth(-1) }
+        binding.btnNextMonth.setOnClickListener { viewModel.changeMonth(1) }
     }
 }
