@@ -19,7 +19,7 @@ import java.util.*
 class CalendarActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCalendarBinding
-    private val adapter = HolidayAdapter() // Kita buat adapter di bawah
+    private val adapter = HolidayAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,14 +42,9 @@ class CalendarActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 1. Ambil Data Nasional dari API
                 val response = HolidayRetrofitClient.instance.getNationalHolidays()
-
-                // 2. Filter data tahun ini (Opsional)
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
                 val filteredList = response.filter { it.tanggal.startsWith(currentYear) }
-
-                // 3. Update UI
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
                     adapter.setData(filteredList)

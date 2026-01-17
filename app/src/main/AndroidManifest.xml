@@ -21,15 +21,12 @@
         android:theme="@style/AppTheme"
         tools:targetApi="31">
         <activity
-            android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
-            android:exported="false" />
-        <activity
-            android:name="Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
+            android:name=".LoginActivity"
             android:exported="false" />
         <activity android:name=".ui.arahkiblat.KiblatActivity"
             android:exported="false"/>
         <activity
-            android:name=".MainActivity"
+            android:name=".Splashscreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,6 +34,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
+            android:exported="false" />
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -172,16 +172,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHolidayPreview() {
-        // 1. Setup RecyclerView
         holidayAdapter = HolidayAdapter()
         binding.rvHolidayPreview.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = holidayAdapter
-            // Agar scroll smooth di dalam ScrollView utama
             isNestedScrollingEnabled = false
         }
-
-        // 2. Observe Data dari ViewModel
         viewModel.holidayPreview.observe(this) { resource ->
             when (resource) {
                 is Resource.Success -> {
@@ -190,11 +186,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 is Resource.Error -> {
-                    // Opsional: Tampilkan pesan error atau sembunyikan section
                     Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
                 }
                 is Resource.Loading -> {
-                    // Opsional: Tampilkan shimmer/loading kecil
                 }
             }
         }

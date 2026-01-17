@@ -30,4 +30,9 @@
     <color name="icon_blue">#2563EB</color>
 
     <color name="calendar_bg">#8897B3</color>
+
+
+    <color name="color_primary">#34384A</color>
+    <color name="color_secondary">#898FAA</color>
+
 </resources>

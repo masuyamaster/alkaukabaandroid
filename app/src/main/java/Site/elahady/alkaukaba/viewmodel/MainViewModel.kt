@@ -176,7 +176,6 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
 
 }
 
-// Data Class untuk UI (Agar ViewModel mengirim data 'matang')
 data class PrayerUIModel(
     val prayerName: String,
     val prayerTime: String,

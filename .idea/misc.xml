@@ -1,21 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_card_rounded.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_circle_button.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_header_gradient.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_date.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_kiblat.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_moon.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_pray.xml" value="0.2265" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/activity_arah_kiblat.xml" value="0.22826086956521738" />
-        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/activity_main.xml" value="0.264" />
-        <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/drawable/bg_location.xml" value="0.2445" />
-        <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/drawable/bg_qibla_angle.xml" value="0.2445" />
-        <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/drawable/ic_back.xml" value="0.2445" />
-        <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/drawable/ic_gps_kiblat.xml" value="0.2445" />
-        <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/drawable/ic_location_kiblat.xml" value="0.2445" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/ic_group_splashscreen.xml" value="0.1785" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/ic_menu_moon.xml" value="0.1785" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/ic_menu_pray.xml" value="0.1785" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/ic_splash_screen_background.xml" value="0.1785" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/ic_splash_screen_foreground.xml" value="0.1785" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/logo_splashscreen.xml" value="0.1" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/activity_login.xml" value="0.2171875" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/activity_splash.xml" value="0.1" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/splashscreen.xml" value="0.16666666666666666" />
         <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/layout/activity_arah_kiblat.xml" value="0.22760416666666666" />
         <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/layout/activity_kiblat.xml" value="0.33" />
         <entry key="..\:/Users/it6ma/Documents/data/alkaukaba/app/src/main/res/layout/fragment_falakiyah.xml" value="0.3392210144927536" />
