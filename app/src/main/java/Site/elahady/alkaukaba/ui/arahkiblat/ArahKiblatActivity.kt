@@ -1,6 +1,5 @@
-package Site.elahady.alkaukaba.arahkiblat
+package Site.elahady.alkaukaba.ui.arahkiblat
 
-import Site.elahady.alkaukaba.R
 import Site.elahady.alkaukaba.databinding.ActivityArahKiblatBinding
 import android.Manifest
 import android.content.pm.PackageManager
@@ -15,7 +14,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
 
 class ArahKiblatActivity : AppCompatActivity() {
     lateinit var binding: ActivityArahKiblatBinding

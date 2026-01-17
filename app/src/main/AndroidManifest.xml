@@ -38,6 +38,18 @@
         <activity
             android:name=".arahkiblat.ArahKiblatActivity"
             android:exported="false" />
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
+            android:exported="false" />
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
+            android:exported="false" />
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.arahkiblat.ArahKiblatActivity"
+            android:exported="false"/>
+        <activity
+            android:name="Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity"
+            android:exported="false"/>
     </application>
 
 </manifest>
