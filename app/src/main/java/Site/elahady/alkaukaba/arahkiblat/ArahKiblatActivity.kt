@@ -23,9 +23,9 @@ class ArahKiblatActivity : AppCompatActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                showMessage("Izin GPS diberikan ✅")
+                showMessage("Izin GPS diberikan")
             } else {
-                showMessage("Izin GPS ditolak ❌")
+                showMessage("Izin GPS ditolak")
             }
         }
     @RequiresApi(Build.VERSION_CODES.M)
