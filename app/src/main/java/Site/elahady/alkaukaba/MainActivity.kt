@@ -3,7 +3,7 @@ package Site.elahady.alkaukaba
 import PrayerRepository
 import Site.elahady.alkaukaba.adapter.HolidayAdapter
 import Site.elahady.alkaukaba.api.RetrofitClient
-import Site.elahady.alkaukaba.ui.arahkiblat.ArahKiblatActivity
+import Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
 import Site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import Site.elahady.alkaukaba.utils.Resource
@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         binding.btKiblat.setOnClickListener {
-            val intentKiblat = Intent(this@MainActivity, ArahKiblatActivity::class.java)
+            val intentKiblat = Intent(this@MainActivity, KiblatActivity::class.java)
             startActivity(intentKiblat)
         }
         binding.tvLabelCalendar.setOnClickListener {
