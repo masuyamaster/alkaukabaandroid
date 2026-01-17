@@ -296,6 +296,7 @@ android:fillViewport="true">
         app:layout_constraintTop_toBottomOf="@id/layoutMenu" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutCalendarContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
@@ -407,6 +408,46 @@ android:fillViewport="true">
             </LinearLayout>
 
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvLabelHoliday"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
+            android:text="Hari Besar Segera"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/btnSeeAllHolidays"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layoutCalendarContainer" />
+        <TextView
+            android:id="@+id/btnSeeAllHolidays"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:padding="8dp"
+            android:text="Lihat Semua"
+            android:textColor="@color/accent_yellow"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintBaseline_toBaselineOf="@id/tvLabelHoliday"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHolidayPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="16dp"
+            android:nestedScrollingEnabled="false"
+            tools:itemCount="2"
+            tools:listitem="@layout/item_holiday"
+            app:layout_constraintTop_toBottomOf="@id/tvLabelHoliday" />
+
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

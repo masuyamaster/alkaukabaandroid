@@ -1,4 +1,4 @@
-package Site.elahady.alkaukaba.arahkiblat
+package Site.elahady.alkaukaba.ui.arahkiblat
 
 import Site.elahady.alkaukaba.databinding.ActivityKiblatBinding
 import androidx.appcompat.app.AppCompatActivity

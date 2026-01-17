@@ -1,6 +1,8 @@
 package Site.elahady.alkaukaba.viewmodel
 
 import PrayerRepository
+import Site.elahady.alkaukaba.api.HolidayItem
+import Site.elahady.alkaukaba.api.HolidayRetrofitClient
 import Site.elahady.alkaukaba.api.Timings
 import Site.elahady.alkaukaba.utils.Resource
 import android.location.Geocoder
@@ -27,34 +29,37 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
     private val _holidayAlert = MutableLiveData<String?>()
     val holidayAlert: LiveData<String?> = _holidayAlert
 
+    private val _holidayPreview = MutableLiveData<Resource<List<HolidayItem>>>()
+    val holidayPreview: LiveData<Resource<List<HolidayItem>>> = _holidayPreview
+
     fun fetchPrayerData(lat: Double, lng: Double) {
         _prayerState.value = Resource.Loading()
 
         viewModelScope.launch(Dispatchers.IO) {
-//            try {
-//                val response = repository.getPrayerTimes(lat, lng)
-//                if (response.isSuccessful && response.body() != null) {
-//                    val data = response.body()!!.data
-//
-//                    // 1. Proses Waktu Sholat (Business Logic)
-//                    val uiModel = calculateNextPrayer(data.timings)
-//                    _prayerState.postValue(Resource.Success(uiModel))
-//
-//                    // 2. Proses Hari Besar Islam
-//                    if (data.date.hijri.holidays.isNotEmpty()) {
-//                        val holidays = data.date.hijri.holidays.joinToString(", ")
-//                        _holidayAlert.postValue(holidays)
-//                    } else {
-//                        // Cek Hari Nasional Masehi (Logic Sederhana)
-//                        checkNationalHoliday()
-//                    }
-//
-//                } else {
-//                    _prayerState.postValue(Resource.Error(response.message()))
-//                }
-//            } catch (e: Exception) {
-//                _prayerState.postValue(Resource.Error(e.message ?: "Unknown Error"))
-//            }
+            try {
+                val response = repository.getPrayerTimes(lat, lng)
+                if (response.isSuccessful && response.body() != null) {
+                    val data = response.body()!!.data
+
+                    // 1. Proses Waktu Sholat (Business Logic)
+                    val uiModel = calculateNextPrayer(data.timings)
+                    _prayerState.postValue(Resource.Success(uiModel))
+
+                    // 2. Proses Hari Besar Islam
+                    if (data.date.hijri.holidays.isNotEmpty()) {
+                        val holidays = data.date.hijri.holidays.joinToString(", ")
+                        _holidayAlert.postValue(holidays)
+                    } else {
+                        // Cek Hari Nasional Masehi (Logic Sederhana)
+                        checkNationalHoliday()
+                    }
+
+                } else {
+                    _prayerState.postValue(Resource.Error(response.message()))
+                }
+            } catch (e: Exception) {
+                _prayerState.postValue(Resource.Error(e.message ?: "Unknown Error"))
+            }
         }
     }
 
@@ -145,6 +150,30 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         cal.set(Calendar.SECOND, 0)
         return cal.time
     }
+
+    fun fetchUpcomingHolidays() {
+        _holidayPreview.postValue(Resource.Loading())
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = HolidayRetrofitClient.instance.getNationalHolidays()
+
+                // 2. Filter & Sort Logic
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+                val upcomingItems = response
+                    .filter { it.tanggal >= today }
+                    .sortedBy { it.tanggal }
+                    .take(3)
+
+                _holidayPreview.postValue(Resource.Success(upcomingItems))
+
+            } catch (e: Exception) {
+                _holidayPreview.postValue(Resource.Error(e.message ?: "Gagal memuat libur"))
+            }
+        }
+    }
+
 }
 
 // Data Class untuk UI (Agar ViewModel mengirim data 'matang')

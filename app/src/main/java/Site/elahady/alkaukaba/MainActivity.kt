@@ -1,12 +1,14 @@
 package Site.elahady.alkaukaba
 
 import PrayerRepository
+import Site.elahady.alkaukaba.adapter.HolidayAdapter
 import Site.elahady.alkaukaba.api.RetrofitClient
-import Site.elahady.alkaukaba.arahkiblat.ArahKiblatActivity
+import Site.elahady.alkaukaba.ui.arahkiblat.ArahKiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
+import Site.elahady.alkaukaba.ui.calendar.CalendarActivity
+import Site.elahady.alkaukaba.utils.Resource
 import Site.elahady.alkaukaba.viewmodel.MainViewModel
 import Site.elahady.alkaukaba.viewmodel.MainViewModelFactory
-import Site.elahady.alkaukaba.utils.Resource
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -16,10 +18,10 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import java.text.SimpleDateFormat
@@ -30,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var holidayAdapter: HolidayAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +46,9 @@ class MainActivity : AppCompatActivity() {
 
         checkLocationPermission()
         setupObservers()
-        setupNavigation() // Pindahkan setup tombol ke fungsi terpisah
+        setupNavigation()
+        setupHolidayPreview()
+        viewModel.fetchUpcomingHolidays()
     }
 
     private fun setupViewModel() {
@@ -149,6 +154,54 @@ class MainActivity : AppCompatActivity() {
             val intentKiblat = Intent(this@MainActivity, ArahKiblatActivity::class.java)
             startActivity(intentKiblat)
         }
-        // Tombol lainnya...
+        binding.tvLabelCalendar.setOnClickListener {
+            openCalendarPage()
+        }
+
+        // Membuat area bulan/kalender card bisa diklik
+        // Asumsi ID parent layout kalender di XML (Anda perlu tambahkan ID jika belum ada)
+        // Lihat XML di bawah untuk penambahan ID
+        binding.layoutCalendarContainer.setOnClickListener {
+            openCalendarPage()
+        }
+    }
+
+    private fun openCalendarPage() {
+        val intent = Intent(this, CalendarActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun setupHolidayPreview() {
+        // 1. Setup RecyclerView
+        holidayAdapter = HolidayAdapter()
+        binding.rvHolidayPreview.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = holidayAdapter
+            // Agar scroll smooth di dalam ScrollView utama
+            isNestedScrollingEnabled = false
+        }
+
+        // 2. Observe Data dari ViewModel
+        viewModel.holidayPreview.observe(this) { resource ->
+            when (resource) {
+                is Resource.Success -> {
+                    resource.data?.let { items ->
+                        holidayAdapter.setData(items)
+                    }
+                }
+                is Resource.Error -> {
+                    // Opsional: Tampilkan pesan error atau sembunyikan section
+                    Toast.makeText(this, resource.message, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Loading -> {
+                    // Opsional: Tampilkan shimmer/loading kecil
+                }
+            }
+        }
+
+        binding.btnSeeAllHolidays.setOnClickListener {
+            val intent = Intent(this, CalendarActivity::class.java)
+            startActivity(intent)
+        }
     }
 }
