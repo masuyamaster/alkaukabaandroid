@@ -1,7 +1,7 @@
 package Site.elahady.alkaukaba.viewmodel
 
+import PrayerRepository
 import Site.elahady.alkaukaba.api.Timings
-import Site.elahady.alkaukaba.repo.PrayerRepository
 import Site.elahady.alkaukaba.utils.Resource
 import android.location.Geocoder
 import androidx.lifecycle.LiveData
@@ -31,30 +31,30 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         _prayerState.value = Resource.Loading()
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = repository.getPrayerTimes(lat, lng)
-                if (response.isSuccessful && response.body() != null) {
-                    val data = response.body()!!.data
-
-                    // 1. Proses Waktu Sholat (Business Logic)
-                    val uiModel = calculateNextPrayer(data.timings)
-                    _prayerState.postValue(Resource.Success(uiModel))
-
-                    // 2. Proses Hari Besar Islam
-                    if (data.date.hijri.holidays.isNotEmpty()) {
-                        val holidays = data.date.hijri.holidays.joinToString(", ")
-                        _holidayAlert.postValue(holidays)
-                    } else {
-                        // Cek Hari Nasional Masehi (Logic Sederhana)
-                        checkNationalHoliday()
-                    }
-
-                } else {
-                    _prayerState.postValue(Resource.Error(response.message()))
-                }
-            } catch (e: Exception) {
-                _prayerState.postValue(Resource.Error(e.message ?: "Unknown Error"))
-            }
+//            try {
+//                val response = repository.getPrayerTimes(lat, lng)
+//                if (response.isSuccessful && response.body() != null) {
+//                    val data = response.body()!!.data
+//
+//                    // 1. Proses Waktu Sholat (Business Logic)
+//                    val uiModel = calculateNextPrayer(data.timings)
+//                    _prayerState.postValue(Resource.Success(uiModel))
+//
+//                    // 2. Proses Hari Besar Islam
+//                    if (data.date.hijri.holidays.isNotEmpty()) {
+//                        val holidays = data.date.hijri.holidays.joinToString(", ")
+//                        _holidayAlert.postValue(holidays)
+//                    } else {
+//                        // Cek Hari Nasional Masehi (Logic Sederhana)
+//                        checkNationalHoliday()
+//                    }
+//
+//                } else {
+//                    _prayerState.postValue(Resource.Error(response.message()))
+//                }
+//            } catch (e: Exception) {
+//                _prayerState.postValue(Resource.Error(e.message ?: "Unknown Error"))
+//            }
         }
     }
 

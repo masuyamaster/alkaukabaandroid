@@ -1,13 +1,15 @@
 package Site.elahady.alkaukaba
 
+import PrayerRepository
 import Site.elahady.alkaukaba.api.RetrofitClient
-import Site.elahady.alkaukaba.repo.PrayerRepository
+import Site.elahady.alkaukaba.arahkiblat.ArahKiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
 import Site.elahady.alkaukaba.viewmodel.MainViewModel
 import Site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import Site.elahady.alkaukaba.utils.Resource
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Build
@@ -100,13 +102,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     // --- Location Logic (View Layer karena butuh Permission Activity) ---
-    @RequiresApi(Build.VERSION_CODES.N)
     private fun checkLocationPermission() {
         val locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-            if (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
-                permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+            if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+                        permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+                } else {
+                    TODO("VERSION.SDK_INT < N")
+                }
             ) {
                 getUserLocation()
             } else {
@@ -141,7 +146,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         binding.btKiblat.setOnClickListener {
-            Toast.makeText(this, "Fitur Kiblat", Toast.LENGTH_SHORT).show()
+            val intentKiblat = Intent(this@MainActivity, ArahKiblatActivity::class.java)
+            startActivity(intentKiblat)
         }
         // Tombol lainnya...
     }
