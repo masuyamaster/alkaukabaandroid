@@ -36,4 +36,9 @@
     <color name="color_primary">#34384A</color>
     <color name="color_secondary">#898FAA</color>
 
+    <color name="toggle_bg_container">#DBE0F6</color>
+    <color name="toggle_bg_selected">#898FAA</color>
+    <color name="text_selected">#FFFFFF</color>
+    <color name="text_unselected">#393939</color>
+
 </resources>

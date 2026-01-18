@@ -1,7 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/drawable/bg_item_sholat_active.xml" value="0.257" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/activity_main.xml" value="0.225" />
+        <entry key="..\:/Project/alkaukabaandroid/app/src/main/res/layout/activity_waktu_sholat.xml" value="0.5" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_card_rounded.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_circle_button.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_header_gradient.xml" value="0.2265" />

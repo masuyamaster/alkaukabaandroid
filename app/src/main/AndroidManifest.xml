@@ -42,7 +42,10 @@
             android:exported="false" />
         <activity
             android:name="Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
-            android:exported="false" />
+            android:exported="false" >
+
+
+        </activity>
     </application>
 
 </manifest>
