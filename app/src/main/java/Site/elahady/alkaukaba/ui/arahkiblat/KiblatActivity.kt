@@ -9,6 +9,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -19,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -42,13 +44,17 @@ class KiblatActivity : AppCompatActivity() {
     private var smoothedAzimuth = 0f
     private var lastRotation = 0f
 
-    private val SMOOTHING_FACTOR = 0.15f   // 0.1 – 0.2 ideal
+    private val smoothingFactor = 0.15f   // 0.1 – 0.2 ideal
+    private val qiblaThresshold = 3f // derajat
+
+    private var isCalibrationVisible = false
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityKiblatBinding.inflate(layoutInflater)
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.statusBarColor = Color.TRANSPARENT
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -69,6 +75,7 @@ class KiblatActivity : AppCompatActivity() {
             rotateCompass()
         }
     }
+    @SuppressLint("SetTextI18n")
     private fun observeViewModel() {
         viewModel.qiblaAngle.observe(this) { angle ->
             binding.txtQiblaValue.text = "${angle.toInt()}°"
@@ -171,6 +178,7 @@ class KiblatActivity : AppCompatActivity() {
         // update compass
         loadQiblaCompass(lat, lon)
     }
+    @SuppressLint("SetTextI18n")
     private fun getAddressFromLatLong(lat: Double, lon: Double) {
 
         try {
@@ -179,17 +187,17 @@ class KiblatActivity : AppCompatActivity() {
 
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
-//                val kecamatan = address.subLocality ?: "-"
-                val kota = address.locality ?: "-"
+                val kecamatan = address.subLocality ?: address.locality
+                val kota = address.subAdminArea ?: address.adminArea
 //                val provinsi = address.adminArea ?: "-"
                 val negara = address.countryName ?: "-"
-                val lokasiTeks = "$kota, $negara"
+                val lokasiTeks = "$kecamatan, $kota, $negara"
                 binding.txtLocation.text = lokasiTeks
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            binding.txtLocation.text = "Lokasi tidak diketahui"
+            binding.txtLocation.text = getString(R.string.infoLokasi)
         }
     }
 
@@ -206,7 +214,7 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun lowPassFilter(input: Float, output: Float): Float {
-        return output + SMOOTHING_FACTOR * (input - output)
+        return output + smoothingFactor * (input - output)
     }
 
     private val sensorListener = object : SensorEventListener {
@@ -221,24 +229,46 @@ class KiblatActivity : AppCompatActivity() {
                     event.values
                 )
 
-                val orientationAngles = FloatArray(3)
-                SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                val adjustedMatrix = FloatArray(9)
 
-                val azimuthRad = orientationAngles[0]
-                val azimuthDeg =
-                    Math.toDegrees(azimuthRad.toDouble()).toFloat()
+                // REMAP coordinate sesuai PORTRAIT
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_Y,
+                    adjustedMatrix
+                )
 
-                val normalizedAzimuth = (azimuthDeg + 360) % 360
+                val orientation = FloatArray(3)
+                SensorManager.getOrientation(adjustedMatrix, orientation)
 
-                smoothedAzimuth = lowPassFilter(normalizedAzimuth, smoothedAzimuth)
+                val azimuthRad = orientation[0]
+                val azimuthDeg = Math.toDegrees(azimuthRad.toDouble()).toFloat()
 
+                val normalized = (azimuthDeg + 360) % 360
+
+                smoothedAzimuth = lowPassFilter(normalized, smoothedAzimuth)
                 currentAzimuth = smoothedAzimuth
 
                 rotateCompassSmooth()
             }
         }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            val needCalibration = accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE ||
+                    accuracy == SensorManager.SENSOR_STATUS_ACCURACY_LOW
+
+            if (needCalibration && !isCalibrationVisible) {
+                binding.calibrationHint.visibility = View.VISIBLE
+                isCalibrationVisible = true
+            }
+
+            if (!needCalibration && isCalibrationVisible) {
+                binding.calibrationHint.visibility = View.GONE
+                isCalibrationVisible = false
+            }
+
+        }
     }
 
     private fun getShortestRotation(target: Float, current: Float): Float {
@@ -250,12 +280,30 @@ class KiblatActivity : AppCompatActivity() {
 
     private fun rotateCompassSmooth() {
 
-        val target = qiblaAngle - currentAzimuth
-        val smoothTarget = getShortestRotation(target, lastRotation)
+//        val target = qiblaAngle - currentAzimuth
+        val smoothTarget = getShortestRotation(smoothedAzimuth, lastRotation)
 
         lastRotation = smoothTarget
+        println("qibla angle $qiblaAngle azimuth $currentAzimuth lastrotation $lastRotation")
+        binding.imgCompass.rotation = -smoothTarget
 
-        binding.imgCompass.rotation = smoothTarget
+        checkQiblaAlignment()
+    }
+
+    private fun checkQiblaAlignment() {
+
+        if (isAlignedToQibla()) {
+            binding.qiblaAngleContainer.background =
+                ContextCompat.getDrawable(this, R.drawable.bg_qibla_match)
+            binding.txtQiblaLabel.setTextColor(Color.WHITE)
+            binding.txtQiblaValue.setTextColor(Color.WHITE)
+
+        } else {
+            binding.qiblaAngleContainer.background =
+                ContextCompat.getDrawable(this, R.drawable.bg_qibla_angle)
+            binding.txtQiblaLabel.setTextColor(Color.BLACK)
+            binding.txtQiblaValue.setTextColor(Color.BLACK)
+        }
     }
 
     private fun rotateCompass() {
@@ -266,6 +314,11 @@ class KiblatActivity : AppCompatActivity() {
             .rotation(targetRotation)
             .setDuration(200)
             .start()
+    }
+
+    private fun isAlignedToQibla(): Boolean {
+        val diff = kotlin.math.abs(currentAzimuth - qiblaAngle)
+        return diff <= qiblaThresshold || diff >= 360 - qiblaThresshold
     }
 
     override fun onResume() {

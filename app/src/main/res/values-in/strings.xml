@@ -5,8 +5,8 @@
     <string name="title_activity_kiblat">KiblatActivity</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
-    <string name="titleArahKiblat">Qibla Compass</string>
-    <string name="sudutKiblat">Qibla Angle :</string>
-    <string name="kalibrasiHint">Compass accuracy is low. Move the device in a figure 8.</string>
-    <string name="infoLokasi">Location unknown</string>
+    <string name="titleArahKiblat">Kompas Kiblat</string>
+    <string name="sudutKiblat">Sudut Kiblat :</string>
+    <string name="kalibrasiHint">Akurasi kompas rendah. Gerakkan perangkat membentuk angka 8.</string>
+    <string name="infoLokasi">Lokasi tidak diketahui</string>
 </resources>
