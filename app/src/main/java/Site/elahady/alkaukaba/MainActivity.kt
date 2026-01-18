@@ -7,6 +7,7 @@ import Site.elahady.alkaukaba.api.RetrofitClient
 import Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
 import Site.elahady.alkaukaba.ui.calendar.CalendarActivity
+import Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import Site.elahady.alkaukaba.utils.Resource
 import Site.elahady.alkaukaba.viewmodel.MainViewModel
 import Site.elahady.alkaukaba.viewmodel.MainViewModelFactory
@@ -191,6 +192,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
+        binding.btSholat.setOnClickListener {
+            val intentWaktuSholat = Intent(this@MainActivity, WaktuSholatActivity::class.java)
+            startActivity(intentWaktuSholat)
+        }
         binding.btKiblat.setOnClickListener {
             val intentKiblat = Intent(this@MainActivity, KiblatActivity::class.java)
             startActivity(intentKiblat)
