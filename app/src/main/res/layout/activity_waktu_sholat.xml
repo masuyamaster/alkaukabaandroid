@@ -1,538 +1,196 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingTop="20dp"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    tools:context=".ui.waktusholat.WaktuSholatActivity"
+    android:background="#F5F7FA">
 
-    tools:context=".ui.waktusholat.WaktuSholatActivity">
-
-    <ImageView
-        android:id="@+id/ivLogo"
-        android:layout_width="11dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:src="@drawable/ic_left_arrow"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/tvWelcome"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#333"/> <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:fontFamily="sans-serif-medium"
         android:text="Waktu Sholat"
-        android:textColor="#34384A"
-        android:textSize="22sp"
+        android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/ivLogo"
-        app:layout_constraintStart_toEndOf="@+id/ivLogo"
-        app:layout_constraintTop_toTopOf="@+id/ivLogo" />
+        android:layout_marginStart="16dp"
+        android:textColor="#333"/>
+    </LinearLayout>
 
-
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/toggleGroup"
+    <LinearLayout
+        android:id="@+id/tabContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:background="@drawable/bg_tab_container"
+        android:orientation="horizontal"
+        android:layout_margin="16dp">
 
-        android:backgroundTint="@color/toggle_bg_container"
-        app:cardBackgroundColor="@color/toggle_bg_container"
-        app:checkedButton="@+id/btnActual"
-
-        app:layout_constraintTop_toBottomOf="@+id/tvWelcome"
-        app:selectionRequired="true"
-        app:singleSelection="true"
-        tools:layout_editor_absoluteX="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnActual"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Button.Left"
+        <TextView
+            android:id="@+id/btnTabActual"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="@color/selector_toggle_bg"
+            android:background="@drawable/bg_tab_inactive"
+            android:gravity="center"
+            android:paddingVertical="10dp"
             android:text="Waktu Aktual"
-            android:textAllCaps="false"
-            android:textColor="@color/selector_toggle_text"
-            android:textSize="14sp"
+            android:textColor="#333333"
             android:textStyle="bold"
-            app:cornerRadius="8dp"
-            app:strokeWidth="0dp"
-            />
+            android:textSize="14sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDetail"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Button.Right"
+        <TextView
+            android:id="@+id/btnTabDetail"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="@color/selector_toggle_bg"
+            android:background="@drawable/bg_tab_inactive"
+            android:gravity="center"
+            android:paddingVertical="10dp"
             android:text="Detail Perhitungan"
-            android:textAllCaps="false"
-            android:textColor="@color/selector_toggle_text"
-            android:textSize="14sp"
+            android:textColor="#333333"
             android:textStyle="bold"
-            app:cornerRadius="8dp"
-            app:strokeWidth="0dp" />
-
-    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-
-    <TextView
-        android:id="@+id/tglMasehi"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="11 Januari 2025"
-        android:textColor="#34384A"
-        android:textSize="13sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toggleGroup" />
-
-    <TextView
-        android:id="@+id/tglHijri"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="11 Rajab 1446 H"
-        android:textColor="#34384A"
-        android:textSize="13sp"
-        app:layout_constraintBottom_toBottomOf="@+id/tglMasehi"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tglMasehi" />
-
-    <TextView
-        android:id="@+id/SholahTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="12dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="Dhuhur 11:39 WIB"
-        android:textColor="#34384A"
-        android:textSize="21sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tglHijri" />
-
-    <ImageView
-        android:id="@+id/ivlocation"
-        android:layout_width="11dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="12dp"
-        android:src="@drawable/ic_gis_location_poi"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/SholahTime"
-        tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/txtlocation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="Deket, Lamongan"
-        android:textColor="#34384A"
-        android:textSize="13sp"
-        app:layout_constraintBottom_toBottomOf="@+id/ivlocation"
-        app:layout_constraintStart_toEndOf="@+id/ivlocation"
-        app:layout_constraintTop_toTopOf="@+id/ivlocation" />
-
-    <LinearLayout
-        android:id="@+id/linlayimsak"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="38dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txtlocation">
-
-        <ImageView
-            android:id="@+id/ivimsak"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_imsak"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/txtimsak"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Imsak"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countimsak"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:text=""
-            android:visibility="gone"
-            android:textColor="#555555"
             android:textSize="14sp" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/timeimsak"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="04:20"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linlaysubuh"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlayimsak">
+        android:layout_height="match_parent"
+        android:padding="10dp">
 
-        <ImageView
-            android:id="@+id/ivsubuh"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_subuh"
-            tools:ignore="ContentDescription" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/txtsubuh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Subuh"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
+            <LinearLayout
+                android:id="@+id/layoutWaktuSholat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp"
+                android:visibility="visible">
 
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/tvDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textColor="#666"/>
 
-        <TextView
-            android:id="@+id/countsubuh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="#555555"
-            android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvNextPrayer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#333"/>
 
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/tvLocationName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:drawablePadding="8dp"
+                    android:textSize="12sp"
+                    app:drawableStartCompat="@drawable/ic_gis_location_poi"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#B71C1C"/>
 
-        <TextView
-            android:id="@+id/timesubuh"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="04:30"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="24dp"
+                    android:background="@android:color/white"
+                    android:padding="8dp">
 
-    <LinearLayout
-        android:id="@+id/linlaydhuha"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlaysubuh">
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowImsak"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowSubuh"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowDzuhur"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowAshar"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowMaghrib"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowIsya"/>
 
-        <ImageView
-            android:id="@+id/ivdhuha"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_dhuha"
-            tools:ignore="ContentDescription" />
+                </LinearLayout>
+            </LinearLayout>
 
-        <TextView
-            android:id="@+id/txtdhuha"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Dhuha"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
 
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+            <LinearLayout
+                android:id="@+id/layoutDetailKiblat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
 
-        <TextView
-            android:id="@+id/countdhuha"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="#555555"
-            android:textSize="14sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Koordinat Pengguna"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold"/>
 
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                <EditText
+                    android:id="@+id/etCoordinates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card_rounded"
+                    android:padding="12dp"
+                    android:enabled="false"
+                    android:text="-7.123, 112.680"
+                    android:textColor="@android:color/black"
+                    android:layout_marginTop="8dp"/>
 
-        <TextView
-            android:id="@+id/timedhuha"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="06:30"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="IMSAK"
+                    android:backgroundTint="#E6B65D"
+                    android:layout_marginTop="16dp"/>
 
-    <LinearLayout
-        android:id="@+id/linlayzuhur"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
+                <TextView
+                    android:id="@+id/tvCalculationResult"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="monospace"
+                    android:text="Memuat Perhitungan..."
+                    android:textSize="14sp"
+                    android:textColor="#333"/>
 
-        android:background="@drawable/bg_item_sholat_active"
-        android:padding="8dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp">
 
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlaydhuha">
-        <ImageView
-            android:id="@+id/ivzuhur"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_dhuhur"
-            tools:ignore="ContentDescription" />
+                    <TextView
+                        android:id="@+id/tvResultDegree"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="294° UTSB"
+                        android:textColor="@android:color/black"
+                        android:gravity="center"
+                        android:padding="12dp"
+                        android:background="@drawable/bg_card_rounded"/>
+                </LinearLayout>
 
-        <TextView
-            android:id="@+id/txtzuhur"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Dzuhur"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countzuhur"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:text="-2:22:03"
-            android:textColor="#666666"
-            android:textSize="14sp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/timezuhur"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="12:00"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linlayashar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlayzuhur">
-
-        <ImageView
-            android:id="@+id/ivashar"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_ashar"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/txtashar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Ashar"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countashar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="#555555"
-            android:textSize="14sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/timeashar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="15:00"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linlaymaghrib"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlayashar">
-
-        <ImageView
-            android:id="@+id/ivmaghrib"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_maghrib"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/txtmaghrib"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Maghrib"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countmaghrib"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="#555555"
-            android:textSize="14sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/timemaghrib"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="18:00"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linlayisya"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="17dp"
-        android:layout_marginEnd="32dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linlaymaghrib">
-
-        <ImageView
-            android:id="@+id/ivisya"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_icon_isha"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/txtisya"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Isya"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countisya"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="#555555"
-            android:textSize="14sp" />
-
-        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/timeisya"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="19:00"
-            android:textColor="#34384A"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+            </LinearLayout>
+        </FrameLayout>
+    </ScrollView>
+</LinearLayout>

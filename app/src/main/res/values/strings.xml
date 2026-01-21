@@ -9,4 +9,6 @@
     <string name="sudutKiblat">Qibla Angle :</string>
     <string name="kalibrasiHint">Compass accuracy is low. Move the device in a figure 8.</string>
     <string name="infoLokasi">Location unknown</string>
+    <string name="loading">Loading…</string>
+    <string name="timepray">Prayer Times</string>
 </resources>

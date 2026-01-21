@@ -200,6 +200,10 @@ class MainActivity : AppCompatActivity() {
             val intentKiblat = Intent(this@MainActivity, KiblatActivity::class.java)
             startActivity(intentKiblat)
         }
+        binding.btSholat.setOnClickListener {
+            val intentSholat = Intent(this@MainActivity, WaktuSholatActivity::class.java)
+            startActivity(intentSholat)
+        }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
     }

@@ -9,4 +9,6 @@
     <string name="sudutKiblat">Sudut Kiblat :</string>
     <string name="kalibrasiHint">Akurasi kompas rendah. Gerakkan perangkat membentuk angka 8.</string>
     <string name="infoLokasi">Lokasi tidak diketahui</string>
+    <string name="loading">Memuat…</string>
+    <string name="timepray">Waktu Sholat</string>
 </resources>
