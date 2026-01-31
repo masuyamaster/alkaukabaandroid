@@ -71,6 +71,10 @@ class KiblatActivity : AppCompatActivity() {
             qiblaAngle = angle.toFloat()   // <-- penting
             binding.txtQiblaValue.text = "${angle.toInt()}°"
         }
+
+        binding.toolbar.setNavigationOnClickListener{
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
     @SuppressLint("SetTextI18n")
     private fun observeViewModel() {
@@ -289,6 +293,11 @@ class KiblatActivity : AppCompatActivity() {
         binding.imgCompass.rotation = -currentAzimuth
 
         checkQiblaAlignment()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
     }
 
     private fun unwrapAngle(newAngle: Float, prevAngle: Float): Float {
