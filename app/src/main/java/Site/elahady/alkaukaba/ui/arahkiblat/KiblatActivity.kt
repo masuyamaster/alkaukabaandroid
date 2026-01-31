@@ -42,11 +42,9 @@ class KiblatActivity : AppCompatActivity() {
     private var qiblaAngle = 0f
 
     private var smoothedAzimuth = 0f
-    private var lastRotation = 0f
 
     private val smoothingFactor = 0.15f   // 0.1 – 0.2 ideal
     private val qiblaThresshold = 3f // derajat
-    private var hasInitialRotation = false
     private var isCalibrationVisible = false
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -271,13 +269,6 @@ class KiblatActivity : AppCompatActivity() {
             }
 
         }
-    }
-
-    private fun getShortestRotation(current: Float, target: Float): Float {
-        var diff = target - current
-        while (diff > 180) diff -= 360
-        while (diff < -180) diff += 360
-        return current + diff
     }
 
     private fun rotateCompassSmooth() {
