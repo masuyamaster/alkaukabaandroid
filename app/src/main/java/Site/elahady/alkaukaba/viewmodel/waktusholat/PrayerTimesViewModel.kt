@@ -12,8 +12,8 @@ import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Response
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import Site.elahady.alkaukaba.utils.PrayerTextCalculator
+import java.util.*
 
 class PrayerTimesViewModel : ViewModel() {
 
@@ -32,10 +32,24 @@ class PrayerTimesViewModel : ViewModel() {
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
+    private val _prayerCalcDetailText = MutableLiveData<String>()
+    val prayerCalcDetailText: LiveData<String> = _prayerCalcDetailText
+
     fun loadData(lat: Double, long: Double) {
         _isLoading.value = true
         calculateQibla(lat, long)
+        calculatePrayerDetails(lat, long) // <--- Panggil fungsi baru ini
         fetchPrayerTimes(lat, long)
+    }
+
+    // Fungsi Baru
+    private fun calculatePrayerDetails(lat: Double, long: Double) {
+        val timeZone = TimeZone.getDefault()
+        val now = System.currentTimeMillis()
+        val offsetMillis = timeZone.getOffset(now)
+        val timeZoneHour = offsetMillis / (1000.0 * 60 * 60)
+        val details = PrayerTextCalculator.generatePrayerDetails(lat, long, timeZoneHour)
+        _prayerCalcDetailText.value = details
     }
 
     private fun calculateQibla(lat: Double, long: Double) {

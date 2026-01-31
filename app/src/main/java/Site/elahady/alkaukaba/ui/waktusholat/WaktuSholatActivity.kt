@@ -260,6 +260,10 @@ class WaktuSholatActivity : AppCompatActivity() {
             binding.tvResultDegree.text = degreeText
         }
 
+        viewModel.prayerCalcDetailText.observe(this) { detailText ->
+            binding.tvPrayerCalculationDetail.text = detailText
+        }
+
         // 4. Observe Loading/Error
         viewModel.errorMessage.observe(this) { msg ->
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()

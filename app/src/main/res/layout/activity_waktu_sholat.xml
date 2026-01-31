@@ -155,40 +155,87 @@
                     android:textColor="@android:color/black"
                     android:layout_marginTop="8dp"/>
 
-                <Button
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="IMSAK"
-                    android:backgroundTint="#E6B65D"
-                    android:layout_marginTop="16dp"/>
+                    android:text="1. PERHITUNGAN ARAH KIBLAT"
+                    android:textStyle="bold"
+                    android:textColor="#E6B65D"
+                    android:layout_marginTop="24dp"/>
 
                 <TextView
                     android:id="@+id/tvCalculationResult"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="10dp"
                     android:fontFamily="monospace"
                     android:text="Memuat Perhitungan..."
-                    android:textSize="14sp"
-                    android:textColor="#333"/>
+                    android:textSize="12sp"
+                    android:textColor="#333"
+                    android:background="#FAFAFA"
+                    android:padding="10dp"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="16dp">
-
+                    android:layout_marginTop="10dp">
+                    <TextView
+                        android:text="Hasil Arah:"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:textColor="#333"/>
                     <TextView
                         android:id="@+id/tvResultDegree"
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
                         android:text="294° UTSB"
-                        android:textColor="@android:color/black"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
                         android:gravity="center"
-                        android:padding="12dp"
-                        android:background="@drawable/bg_card_rounded"/>
+                        android:padding="8dp"
+                        android:background="@drawable/bg_card_rounded"
+                        android:backgroundTint="#E6B65D"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#DDDDDD"
+                    android:layout_marginVertical="20dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2. DETAIL RUMUS WAKTU SHOLAT"
+                    android:textStyle="bold"
+                    android:textColor="#E6B65D"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="(Metode Kemenag / Ephemeris Approximation)"
+                    android:textSize="10sp"
+                    android:textColor="#888"/>
+
+                <TextView
+                    android:id="@+id/tvPrayerCalculationDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="monospace"
+                    android:text="Memuat rumus..."
+                    android:textSize="12sp"
+                    android:textColor="#333"
+                    android:background="#FAFAFA"
+                    android:padding="10dp"
+                    android:lineSpacingExtra="4dp"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"/>
 
             </LinearLayout>
         </FrameLayout>
