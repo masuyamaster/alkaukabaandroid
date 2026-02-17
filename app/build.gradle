@@ -8,7 +8,7 @@ android {
     compileSdk 33
     buildFeatures { viewBinding true }
     defaultConfig {
-        applicationId "Site.elahady.alkaukaba"
+        applicationId "site.elahady.alkaukaba"
         minSdk 21
         targetSdk 33
         versionCode 1

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="Site.elahady.alkaukaba">
+    package="site.elahady.alkaukaba">
 
     <uses-permission android:name="android.permission.ACCESS_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -20,17 +20,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="31">
+<!--        <activity-->
+<!--            android:name=".DetailPerhitunganActivity"-->
+<!--            android:exported="false" />-->
         <activity
-            android:name=".DetailPerhitunganActivity"
+            android:name="site.elahady.alkaukaba.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".LoginActivity"
+            android:name="site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.arahkiblat.KiblatActivity"
-            android:exported="false" />
-        <activity
-            android:name=".Splashscreen"
+            android:name="site.elahady.alkaukaba.Splashscreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,13 +39,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="site.elahady.alkaukaba.MainActivity"
             android:exported="false" />
         <activity
-            android:name="Site.elahady.alkaukaba.ui.calendar.CalendarActivity"
+            android:name="site.elahady.alkaukaba.ui.calendar.CalendarActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.waktusholat.WaktuSholatActivity"
+            android:name="site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
             android:exported="false" />
     </application>
 
