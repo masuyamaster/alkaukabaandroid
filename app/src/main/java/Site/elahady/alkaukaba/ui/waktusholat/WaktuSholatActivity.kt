@@ -83,6 +83,7 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.btnTabDetail.setOnClickListener {
             updateTabState(isActual = false)
         }
+        binding.btnBack.setOnClickListener { finish() }
     }
 
     private fun updateTabState(isActual: Boolean) {
@@ -99,7 +100,7 @@ class WaktuSholatActivity : AppCompatActivity() {
             binding.btnTabDetail.setBackgroundResource(R.drawable.bg_tab_inactive)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 binding.btnTabDetail.setTextColor(getColor(R.color.black))
-            } // Atau warna abu gelap #333
+            }
 
             // 3. Tampilkan Layout yang sesuai
             binding.layoutWaktuSholat.visibility = View.VISIBLE
@@ -146,7 +147,6 @@ class WaktuSholatActivity : AppCompatActivity() {
             }
         } else {
             // Untuk Android di bawah 8.0, idealnya ambil dari response API Aladhan (meta.date)
-            // Di sini kita kosongkan atau beri placeholder
             ""
         }
 
@@ -168,8 +168,6 @@ class WaktuSholatActivity : AppCompatActivity() {
         val nextPrayer = getNextPrayerTime(prayerMap)
 
         // Update UI
-        // Format Teks: "Dzuhur 11:39 WIB"
-        // Anda bisa menambahkan "WIB" secara hardcode atau ambil dari timezone
         binding.tvNextPrayer.text = "${nextPrayer.first} ${nextPrayer.second} WIB"
     }
 
@@ -186,7 +184,7 @@ class WaktuSholatActivity : AppCompatActivity() {
 
         // Loop semua jadwal untuk mencari yang belum lewat
         for ((name, timeStr) in prayers) {
-            // Bersihkan format jam (kadang API return "04:12 (WIB)") -> ambil 5 char pertama
+            // Bersihkan format jam-> ambil 5 char pertama
             val cleanTime = timeStr.take(5)
             val prayerMinutes = timeToMinutes(cleanTime)
 
@@ -202,7 +200,6 @@ class WaktuSholatActivity : AppCompatActivity() {
         }
 
         // Jika minDiff masih MAX_VALUE, berarti sekarang sudah malam (setelah Isya)
-        // Maka waktu sholat berikutnya adalah Subuh (besok)
         if (minDiff == Int.MAX_VALUE) {
             nearestPrayerName = "Subuh"
             nearestPrayerTime = prayers["Subuh"]?.take(5) ?: "04:00"
@@ -226,8 +223,6 @@ class WaktuSholatActivity : AppCompatActivity() {
         // 1. Observe Jadwal Sholat
         viewModel.prayerTimings.observe(this) { timings ->
             timings?.let {
-                // Binding ke layout 'include' sangat mudah:
-                // binding.ID_INCLUDE.ID_TEXTVIEW_DI_DALAM_INCLUDE
 
                 binding.rowImsak.tvPrayerName.text = "Imsak"
                 binding.rowImsak.tvTime.text = it.imsak
@@ -298,17 +293,9 @@ class WaktuSholatActivity : AppCompatActivity() {
                 android.Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            // Default Jakarta jika null (misal di emulator belum set lokasi)
             val lat = location?.latitude ?: -6.2088
             val long = location?.longitude ?: 106.8456
 

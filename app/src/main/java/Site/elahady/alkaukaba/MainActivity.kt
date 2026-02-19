@@ -6,6 +6,7 @@ import Site.elahady.alkaukaba.adapter.HolidayAdapter
 import Site.elahady.alkaukaba.api.RetrofitClient
 import Site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
 import Site.elahady.alkaukaba.databinding.ActivityMainBinding
+import Site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity
 import Site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import Site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import Site.elahady.alkaukaba.utils.Resource
@@ -203,6 +204,10 @@ class MainActivity : AppCompatActivity() {
         binding.btSholat.setOnClickListener {
             val intentSholat = Intent(this@MainActivity, WaktuSholatActivity::class.java)
             startActivity(intentSholat)
+        }
+        binding.btAwalbulan.setOnClickListener {
+            val intentAwalBulan = Intent(this@MainActivity, AwalBulanActivity::class.java)
+            startActivity(intentAwalBulan)
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }

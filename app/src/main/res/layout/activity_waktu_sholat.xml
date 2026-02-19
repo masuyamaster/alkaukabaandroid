@@ -16,10 +16,12 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
         <ImageView
+            android:id="@+id/btnBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_arrow_back"
-            app:tint="#333"/> <TextView
+            app:tint="#333"/>
+        <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Waktu Sholat"
