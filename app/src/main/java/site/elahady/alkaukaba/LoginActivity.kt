@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import site.elahady.alkaukaba.databinding.ActivityLoginBinding
 import site.elahady.alkaukaba.model.LoginRequest
+import site.elahady.alkaukaba.model.RegisterRequest
 import site.elahady.alkaukaba.utils.AuthClient
 
 class LoginActivity : AppCompatActivity() {
@@ -26,12 +27,13 @@ class LoginActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
 
-        // --- TOMBOL SIGN IN ---
+        // ==========================================
+        // LOGIC FORM LOGIN
+        // ==========================================
         binding.btnSignIn.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
 
-            // Validasi Input
             if (email.isEmpty()) {
                 binding.etEmail.error = "Email tidak boleh kosong"
                 binding.etEmail.requestFocus()
@@ -43,30 +45,101 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Jalankan proses login
             performLogin(email, password)
         }
 
-        // --- TOMBOL REGISTER ---
+        // ==========================================
+        // TOGGLE ANIMATION (LOGIN <-> REGISTER)
+        // ==========================================
+
+        // Saat 'REGISTER' di halaman login ditekan
         binding.tvRegister.setOnClickListener {
-            // Nanti arahkan ke RegisterActivity
-            // val intent = Intent(this, RegisterActivity::class.java)
-            // startActivity(intent)
-            Toast.makeText(this, "Arahkan ke halaman Register", Toast.LENGTH_SHORT).show()
+            binding.groupLogin.visibility = View.GONE
+            binding.groupRegister.visibility = View.VISIBLE
         }
 
-        // --- TOMBOL GOOGLE (Disiapkan untuk nanti) ---
+        // Saat 'SIGN IN' di halaman register ditekan
+        binding.tvBackToLogin.setOnClickListener {
+            binding.groupRegister.visibility = View.GONE
+            binding.groupLogin.visibility = View.VISIBLE
+        }
+
+        // ==========================================
+        // LOGIC FORM REGISTER
+        // ==========================================
+        binding.btnRegisterSubmit.setOnClickListener {
+            val username = binding.etRegUsername.text.toString().trim()
+            val email = binding.etRegEmail.text.toString().trim()
+            val password = binding.etRegPassword.text.toString().trim()
+
+            if (username.isEmpty()) {
+                binding.etRegUsername.error = "Username tidak boleh kosong"
+                binding.etRegUsername.requestFocus()
+                return@setOnClickListener
+            }
+            if (email.isEmpty()) {
+                binding.etRegEmail.error = "Email tidak boleh kosong"
+                binding.etRegEmail.requestFocus()
+                return@setOnClickListener
+            }
+            if (password.isEmpty()) {
+                binding.etRegPassword.error = "Password tidak boleh kosong"
+                binding.etRegPassword.requestFocus()
+                return@setOnClickListener
+            }
+
+            performRegister(username, email, password)
+        }
+
+        // --- TOMBOL GOOGLE ---
         binding.cvGoogle.setOnClickListener {
             Toast.makeText(this, "Fitur Google Sign-In menyusul", Toast.LENGTH_SHORT).show()
         }
     }
 
+    private fun performRegister(username: String, email: String, pass: String) {
+        binding.btnRegisterSubmit.text = "Loading..."
+        binding.btnRegisterSubmit.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Gunakan model RegisterRequest yang sudah Anda buat
+                val request = RegisterRequest(username, email, pass)
+                val response = AuthClient.instance.register(request)
+
+                withContext(Dispatchers.Main) {
+                    binding.btnRegisterSubmit.text = "REGISTER"
+                    binding.btnRegisterSubmit.isEnabled = true
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val apiResponse = response.body()!!
+
+                        if (apiResponse.status == "success") {
+                            Toast.makeText(this@LoginActivity, "Register Berhasil! Sedang mengalihkan...", Toast.LENGTH_SHORT).show()
+
+                            // LANGSUNG LOGIN OTOMATIS JIKA REGISTER SUKSES
+                            performLogin(email, pass)
+                        } else {
+                            Toast.makeText(this@LoginActivity, apiResponse.message, Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Register gagal, periksa jaringan/server", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.btnRegisterSubmit.text = "REGISTER"
+                    binding.btnRegisterSubmit.isEnabled = true
+                    Toast.makeText(this@LoginActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private fun performLogin(email: String, pass: String) {
-        // Tampilkan loading (opsional, bisa diganti dengan ProgressBar jika ada di XML)
         binding.btnSignIn.text = "Loading..."
         binding.btnSignIn.isEnabled = false
 
-        // Menjalankan API call di background thread
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val request = LoginRequest(email, pass)
@@ -90,12 +163,10 @@ class LoginActivity : AppCompatActivity() {
                             Toast.makeText(this@LoginActivity, apiResponse.message, Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        // Response code bukan 200 (misal 401 Password Salah / 404 Email Tidak Terdaftar)
                         Toast.makeText(this@LoginActivity, "Login gagal, periksa email dan password", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                // Error jaringan atau server down
                 withContext(Dispatchers.Main) {
                     binding.btnSignIn.text = "SIGN IN"
                     binding.btnSignIn.isEnabled = true
