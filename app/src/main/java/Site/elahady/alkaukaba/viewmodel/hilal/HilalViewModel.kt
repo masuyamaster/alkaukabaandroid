@@ -1,4 +1,4 @@
-package Site.elahady.alkaukaba.viewmodel.hilal
+package site.elahady.alkaukaba.viewmodel.hilal
 
 import Site.elahady.alkaukaba.model.HilalInput
 import Site.elahady.alkaukaba.model.HilalResult

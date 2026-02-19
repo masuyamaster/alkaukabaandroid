@@ -1,7 +1,7 @@
 package Site.elahady.alkaukaba.ui.awalbulan
 
-import Site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
-import Site.elahady.alkaukaba.viewmodel.hilal.HilalViewModel
+import site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
+import site.elahady.alkaukaba.viewmodel.hilal.HilalViewModel
 import android.Manifest
 import android.app.DatePickerDialog
 import android.content.pm.PackageManager

@@ -82,6 +82,7 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.btnTabDetail.setOnClickListener {
             updateTabState(isActual = false)
         }
+        binding.btnTabDetail.visibility = View.GONE
         binding.btnBack.setOnClickListener { finish() }
     }
 
