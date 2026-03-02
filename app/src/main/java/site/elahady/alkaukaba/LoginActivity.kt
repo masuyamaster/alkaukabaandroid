@@ -1,16 +1,24 @@
 package site.elahady.alkaukaba
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import site.elahady.alkaukaba.databinding.ActivityLoginBinding
+import site.elahady.alkaukaba.model.GoogleLoginRequest
 import site.elahady.alkaukaba.model.LoginRequest
 import site.elahady.alkaukaba.model.RegisterRequest
 import site.elahady.alkaukaba.utils.AuthClient
@@ -18,14 +26,48 @@ import site.elahady.alkaukaba.utils.AuthClient
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var googleSignInClient: GoogleSignInClient
+
+    private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+
+                if (idToken != null) {
+                    // Berhasil! Lanjut ke API kita
+                    performGoogleLogin(idToken)
+                } else {
+                    Log.e("GOOGLE_AUTH", "Token null, tapi login sukses.")
+                    Toast.makeText(this, "Gagal mendapatkan ID Token", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: ApiException) {
+                // INI YANG PALING PENTING: Menangkap kode error dari Google
+                Log.e("GOOGLE_AUTH", "Google Sign-In failed. Error Code: ${e.statusCode}")
+                Toast.makeText(this, "Error Code: ${e.statusCode}", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Log.e("GOOGLE_AUTH", "Result Code bukan RESULT_OK. User mungkin membatalkan popup.")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            // GANTI DENGAN WEB CLIENT ID DARI GOOGLE CLOUD CONSOLE
+            .requestIdToken("604243092609-94nm2tlm46e3slr0vboe9n41inouvlj7.apps.googleusercontent.com")
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         // ==========================================
         // LOGIC FORM LOGIN
@@ -93,7 +135,10 @@ class LoginActivity : AppCompatActivity() {
 
         // --- TOMBOL GOOGLE ---
         binding.cvGoogle.setOnClickListener {
-            Toast.makeText(this, "Fitur Google Sign-In menyusul", Toast.LENGTH_SHORT).show()
+            googleSignInClient.signOut().addOnCompleteListener {
+                val signInIntent = googleSignInClient.signInIntent
+                googleSignInLauncher.launch(signInIntent)
+            }
         }
     }
 
@@ -170,6 +215,45 @@ class LoginActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.btnSignIn.text = "SIGN IN"
                     binding.btnSignIn.isEnabled = true
+                    Toast.makeText(this@LoginActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun performGoogleLogin(idToken: String) {
+        // Tampilkan indikator loading (opsional, sesuaikan dengan UI Anda)
+        Toast.makeText(this, "Memverifikasi akun Google...", Toast.LENGTH_SHORT).show()
+        println("idtoken :: $idToken")
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Bungkus token dalam model request
+                val request = GoogleLoginRequest(idToken)
+                println("idtoken :: " + idToken)
+
+                // Panggil endpoint khusus Google Login di Retrofit Anda
+                val response = AuthClient.instance.googleLogin(request)
+
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val apiResponse = response.body()!!
+
+                        if (apiResponse.status == "success") {
+                            Toast.makeText(this@LoginActivity, "Login Google Berhasil!", Toast.LENGTH_SHORT).show()
+
+                            // Lanjut ke MainActivity
+                            val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this@LoginActivity, apiResponse.message, Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Verifikasi gagal di server", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
                     Toast.makeText(this@LoginActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
