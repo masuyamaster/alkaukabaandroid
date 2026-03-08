@@ -22,6 +22,7 @@ import site.elahady.alkaukaba.model.GoogleLoginRequest
 import site.elahady.alkaukaba.model.LoginRequest
 import site.elahady.alkaukaba.model.RegisterRequest
 import site.elahady.alkaukaba.utils.AuthClient
+import site.elahady.alkaukaba.utils.SessionManager
 
 class LoginActivity : AppCompatActivity() {
 
@@ -162,7 +163,8 @@ class LoginActivity : AppCompatActivity() {
                         if (apiResponse.status == "success") {
                             Toast.makeText(this@LoginActivity, "Register Berhasil! Sedang mengalihkan...", Toast.LENGTH_SHORT).show()
 
-                            // LANGSUNG LOGIN OTOMATIS JIKA REGISTER SUKSES
+                            val sessionManager = SessionManager(this@LoginActivity)
+                            sessionManager.setLogin(true)
                             performLogin(email, pass)
                         } else {
                             Toast.makeText(this@LoginActivity, apiResponse.message, Toast.LENGTH_SHORT).show()
@@ -200,7 +202,8 @@ class LoginActivity : AppCompatActivity() {
                         if (apiResponse.status == "success") {
                             Toast.makeText(this@LoginActivity, "Selamat Datang, ${apiResponse.data?.username}!", Toast.LENGTH_SHORT).show()
 
-                            // Lanjut ke MainActivity
+                            val sessionManager = SessionManager(this@LoginActivity)
+                            sessionManager.setLogin(true)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -241,7 +244,8 @@ class LoginActivity : AppCompatActivity() {
                         if (apiResponse.status == "success") {
                             Toast.makeText(this@LoginActivity, "Login Google Berhasil!", Toast.LENGTH_SHORT).show()
 
-                            // Lanjut ke MainActivity
+                            val sessionManager = SessionManager(this@LoginActivity)
+                            sessionManager.setLogin(true)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()

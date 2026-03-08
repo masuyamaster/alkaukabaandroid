@@ -10,11 +10,17 @@
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_btn_main_dark.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_calibration_hint.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_card_rounded.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_card_up_rounded.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_circle_button.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_header_gradient.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_input_outline.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_item_sholat_active.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_location.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_qibla_angle.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_qibla_match.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_tab_active.xml" value="0.176" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_tab_container.xml" value="0.2265" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/bg_tab_inactive.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_calendar.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_date.xml" value="0.2265" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/drawable/ic_menu_kiblat.xml" value="0.2265" />
@@ -28,6 +34,7 @@
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/activity_login.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/activity_main.xml" value="0.264" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/activity_waktu_sholat.xml" value="0.22826086956521738" />
+        <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/dialog_profile.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/fragment_kiblat.xml" value="0.22826086956521738" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/item_calendar_day.xml" value="0.4" />
         <entry key="..\:/Users/ASUS/Documents/GitHub/alkaukabaandroid/app/src/main/res/layout/item_hilal_result_card.xml" value="0.22826086956521738" />
@@ -43,7 +50,7 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17_PREVIEW" project-jdk-name="jbr-17" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_16" project-jdk-name="jbr-17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
