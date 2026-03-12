@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import java.util.*
+import site.elahady.alkaukaba.R
 
 class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
