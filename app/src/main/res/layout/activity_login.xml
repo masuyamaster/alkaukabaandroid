@@ -101,7 +101,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="50dp"
-        android:text="Forgot your password?"
+        android:text=""
         android:textColor="@android:color/white"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -219,5 +219,116 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
+
+    <EditText
+        android:id="@+id/etRegUsername"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="50dp"
+        android:backgroundTint="@android:color/white"
+        android:drawablePadding="12dp"
+        android:hint="Masukkan Username"
+        android:inputType="textPersonName"
+        android:paddingBottom="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle2" />
+
+    <EditText
+        android:id="@+id/etRegEmail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="50dp"
+        android:backgroundTint="@android:color/white"
+        android:drawablePadding="12dp"
+        android:hint="Masukkan Email"
+        android:inputType="textEmailAddress"
+        android:paddingBottom="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etRegUsername" />
+
+    <EditText
+        android:id="@+id/etRegPassword"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="50dp"
+        android:backgroundTint="@android:color/white"
+        android:drawablePadding="12dp"
+        android:hint="Masukkan Password"
+        android:inputType="textPassword"
+        android:paddingBottom="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etRegEmail" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRegisterSubmit"
+        android:layout_width="159dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/ic_button_sign_in"
+        android:text="REGISTER"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etRegPassword" />
+
+    <TextView
+        android:id="@+id/tvHasAccount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Already have an account?"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnRegisterSubmit" />
+
+    <TextView
+        android:id="@+id/tvBackToLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="SIGN IN"
+        android:textColor="#E8BA5C"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvHasAccount" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="etEmail,etPassword,tvForgotPassword,btnSignIn,tvNoAccount,tvRegister,lineLeft,tvOr,lineRight,cvGoogle" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="etRegUsername,etRegEmail,etRegPassword,btnRegisterSubmit,tvHasAccount,tvBackToLogin" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

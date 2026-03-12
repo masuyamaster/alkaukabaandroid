@@ -63,6 +63,8 @@
                 android:backgroundTint="#F1F5F9"
                 android:drawablePadding="8dp"
                 android:hint="Cari hari besar..."
+                android:textColorHint="#404040"
+                android:textColor="@color/text_primary"
                 android:paddingHorizontal="12dp"
                 android:textSize="14sp"
                 android:inputType="text"
@@ -90,7 +92,7 @@
                         android:layout_height="wrap_content"
                         android:text="Dari Tanggal"
                         android:textSize="10sp"
-                        android:textColor="@android:color/darker_gray"/>
+                        android:textColor="@android:color/black"/>
                     <TextView
                         android:id="@+id/tvStartDateVal"
                         android:layout_width="match_parent"
@@ -121,7 +123,7 @@
                         android:layout_height="wrap_content"
                         android:text="Sampai Tanggal"
                         android:textSize="10sp"
-                        android:textColor="@android:color/darker_gray"/>
+                        android:textColor="@android:color/black"/>
                     <TextView
                         android:id="@+id/tvEndDateVal"
                         android:layout_width="match_parent"

@@ -169,11 +169,11 @@
         android:id="@+id/layoutMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
         android:orientation="horizontal"
+        android:layout_marginTop="30dp"
         android:paddingHorizontal="24dp"
         android:weightSum="4"
-        app:layout_constraintTop_toBottomOf="@id/cardPrayer">
+        app:layout_constraintTop_toBottomOf="@+id/viewHeaderBg">
 
         <LinearLayout
             android:id="@+id/bt_Kiblat"
@@ -232,7 +232,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/bt_hisiyah"
+            android:id="@+id/bt_awalbulan"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

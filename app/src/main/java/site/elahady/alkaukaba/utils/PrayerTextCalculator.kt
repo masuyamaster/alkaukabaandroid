@@ -21,7 +21,7 @@ object PrayerTextCalculator {
         // Deklinasi Matahari (Declination) - Derajat
         val declination = 23.45 * sin(Math.toRadians(360.0 / 365.0 * (dayOfYear - 81)))
 
-        sb.append("=== DATA ASTRONOMI ===\n")
+        sb.append("DATA ASTRONOMI\n")
         sb.append("Latitude (φ): $lat\n")
         sb.append("Longitude (λ): $lng\n")
         sb.append("Hari ke (d): $dayOfYear\n")
