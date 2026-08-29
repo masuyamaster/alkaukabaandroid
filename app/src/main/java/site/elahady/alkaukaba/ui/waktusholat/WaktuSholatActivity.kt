@@ -17,12 +17,19 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
 class WaktuSholatActivity : AppCompatActivity() {
+
+    companion object {
+        // Waktu Dhuha tidak disediakan langsung oleh API Aladhan, dihitung dari Sunrise + offset ini
+        private const val DHUHA_OFFSET_MINUTES = 15
+    }
+
     private lateinit var binding: ActivityWaktuSholatBinding
     private lateinit var viewModel: PrayerTimesViewModel
 
@@ -154,58 +161,74 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.tvDate.text = if (hijriString.isNotEmpty()) "$hijriString | $masehiString" else masehiString
     }
 
-    // 2. Logika Mencari Jadwal Sholat Berikutnya (Next Prayer)
+    // 2. Bind 8 baris waktu (Tsulutsul Lail Akhir s/d Isya) & tandai periode yang sedang aktif
     @SuppressLint("SetTextI18n")
     private fun updateNextPrayerUI(timings: TimingPrayers) {
-        val prayerMap = mapOf(
-            "Subuh" to timings.subuh,
-            "Dzuhur" to timings.dzuhur,
-            "Ashar" to timings.ashar,
-            "Maghrib" to timings.maghrib,
-            "Isya" to timings.isya
+        val dhuha = addMinutes(timings.sunrise.take(5), DHUHA_OFFSET_MINUTES)
+
+        data class PrayerEntry(val label: String, val iconRes: Int, val time: String)
+
+        val items = listOf(
+            PrayerEntry("Tsulutsul Lail Akhir", R.drawable.ic_prayer_tsulutsul_lail, timings.tsulutsulLailAkhir.take(5)),
+            PrayerEntry("Imsak", R.drawable.ic_prayer_imsak, timings.imsak.take(5)),
+            PrayerEntry("Subuh", R.drawable.ic_prayer_subuh, timings.subuh.take(5)),
+            PrayerEntry("Dhuha", R.drawable.ic_prayer_dhuha, dhuha),
+            PrayerEntry("Dzuhur", R.drawable.ic_prayer_dzuhur, timings.dzuhur.take(5)),
+            PrayerEntry("Ashar", R.drawable.ic_prayer_ashar, timings.ashar.take(5)),
+            PrayerEntry("Maghrib", R.drawable.ic_prayer_maghrib, timings.maghrib.take(5)),
+            PrayerEntry("Isya", R.drawable.ic_prayer_isya, timings.isya.take(5))
         )
 
-        val nextPrayer = getNextPrayerTime(prayerMap)
+        val rows = listOf(
+            binding.rowTsulutsulLail, binding.rowImsak, binding.rowSubuh, binding.rowDhuha,
+            binding.rowDzuhur, binding.rowAshar, binding.rowMaghrib, binding.rowIsya
+        )
 
-        // Update UI
-        binding.tvNextPrayer.text = "${nextPrayer.first} ${nextPrayer.second} WIB"
+        val currentMinutes = timeToMinutes(
+            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+        )
+        val activeIndex = items.indexOfLast { timeToMinutes(it.time) <= currentMinutes }
+            .let { if (it == -1) items.size - 1 else it }
+
+        val colorActiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_row_active_bg)
+        val colorDarkBg = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorIconInactiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_icon_bg_inactive)
+        val colorIconMuted = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
+        val colorWhite = ContextCompat.getColor(this, android.R.color.white)
+        val colorTransparent = ContextCompat.getColor(this, R.color.transparent)
+        val colorNameInactive = android.graphics.Color.parseColor("#374151")
+
+        items.forEachIndexed { index, entry ->
+            val row = rows[index]
+            row.tvPrayerName.text = entry.label
+            row.tvTime.text = entry.time
+            row.ivIcon.setImageResource(entry.iconRes)
+
+            val isActive = index == activeIndex
+            row.rowRoot.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorActiveBg else colorTransparent)
+            row.iconContainer.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorDarkBg else colorIconInactiveBg)
+            row.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorWhite else colorIconMuted)
+            row.tvPrayerName.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            row.tvTime.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            row.tvPrayerName.setTextColor(if (isActive) colorDarkBg else colorNameInactive)
+        }
+
+        binding.tvNextPrayer.text = items[activeIndex].label
+        binding.tvNextPrayerTime.text = "${items[activeIndex].time} WIB"
     }
 
-    private fun getNextPrayerTime(prayers: Map<String, String>): Pair<String, String> {
-        val sdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-        val currentTimeString = sdf.format(java.util.Date())
-
-        // Ubah waktu sekarang ke menit agar mudah dibandingkan (Jam * 60 + Menit)
-        val currentMinutes = timeToMinutes(currentTimeString)
-
-        var nearestPrayerName = "Subuh" // Default jika semua lewat (berarti besok Subuh)
-        var nearestPrayerTime = prayers["Subuh"] ?: "00:00"
-        var minDiff = Int.MAX_VALUE
-
-        // Loop semua jadwal untuk mencari yang belum lewat
-        for ((name, timeStr) in prayers) {
-            // Bersihkan format jam-> ambil 5 char pertama
-            val cleanTime = timeStr.take(5)
-            val prayerMinutes = timeToMinutes(cleanTime)
-
-            if (prayerMinutes > currentMinutes) {
-                val diff = prayerMinutes - currentMinutes
-                // Cari selisih terkecil (waktu terdekat yang akan datang)
-                if (diff < minDiff) {
-                    minDiff = diff
-                    nearestPrayerName = name
-                    nearestPrayerTime = cleanTime
-                }
-            }
+    private fun addMinutes(time: String, minutesToAdd: Int): String {
+        return try {
+            val parts = time.split(":")
+            val cal = java.util.Calendar.getInstance()
+            cal.set(java.util.Calendar.HOUR_OF_DAY, parts[0].toInt())
+            cal.set(java.util.Calendar.MINUTE, parts[1].toInt())
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.add(java.util.Calendar.MINUTE, minutesToAdd)
+            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(cal.time)
+        } catch (e: Exception) {
+            time
         }
-
-        // Jika minDiff masih MAX_VALUE, berarti sekarang sudah malam (setelah Isya)
-        if (minDiff == Int.MAX_VALUE) {
-            nearestPrayerName = "Subuh"
-            nearestPrayerTime = prayers["Subuh"]?.take(5) ?: "04:00"
-        }
-
-        return Pair(nearestPrayerName, nearestPrayerTime)
     }
 
     private fun timeToMinutes(time: String): Int {
@@ -222,27 +245,7 @@ class WaktuSholatActivity : AppCompatActivity() {
     private fun observeViewModel() {
         // 1. Observe Jadwal Sholat
         viewModel.prayerTimings.observe(this) { timings ->
-            timings?.let {
-
-                binding.rowImsak.tvPrayerName.text = "Imsak"
-                binding.rowImsak.tvTime.text = it.imsak
-
-                binding.rowSubuh.tvPrayerName.text = "Subuh"
-                binding.rowSubuh.tvTime.text = it.subuh
-
-                binding.rowDzuhur.tvPrayerName.text = "Dzuhur"
-                binding.rowDzuhur.tvTime.text = it.dzuhur
-
-                binding.rowAshar.tvPrayerName.text = "Ashar"
-                binding.rowAshar.tvTime.text = it.ashar
-
-                binding.rowMaghrib.tvPrayerName.text = "Maghrib"
-                binding.rowMaghrib.tvTime.text = it.maghrib
-
-                binding.rowIsya.tvPrayerName.text = "Isya"
-                binding.rowIsya.tvTime.text = it.isya
-                updateNextPrayerUI(it)
-            }
+            timings?.let { updateNextPrayerUI(it) }
         }
 
         // 2. Observe Detail Rumus Kiblat

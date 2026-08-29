@@ -41,4 +41,12 @@
     <color name="text_selected">#FFFFFF</color>
     <color name="text_unselected">#393939</color>
 
+    <color name="waktu_sholat_dark_bg">#111827</color>
+    <color name="waktu_sholat_date_muted">#9CA3AF</color>
+    <color name="waktu_sholat_pill_text">#D1D5DB</color>
+    <color name="waktu_sholat_icon_muted">#6B7280</color>
+    <color name="waktu_sholat_icon_bg_inactive">#F1F5F9</color>
+    <color name="waktu_sholat_row_active_bg">#F8FAFC</color>
+    <color name="waktu_sholat_row_active_border">#F1F5F9</color>
+
 </resources>

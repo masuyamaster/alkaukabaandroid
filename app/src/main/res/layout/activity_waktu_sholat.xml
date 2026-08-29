@@ -14,13 +14,17 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:padding="16dp">
         <ImageView
             android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="10dp"
+            android:background="@drawable/bg_circle_button"
+            android:backgroundTint="@color/waktu_sholat_icon_bg_inactive"
             android:src="@drawable/ic_arrow_back"
-            app:tint="#333"/>
+            app:tint="#374151"/>
         <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -28,7 +32,7 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginStart="16dp"
-        android:textColor="#333"/>
+        android:textColor="#111827"/>
     </LinearLayout>
 
     <LinearLayout
@@ -37,6 +41,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_tab_container"
         android:orientation="horizontal"
+        android:visibility="gone"
         android:layout_margin="16dp">
 
         <TextView
@@ -84,44 +89,81 @@
                 android:padding="10dp"
                 android:visibility="visible">
 
-                <TextView
-                    android:id="@+id/tvDate"
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textColor="#666"/>
+                    android:background="@drawable/bg_card_rounded"
+                    android:backgroundTint="@color/waktu_sholat_dark_bg"
+                    android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/tvNextPrayer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#333"/>
+                    <TextView
+                        android:id="@+id/tvDate"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/loading"
+                        android:textColor="@color/waktu_sholat_date_muted"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/tvLocationName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:drawablePadding="8dp"
-                    android:textSize="12sp"
-                    app:drawableStartCompat="@drawable/ic_gis_location_poi"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#B71C1C"/>
+                    <TextView
+                        android:id="@+id/tvNextPrayer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/loading"
+                        android:textColor="@android:color/white"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvDate" />
+
+                    <TextView
+                        android:id="@+id/tvNextPrayerTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/loading"
+                        android:textColor="#D1D5DB"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:layout_constraintBottom_toBottomOf="@id/tvNextPrayer"
+                        app:layout_constraintStart_toEndOf="@id/tvNextPrayer" />
+
+                    <TextView
+                        android:id="@+id/tvLocationName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_pill_dark"
+                        android:drawablePadding="6dp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:text="@string/loading"
+                        android:textColor="@color/waktu_sholat_pill_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_gis_location_poi"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvNextPrayer" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="24dp"
-                    android:background="@android:color/white"
-                    android:padding="8dp">
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:backgroundTint="@color/card_white"
+                    android:padding="6dp">
 
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowTsulutsulLail"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowImsak"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowSubuh"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowDhuha"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowDzuhur"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowAshar"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowMaghrib"/>

@@ -26,10 +26,12 @@ data class CalendarResponse(val code: Int,val status: String,val data: List<Pray
 data class TimingPrayers(
     @SerializedName("Imsak") val imsak: String,
     @SerializedName("Fajr") val subuh: String,
+    @SerializedName("Sunrise") val sunrise: String,
     @SerializedName("Dhuhr") val dzuhur: String,
     @SerializedName("Asr") val ashar: String,
     @SerializedName("Maghrib") val maghrib: String,
-    @SerializedName("Isha") val isya: String
+    @SerializedName("Isha") val isya: String,
+    @SerializedName("Lastthird") val tsulutsulLailAkhir: String
 )
 
 data class Method(
