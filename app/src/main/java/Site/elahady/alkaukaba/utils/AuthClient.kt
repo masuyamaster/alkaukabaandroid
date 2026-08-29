@@ -5,8 +5,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import site.elahady.alkaukaba.api.AuthApiService
 
 object AuthClient {
-    // Gunakan URL hosting Anda yang sudah HTTPS
-    private const val BASE_URL = "https://elahady.site/alkaukabaauth/"
+    // TESTING LOKAL (emulator): 10.0.2.2 = alias ke localhost mesin host.
+    // Jalankan `php artisan serve` di alkaukabaweb sebelum tes.
+    // Sebelum rilis, ganti ke BASE_URL produksi: "https://alkaukaba.com/"
+    private const val BASE_URL = "http://10.0.2.2:8000/"
 
     val instance: AuthApiService by lazy {
         val retrofit = Retrofit.Builder()
