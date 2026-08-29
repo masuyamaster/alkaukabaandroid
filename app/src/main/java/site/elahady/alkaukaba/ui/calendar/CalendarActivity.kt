@@ -157,12 +157,15 @@ class CalendarActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val allHolidays = mutableListOf<HolidayItem>()
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            val today = Calendar.getInstance()
+            val currentYear = today.get(Calendar.YEAR)
+            val currentMonth = today.get(Calendar.MONTH) + 1
             val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
             val outputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val todayStr = outputDateFormat.format(today.time)
 
             try {
-                for (month in 1..12) {
+                for (month in currentMonth..12) {
                     val response = repository.getIslamicHolidays(lat, lng, month, currentYear)
                     if (response.isSuccessful && response.body() != null) {
                         val rawData = response.body()!!.data
@@ -189,9 +192,15 @@ class CalendarActivity : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
-                    if (allHolidays.isNotEmpty()) {
+
+                    // Hanya tampilkan hari besar dari hari ini dan seterusnya
+                    val upcomingHolidays = allHolidays
+                        .filter { it.tanggal >= todayStr }
+                        .sortedBy { it.tanggal }
+
+                    if (upcomingHolidays.isNotEmpty()) {
                         // SIMPAN KE ORIGINAL LIST
-                        originalList = allHolidays.sortedBy { it.tanggal }
+                        originalList = upcomingHolidays
 
                         // Tampilkan semua data pertama kali (tanpa filter)
                         adapter.setData(originalList)
