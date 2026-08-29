@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:orientation="vertical"
-    android:paddingVertical="8dp">
+    android:paddingVertical="3dp">
 
     <FrameLayout
         android:layout_width="wrap_content"
@@ -14,8 +14,8 @@
 
         <View
             android:id="@+id/bgToday"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_circle_button"
             android:backgroundTint="#33FFFFFF"
@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             tools:text="02" />
     </FrameLayout>
@@ -37,16 +37,16 @@
         android:id="@+id/tvHijriNum"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="1dp"
         android:textColor="#CCFFFFFF"
-        android:textSize="10sp"
+        android:textSize="9sp"
         tools:text="1" />
 
     <View
         android:id="@+id/dotHoliday"
         android:layout_width="4dp"
         android:layout_height="4dp"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="1dp"
         android:background="@drawable/bg_circle_button"
         android:backgroundTint="@color/accent_yellow"
         android:visibility="gone"

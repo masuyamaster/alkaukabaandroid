@@ -322,7 +322,7 @@
         android:layout_marginTop="16dp"
         android:background="@drawable/bg_card_rounded"
         android:backgroundTint="@color/calendar_bg"
-        android:padding="24dp"
+        android:padding="16dp"
         app:layout_constraintTop_toBottomOf="@id/tvLabelCalendar">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -419,7 +419,7 @@
             android:id="@+id/rowDays"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/headerCalendar">
 
@@ -436,7 +436,7 @@
             android:id="@+id/rvWeeklyCalendar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/rowDays"
             tools:listitem="@layout/item_calendar_day"
