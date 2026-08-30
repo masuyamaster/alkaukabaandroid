@@ -23,26 +23,30 @@ class SolarEclipseAdapter : RecyclerView.Adapter<SolarEclipseAdapter.ViewHolder>
     class ViewHolder(private val binding: ItemGerhanaMatahariBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: SolarEclipseItem) {
             val context = binding.root.context
-            binding.tvTitle.text = "Gerhana Matahari ${item.kindLabel}"
-            binding.tvDate.text = item.peakDateLabel
-            binding.tvPartialBegin.text = "Mulai: ${item.partialBeginLabel}"
-            binding.tvPeakTime.text = "Puncak: ${item.peakTimeLabel}"
-            binding.tvPartialEnd.text = "Berakhir: ${item.partialEndLabel}"
-            binding.tvMagnitude.text = "Magnitude: %.1f%%".format(Locale.US, item.magnitudePercent)
+            binding.tvTitle.text = "☀️ Gerhana Matahari ${item.kindLabel}"
+            binding.tvDate.text = "📅 ${item.peakDateLabel}"
+            binding.tvPartialBegin.text = "${item.partialBeginLabel.substringAfter(", ")} WIB"
+            binding.tvPeakTime.text = "${item.peakTimeLabel.substringAfter(", ")} WIB"
+            binding.tvPartialEnd.text = "${item.partialEndLabel.substringAfter(", ")} WIB"
+            binding.tvMagnitude.text = "%.1f%%".format(Locale.US, item.magnitudePercent)
 
             if (item.totalBeginLabel != null && item.totalEndLabel != null) {
-                binding.tvTotalRange.visibility = View.VISIBLE
-                binding.tvTotalRange.text = "Fase Total/Cincin: ${item.totalBeginLabel} – ${item.totalEndLabel}"
+                binding.rowTotalRange.visibility = View.VISIBLE
+                val totalBeginTime = item.totalBeginLabel.substringAfter(", ")
+                val totalEndTime = item.totalEndLabel.substringAfter(", ")
+                binding.tvTotalRange.text = "$totalBeginTime – $totalEndTime WIB"
             } else {
-                binding.tvTotalRange.visibility = View.GONE
+                binding.rowTotalRange.visibility = View.GONE
             }
 
             if (item.visibleFromLocation) {
-                binding.tvVisibility.text = "Terlihat dari lokasimu"
+                binding.tvVisibility.text = "👁️ Terlihat dari lokasimu"
+                binding.tvVisibility.setBackgroundResource(R.drawable.bg_pill_green)
                 binding.tvVisibility.setTextColor(ContextCompat.getColor(context, R.color.pill_green_text))
             } else {
-                binding.tvVisibility.text = "Tidak terlihat dari lokasimu"
-                binding.tvVisibility.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                binding.tvVisibility.text = "🚫 Tidak terlihat dari lokasimu"
+                binding.tvVisibility.setBackgroundResource(R.drawable.bg_pill_red)
+                binding.tvVisibility.setTextColor(ContextCompat.getColor(context, R.color.pill_red_text))
             }
         }
     }

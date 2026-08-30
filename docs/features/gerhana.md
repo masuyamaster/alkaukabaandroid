@@ -34,7 +34,8 @@ tidak ada panggilan network.
    `isLoading` LiveData mengontrol `ProgressBar`.
 3. Hasil dirender ke dua `RecyclerView` (`rvLunarEclipse`, `rvSolarEclipse`)
    yang di-toggle visibility oleh tab "Gerhana Bulan" / "Gerhana Matahari"
-   (pola tab sama dengan `WaktuSholatActivity` — `bg_tab_underline_active`/`inactive`).
+   (pola tab sama dengan `WaktuSholatActivity`, tapi warna tab aktif dibuat
+   khusus — lihat catatan 2026-08-30 di section 7).
 4. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang.
 5. `btnBack` (toolbar) -> `finish()`.
 
@@ -96,3 +97,30 @@ sama.
       (mis. cuma awal atau cuma akhir) tetap kelihatan — simplifikasi yang
       disengaja, konsisten dengan pola badge boolean tunggal di gerhana
       Bulan.
+
+Per 2026-08-30 (polish UI, belum di-commit): standardisasi visual mengikuti
+masukan user —
+- Toolbar (`view_toolbar_default.xml`, dipakai bareng oleh layar lain juga:
+  Waktu Sholat/Awal Bulan/Konfigurasi/Kiblat) — lingkaran abu-abu di
+  belakang `btnBack` dihapus, jadi ikon panah polos dengan ripple borderless.
+- Tab aktif ("Gerhana Bulan"/"Gerhana Matahari") pindah dari
+  `waktu_sholat_dark_bg` (nyaris hitam, #111827) ke warna baru
+  `navy_dongker` (#1E3A5F) lewat drawable baru
+  `bg_tab_underline_active_navy.xml` — sengaja dibuat drawable/warna
+  terpisah dari `waktu_sholat_dark_bg`, bukan mengubah warna itu langsung,
+  supaya tidak ikut mengubah hero card Waktu Sholat yang belum diminta.
+- Bar lokasi: emoji pin merah diganti `ic_gis_location_poi` (vector,
+  di-tint `navy_dongker`), diberi background abu-abu muda
+  (`waktu_sholat_icon_bg_inactive`), dan tombol "Ubah Lokasi" dibesarkan
+  jadi tap target 48dp.
+- Card item (`item_gerhana_bulan.xml`/`item_gerhana_matahari.xml`):
+  tanggal cuma ditampilkan sekali (sebagai sub-heading `navy_dongker`,
+  ikon 📅), baris Puncak/Mulai/Berakhir/Fase cuma nampilin jam (adapter
+  strip tanggal dari label lewat `substringAfter(", ")` — bergantung pada
+  format tetap `EclipseCalculator.formatLocalTime`, "dd MMMM yyyy,
+  HH:mm:ss"), badge visibilitas jadi pill berwarna
+  (`bg_pill_green`/`bg_pill_red`, reuse drawable yang sama dengan fitur
+  Profil) plus ikon 👁️/🚫, dan judul dapet ikon 🌙/☀️.
+- Belum diverifikasi di emulator/device fisik (mesin kerja saat ini tidak
+  punya JDK/Android Studio terpasang) — build + smoke test manual masih
+  perlu dilakukan sebelum commit.

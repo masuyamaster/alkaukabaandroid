@@ -87,6 +87,10 @@ login ulang setiap buka app.
     `FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK` (bersihkan back
     stack sepenuhnya) setelah `sessionManager.setLogin(false)`, dipicu dari
     tombol `btnLogout` → dialog konfirmasi `showLogoutConfirmation()`.
+    **Per 2026-08-30**: diganti jadi `sessionManager.clearUserData()`
+    (bukan cuma `setLogin(false)`) supaya token/nama/email lama ikut
+    terhapus, bukan cuma flag login. `ProfileActivity` punya jalur logout
+    kedua dengan pola identik — lihat [features/profil.md](profil.md).
 
 ## 4. Struktur & alur data
 
@@ -182,20 +186,27 @@ Verifikasi manual saat ini:
       identifikasi client ke Google), tapi tetap technical debt karena tidak
       dikonfigurasi lewat `BuildConfig`/resource yang gampang diganti per
       environment (produksi vs testing) seperti `AuthClient.BASE_URL`.
-- [ ] **Tidak ada penyimpanan token/session dari backend** — `ApiResponse`
-      dari login/register/google_login cuma dipakai untuk cek `status` dan
-      toast pesan; tidak ada API token/session key yang dikembalikan backend
-      disimpan di `SessionManager`. Status login cuma boolean
-      `IS_LOGGED_IN` lokal, jadi kalau ke depan ada endpoint lain yang butuh
-      autentikasi (mis. fitur Circle yang disebut di `CLAUDE.md` root),
-      belum ada mekanisme kirim token di request-nya.
-- [ ] **`SessionManager.setUserName()` dan `setEmail()` didefinisikan tapi
-      tidak pernah dipanggil** di mana pun (dicek lewat grep seluruh
-      `app/src/main/java`) — `UserData` (`id`, `username`, `email`) yang
-      dikembalikan backend setelah login sukses tidak pernah disimpan
-      lokal, cuma dipakai sekali untuk toast ("Selamat Datang, ${username}!").
-      Kemungkinan ini setengah-jalan menuju fitur profil yang belum
-      dibangun — jangan asumsikan data user tersimpan di `SharedPreferences`.
+- [x] ~~Tidak ada penyimpanan token/session dari backend~~ — **Diselesaikan
+      2026-08-30.** Backend `alkaukabaweb` sekarang mengaktifkan Laravel
+      Sanctum (paket sudah lama terpasang tapi tidak pernah dipakai) di
+      `login`/`register`/`google_login` — tiap response sukses menyertakan
+      `data.token` (bearer token). `LoginActivity.persistUserData()`
+      menyimpannya lewat `SessionManager.setAuthToken()`. Dipakai untuk
+      endpoint baru yang butuh identitas user (`update_profile`,
+      `change_password`, `delete_account`) — lihat
+      [features/profil.md](profil.md). `AuthApiService` mengirim token lewat
+      `@Header("Authorization")` per-call (bukan `OkHttp` interceptor
+      global), jadi setiap pemanggil endpoint terproteksi harus ambil token
+      dari `SessionManager.getAuthToken()` sendiri dan format
+      `"Bearer $token"` manual.
+- [x] ~~`SessionManager.setUserName()` dan `setEmail()` didefinisikan tapi
+      tidak pernah dipanggil`~~ — **Diselesaikan 2026-08-30, bug lama sejak
+      awal app dibuat.** `LoginActivity.persistUserData()` sekarang
+      dipanggil di ketiga jalur sukses (login/register-lalu-login/google
+      login), menyimpan `id`, `username`, `email`, dan `token` dari
+      `UserData` lewat `SessionManager`. Ini yang memungkinkan halaman
+      Profil baru ([features/profil.md](profil.md)) menampilkan nama/email
+      user sungguhan, bukan placeholder.
 - [ ] Tidak ada validasi format email di form (cuma cek `isEmpty()`) — baik
       di form login maupun register.
 - [ ] Tidak ada re-check status login di Activity lain selain `Splashscreen`
