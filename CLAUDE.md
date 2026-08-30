@@ -1,5 +1,25 @@
 # Al-Kaukaba Android
 
+## Dokumentasi teknis per-fitur
+
+Dokumentasi arsitektur/keputusan desain per-fitur **tidak** ditulis di file ini
+(file ini isinya instruksi operasional untuk kerja sehari-hari), tapi di folder
+`docs/`:
+
+```
+docs/
+  README.md              # index + template lengkap untuk nulis doc fitur baru
+  features/
+    <nama-fitur>.md       # satu file per fitur, kebab-case, mis. waktu-sholat.md
+```
+
+Kalau selesai membangun/mengubah sebuah fitur secara signifikan (bukan bug fix
+kecil), tambahkan atau update file di `docs/features/` sesuai template di
+[`docs/README.md`](docs/README.md) — jangan salin template generik multi-module
+Clean Architecture, repo ini single-module (`:app` saja), tanpa DI framework,
+tanpa split `data/domain/presentation`, dan navigasi antar-layar pakai `Intent`
+biasa (bukan Navigation Component/DeepLink).
+
 ## Menjalankan & build via CLI (tanpa Android Studio)
 
 Project ini dikerjakan sebagian dengan emulator yang dijalankan langsung dari VSCode, bukan dari Android Studio. Jangan sarankan langkah "buka/jalankan di Android Studio" — gunakan `gradlew` dari command line, dan jalankan/hubungkan emulator via `adb`.

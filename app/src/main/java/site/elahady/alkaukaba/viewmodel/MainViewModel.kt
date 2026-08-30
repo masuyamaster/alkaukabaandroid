@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba.viewmodel
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.DayUIModel
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.Timings

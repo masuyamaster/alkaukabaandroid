@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba.ui.calendar
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.RetrofitClient
@@ -32,7 +32,7 @@ class CalendarActivity : AppCompatActivity() {
     private var filterEndDate: Date? = null
 
     private val repository by lazy {
-        PrayerRepository(RetrofitClient.instance)
+        PrayerRepository(RetrofitClient.instance, applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

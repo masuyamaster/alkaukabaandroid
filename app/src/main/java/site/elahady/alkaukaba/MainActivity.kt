@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.CalendarAdapter
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.RetrofitClient
@@ -19,11 +19,8 @@ import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
@@ -32,9 +29,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import site.elahady.alkaukaba.databinding.ActivityMainBinding
-import site.elahady.alkaukaba.utils.SessionManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -98,7 +93,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupViewModel() {
         val apiService = RetrofitClient.instance
-        val repository = PrayerRepository(apiService)
+        val repository = PrayerRepository(apiService, applicationContext)
         val factory = MainViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
     }
@@ -211,7 +206,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(intentSholat)
         }
         binding.btnSettings.setOnClickListener {
-            showProfilePopup()
+            startActivity(Intent(this, site.elahady.alkaukaba.ui.konfigurasi.KonfigurasiActivity::class.java))
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
@@ -293,57 +288,4 @@ class MainActivity : AppCompatActivity() {
         binding.btnNextMonth.setOnClickListener { viewModel.changeMonth(1) }
     }
 
-    private fun showProfilePopup() {
-        val bottomSheetDialog = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.dialog_profile, null)
-        bottomSheetDialog.setContentView(view)
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        val tvUserEmail = view.findViewById<TextView>(R.id.tvUserEmail)
-        val btnLogoutDialog = view.findViewById<Button>(R.id.btnLogoutDialog)
-
-        btnLogoutDialog.setOnClickListener {
-            bottomSheetDialog.dismiss()
-            showLogoutConfirmation()
-        }
-
-        bottomSheetDialog.show()
-    }
-
-    private fun showLogoutConfirmation() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Konfirmasi Logout")
-        builder.setMessage("Apakah Anda yakin ingin keluar dari aplikasi?")
-
-        // Tombol Ya (Lanjut Logout)
-        builder.setPositiveButton("Ya") { dialog, _ ->
-            dialog.dismiss()
-            performLogout() // Memanggil fungsi logout yang sudah kita buat sebelumnya
-        }
-
-        // Tombol Batal
-        builder.setNegativeButton("Batal") { dialog, _ ->
-            dialog.dismiss()
-        }
-
-        val alertDialog = builder.create()
-        alertDialog.show()
-    }
-
-    // Fungsi performLogout yang sudah dibuat di langkah sebelumnya
-    private fun performLogout() {
-        // Ubah session menjadi false
-        val sessionManager = SessionManager(this)
-        sessionManager.setLogin(false)
-
-        // Jika menggunakan Google Sign-In, tambahkan ini agar benar-benar logout dari Google (opsional)
-        // GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut()
-
-        // Arahkan kembali ke LoginActivity
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
 }
