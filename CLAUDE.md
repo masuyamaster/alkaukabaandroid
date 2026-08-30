@@ -51,3 +51,25 @@ Setelah mengubah kode, jangan hanya compile check — build & install APK debug 
 "$ANDROID_HOME/platform-tools/adb.exe" devices   # pastikan emulator terdeteksi
 JAVA_HOME=... ANDROID_HOME=... ./gradlew.bat installDebug --console=plain
 ```
+
+## Batasi percobaan verifikasi UI via adb (jangan spam screenshot)
+
+Kalau `adb shell input tap` di suatu koordinat tidak memberi efek (screenshot
+sebelum/sesudah identik) **dua kali berturut-turut**, atau `uiautomator dump`
+gagal dengan "could not get idle state" (umum terjadi di layar dengan animasi
+terus-menerus, mis. kompas yang di-update sensor listener setiap frame),
+**berhenti** — jangan lanjut menembak koordinat lain secara trial-and-error.
+Setiap screenshot yang dibaca adalah gambar multimodal, jauh lebih mahal
+token-nya dibanding teks; sesi 2026-08-30 menghabiskan puluhan screenshot
+berulang untuk satu interaksi tap yang gagal di layar Kiblat, dan itu
+kemungkinan besar jadi penyebab utama pemakaian token yang sangat besar untuk
+task yang seharusnya kecil.
+
+Kalau menemui ini:
+1. Verifikasi lewat cara lain dulu — baca kode, compile check, atau hitung
+   manual (mis. cocokkan rumus dengan angka contoh) kalau itu cukup untuk
+   meyakinkan logikanya benar.
+2. Kalau memang butuh konfirmasi visual/interaktif dan gagal, **laporkan apa
+   adanya** ke user bahwa verifikasi otomatis tidak berhasil di lingkungan
+   ini (sebutkan dugaan penyebabnya kalau ada), dan minta user coba manual —
+   jangan diam-diam terus mencoba sampai berhasil atau sampai token habis.
