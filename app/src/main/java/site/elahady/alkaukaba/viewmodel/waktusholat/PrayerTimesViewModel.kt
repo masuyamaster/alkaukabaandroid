@@ -8,7 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import site.elahady.alkaukaba.utils.PrayerTextCalculator
+import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
+import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerCalculationBreakdownRegistry
 import java.util.*
 
 enum class PrayerKind {
@@ -46,24 +47,22 @@ class PrayerTimesViewModel(private val repository: PrayerRepository) : ViewModel
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-    private val _prayerCalcDetailText = MutableLiveData<String>()
-    val prayerCalcDetailText: LiveData<String> = _prayerCalcDetailText
+    // Null kalau metode aktif tidak punya breakdown detail (lihat PrayerCalculationBreakdownRegistry)
+    private val _calculationBreakdown = MutableLiveData<List<PrayerBreakdownSection>?>()
+    val calculationBreakdown: LiveData<List<PrayerBreakdownSection>?> = _calculationBreakdown
 
     fun loadData(lat: Double, long: Double) {
         _isLoading.value = true
         calculateQibla(lat, long)
-        calculatePrayerDetails(lat, long) // <--- Panggil fungsi baru ini
+        calculatePrayerBreakdown(lat, long)
         fetchPrayerTimes(lat, long)
     }
 
-    // Fungsi Baru
-    private fun calculatePrayerDetails(lat: Double, long: Double) {
-        val timeZone = TimeZone.getDefault()
-        val now = System.currentTimeMillis()
-        val offsetMillis = timeZone.getOffset(now)
+    private fun calculatePrayerBreakdown(lat: Double, long: Double) {
+        val offsetMillis = TimeZone.getDefault().getOffset(System.currentTimeMillis())
         val timeZoneHour = offsetMillis / (1000.0 * 60 * 60)
-        val details = PrayerTextCalculator.generatePrayerDetails(lat, long, timeZoneHour)
-        _prayerCalcDetailText.value = details
+        val provider = PrayerCalculationBreakdownRegistry.providerFor(repository.getSelectedMethodId())
+        _calculationBreakdown.value = provider?.breakdown(lat, long, timeZoneHour)
     }
 
     private fun calculateQibla(lat: Double, long: Double) {

@@ -41,7 +41,6 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_tab_container"
         android:orientation="horizontal"
-        android:visibility="gone"
         android:layout_margin="16dp">
 
         <TextView
@@ -253,29 +252,36 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2. DETAIL RUMUS WAKTU SHOLAT"
+                    android:text="2. DETAIL PERHITUNGAN WAKTU SHOLAT"
                     android:textStyle="bold"
                     android:textColor="#E6B65D"/>
 
                 <TextView
+                    android:id="@+id/tvPrayerBreakdownSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="(Metode Kemenag / Ephemeris Approximation)"
+                    android:text="Breakdown perhitungan (Ephemeris Approximation)"
                     android:textSize="10sp"
                     android:textColor="#888"/>
 
+                <LinearLayout
+                    android:id="@+id/layoutPrayerBreakdownContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="10dp"/>
+
                 <TextView
-                    android:id="@+id/tvPrayerCalculationDetail"
+                    android:id="@+id/tvNoPrayerBreakdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:fontFamily="monospace"
-                    android:text="Memuat rumus..."
+                    android:text="Metode perhitungan yang aktif saat ini tidak punya breakdown detail - nilainya diambil langsung dari Aladhan API, bukan hasil hitung lokal."
                     android:textSize="12sp"
-                    android:textColor="#333"
+                    android:textColor="#666"
                     android:background="#FAFAFA"
                     android:padding="10dp"
-                    android:lineSpacingExtra="4dp"/>
+                    android:visibility="gone"/>
 
                 <View
                     android:layout_width="match_parent"

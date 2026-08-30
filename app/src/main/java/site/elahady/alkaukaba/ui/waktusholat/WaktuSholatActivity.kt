@@ -8,12 +8,15 @@ import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerKind
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerScheduleUiState
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerTimesViewModel
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerViewModelFactory
+import site.elahady.alkaukaba.databinding.ItemPrayerBreakdownBinding
+import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -85,7 +88,6 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.btnTabDetail.setOnClickListener {
             updateTabState(isActual = false)
         }
-        binding.btnTabDetail.visibility = View.GONE
         binding.btnBack.setOnClickListener { finish() }
     }
 
@@ -220,8 +222,8 @@ class WaktuSholatActivity : AppCompatActivity() {
             binding.tvResultDegree.text = degreeText
         }
 
-        viewModel.prayerCalcDetailText.observe(this) { detailText ->
-            binding.tvPrayerCalculationDetail.text = detailText
+        viewModel.calculationBreakdown.observe(this) { sections ->
+            renderPrayerBreakdown(sections)
         }
 
         // 4. Observe Loading/Error
@@ -230,6 +232,44 @@ class WaktuSholatActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    // Accordion "Detail Perhitungan" - cuma tampil kalau metode aktif punya breakdown
+    // (lihat PrayerCalculationBreakdownRegistry). Kalau tidak, tampilkan pesan fallback.
+    private fun renderPrayerBreakdown(sections: List<PrayerBreakdownSection>?) {
+        binding.layoutPrayerBreakdownContainer.removeAllViews()
+
+        if (sections.isNullOrEmpty()) {
+            binding.layoutPrayerBreakdownContainer.visibility = View.GONE
+            binding.tvNoPrayerBreakdown.visibility = View.VISIBLE
+            return
+        }
+
+        binding.layoutPrayerBreakdownContainer.visibility = View.VISIBLE
+        binding.tvNoPrayerBreakdown.visibility = View.GONE
+
+        sections.forEach { section ->
+            val itemBinding = ItemPrayerBreakdownBinding.inflate(
+                layoutInflater, binding.layoutPrayerBreakdownContainer, false
+            )
+            itemBinding.tvPrayerLabel.text = section.prayerLabel
+            itemBinding.tvResultTime.text = "${section.resultTime} WIB"
+
+            section.rows.forEach { row ->
+                val rowView = layoutInflater.inflate(R.layout.item_breakdown_row, itemBinding.layoutBody, false)
+                rowView.findViewById<TextView>(R.id.tvRowLabel).text = row.label
+                rowView.findViewById<TextView>(R.id.tvRowValue).text = row.value
+                itemBinding.layoutBody.addView(rowView)
+            }
+
+            itemBinding.rowHeader.setOnClickListener {
+                val isExpanded = itemBinding.layoutBody.visibility == View.VISIBLE
+                itemBinding.layoutBody.visibility = if (isExpanded) View.GONE else View.VISIBLE
+                itemBinding.tvChevron.text = if (isExpanded) "⌄" else "⌃"
+            }
+
+            binding.layoutPrayerBreakdownContainer.addView(itemBinding.root)
+        }
     }
 
     private fun checkLocationPermission() {

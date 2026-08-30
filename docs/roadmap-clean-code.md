@@ -24,37 +24,51 @@ sudah terasa perlu.
   pindah ke `PrayerTimesViewModel.buildSchedule()`, menghasilkan
   `PrayerScheduleUiState` siap-render; Activity cuma bind ke View. Detail di
   [features/waktu-sholat.md](features/waktu-sholat.md#3-titik-masuk-logika--navigasi).
+- [x] **Breakdown kalkulasi teknis, khusus untuk Ephemeris (tapi extensible).**
+  User kasih contoh nyata cara hitung manual (kertas "Hisab Waktu Sholat
+  Ephimeris" - Kulminasi, koreksi Equation of Time, Kwd, Ikhtiyat per waktu
+  sholat) dan menegaskan: breakdown ini **hanya untuk Ephemeris sekarang**,
+  tapi arsitekturnya **tidak boleh hardcode ke satu metode** - harus gampang
+  ditambah ke metode lain nanti kalau dibutuhkan.
 
-## Didesain, menunggu bahan dari Ephemeris
+  Yang dibangun (bukan sekadar rancangan lagi):
+  - `utils/prayerbreakdown/PrayerCalculationBreakdownProvider` - interface
+    titik-ekstensi (`fun breakdown(lat, lng, timeZoneHour): List<PrayerBreakdownSection>`).
+  - `utils/prayerbreakdown/PrayerCalculationBreakdownRegistry` - `Map<methodId, Provider>`.
+    Ini titik ekstensinya: nambah breakdown ke metode lain = tambah satu baris
+    di map ini, tidak sentuh ViewModel/Activity sama sekali.
+  - `utils/prayerbreakdown/EphemerisPrayerCalculator` - satu-satunya provider
+    hari ini, didaftarkan untuk `PrayerCalculationMethods.EPHEMERIS_ID`.
+    Formulanya diadaptasi dari `PrayerTextCalculator.kt` lama (sudah dihapus,
+    tergantikan sepenuhnya oleh ini) - deklinasi & Equation of Time pakai
+    pendekatan sinusoidal sederhana ("Ephemeris Approximation", didisclose
+    apa adanya di UI), BUKAN tabel ephemeris presisi tinggi seperti contoh
+    kertas dari user (yang pakai data Buku Ephemeris + algoritma Jean Meeus).
+    Kalau nanti ada sumber data matahari yang lebih presisi, ganti isi kelas
+    ini saja - struktur breakdown/registry tidak perlu berubah.
+  - `WaktuSholatActivity` tab "Detail Perhitungan" (sekarang betulan bisa
+    diakses - `tabContainer` & `btnTabDetail` yang tadinya `visibility="gone"`
+    sudah dibuka) merender accordion (`item_prayer_breakdown.xml`, expand per
+    waktu sholat) kalau `PrayerCalculationBreakdownRegistry.providerFor(methodId)`
+    mengembalikan provider, atau pesan fallback ("metode ini tidak punya
+    breakdown detail") kalau `null` - **bukan** `if (method == EPHEMERIS_ID)`
+    yang di-hardcode di Activity.
 
-- [ ] **Breakdown kalkulasi teknis, khusus untuk Ephemeris.** Kebutuhan: kalau
-  user pilih metode Ephemeris, ada tampilan detail "angka ini didapat dari
-  mana" (breakdown rumus/langkah hitung). Metode lain (semua yang
-  "(Aladhan API)") **tidak perlu** breakdown ini, karena angkanya memang
-  murni dari response API, bukan hasil hitung lokal.
+  **Sudah diverifikasi di emulator kedua arahnya**: pilih Ephemeris →
+  accordion muncul dengan angka asli terhitung; pilih Muslim World League →
+  section otomatis ganti jadi pesan fallback, tanpa ubah kode apa pun.
 
-  Rancangan yang disarankan (belum diimplementasikan — menunggu rumus
-  Ephemeris beneran dari Al Hasib/tim Alkaukaba):
-
-  1. Buat kelas baru khusus, mis. `utils/ephemeris/EphemerisPrayerCalculator.kt`,
-     tanggung jawab tunggal: hitung breakdown langkah demi langkah untuk
-     Ephemeris. Jangan campur dengan `PrayerTextCalculator.kt` yang sudah ada
-     sekarang (itu formula sudut matahari generik ala Kemenag, bukan
-     Ephemeris/posisi bulan — kalau Ephemeris sudah nyata, evaluasi apakah
-     `PrayerTextCalculator` masih perlu dipertahankan atau digantikan).
-  2. Representasikan breakdown sebagai data terstruktur, bukan `String`
-     mentah — mis. `data class EphemerisCalculationStep(val label: String, val formula: String, val result: String)`
-     — supaya UI bisa render rapi per baris, bukan blob teks.
-  3. Di `PrayerTimesViewModel`, expose `LiveData<List<EphemerisCalculationStep>?>`
-     yang **null kalau method aktif bukan Ephemeris**, isi kalau Ephemeris.
-  4. Di `WaktuSholatActivity`, tab/section "Detail Perhitungan"
-     (`btnTabDetail`, saat ini malah disembunyikan total —
-     `binding.btnTabDetail.visibility = View.GONE`) baru ditampilkan kalau
-     LiveData di atas tidak null. Untuk method lain, tab ini tidak pernah
-     muncul.
-
-  Efeknya: begitu rumus Ephemeris siap, cuma perlu isi
-  `EphemerisPrayerCalculator`, tidak perlu bongkar struktur UI lagi.
+  **Catatan penting yang perlu disadari user**: karena breakdown Ephemeris ini
+  pakai algoritma sendiri (sinusoidal approximation) sedangkan jadwal di tab
+  "Waktu Aktual" untuk Ephemeris masih bersumber dari Aladhan API method
+  Kemenag RI (lihat bagian fallback Ephemeris di
+  [features/waktu-sholat.md](features/waktu-sholat.md)), **kedua angka bisa
+  beda beberapa menit** untuk waktu sholat yang sama (mis. Dzuhur 11:31 dari
+  Aladhan vs breakdown lokal juga kebetulan 11:31, tapi Ashar 14:49 dari
+  Aladhan vs 14:50 dari breakdown lokal). Ini bukan bug, tapi konsekuensi dari
+  dua sumber angka berbeda yang belum disatukan - baru akan konsisten kalau
+  Ephemeris beneran menjadi satu-satunya sumber (lihat item TODO di
+  `features/waktu-sholat.md`).
 
 ## Belum waktunya, jadi konsesi untuk nanti
 

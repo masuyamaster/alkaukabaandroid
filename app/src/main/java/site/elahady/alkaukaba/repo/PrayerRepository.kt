@@ -29,6 +29,12 @@ class PrayerRepository(private val api: AladhanApi, context: Context) {
 
     private fun currentMethodSettings(): String? = sessionManager.getMethodSettingsQuery()
 
+    /** Id metode yang benar-benar dipilih user (mis. id Ephemeris), beda dari [currentMethod]
+     *  yang bisa jadi sudah di-fallback-kan ke method Aladhan asli. Dipakai UI untuk
+     *  keputusan yang sifatnya tampilan, mis. cari breakdown perhitungan lewat
+     *  PrayerCalculationBreakdownRegistry. */
+    fun getSelectedMethodId(): Int = sessionManager.getPrayerMethodId()
+
     suspend fun getPrayerTimes(lat: Double, lng: Double): Response<PrayerResponse> {
         val today = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date())
         return api.getTimings(today, lat, lng, currentMethod(), currentMethodSettings())
