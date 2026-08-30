@@ -13,7 +13,49 @@ class SessionManager(context: Context) {
         const val DEFAULT_PRAYER_METHOD_ID = PrayerCalculationMethods.EPHEMERIS_ID
         const val DEFAULT_CUSTOM_FAJR_ANGLE = 20.0
         const val DEFAULT_CUSTOM_ISHA_ANGLE = 18.0
+
+        private const val KEY_LOCATION_MODE = "LOCATION_MODE"
+        private const val KEY_MANUAL_LAT = "MANUAL_LAT"
+        private const val KEY_MANUAL_LNG = "MANUAL_LNG"
+        const val LOCATION_MODE_AUTO = "AUTO"
+        const val LOCATION_MODE_MANUAL = "MANUAL"
+
+        private const val KEY_QIBLA_SOURCE = "QIBLA_SOURCE"
+        const val QIBLA_SOURCE_ALADHAN = "ALADHAN"
+        const val QIBLA_SOURCE_MANUAL = "MANUAL_FORMULA"
     }
+
+    /**
+     * Setting lokasi global — dipakai semua fitur yang butuh lat/lon (Waktu Sholat, Kiblat,
+     * Kalender, Bulan Hijriyah), bukan cuma layar Konfigurasi. Lihat docs di folder
+     * docs/features untuk fitur mana yang sudah/belum menghormati setting ini.
+     */
+    fun setLocationMode(mode: String) {
+        prefs.edit().putString(KEY_LOCATION_MODE, mode).apply()
+    }
+
+    fun getLocationMode(): String = prefs.getString(KEY_LOCATION_MODE, LOCATION_MODE_AUTO) ?: LOCATION_MODE_AUTO
+
+    fun isManualLocationMode(): Boolean = getLocationMode() == LOCATION_MODE_MANUAL && hasManualLocation()
+
+    fun setManualLocation(lat: Double, lng: Double) {
+        prefs.edit()
+            .putFloat(KEY_MANUAL_LAT, lat.toFloat())
+            .putFloat(KEY_MANUAL_LNG, lng.toFloat())
+            .apply()
+    }
+
+    fun getManualLat(): Double = prefs.getFloat(KEY_MANUAL_LAT, 0f).toDouble()
+
+    fun getManualLng(): Double = prefs.getFloat(KEY_MANUAL_LNG, 0f).toDouble()
+
+    fun hasManualLocation(): Boolean = prefs.contains(KEY_MANUAL_LAT) && prefs.contains(KEY_MANUAL_LNG)
+
+    fun setQiblaSource(source: String) {
+        prefs.edit().putString(KEY_QIBLA_SOURCE, source).apply()
+    }
+
+    fun getQiblaSource(): String = prefs.getString(KEY_QIBLA_SOURCE, QIBLA_SOURCE_ALADHAN) ?: QIBLA_SOURCE_ALADHAN
 
     fun setPrayerMethodId(methodId: Int) {
         prefs.edit().putInt(KEY_PRAYER_METHOD_ID, methodId).apply()

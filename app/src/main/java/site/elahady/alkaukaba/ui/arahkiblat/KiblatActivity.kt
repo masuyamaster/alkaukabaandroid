@@ -4,6 +4,7 @@ import site.elahady.alkaukaba.databinding.ActivityKiblatBinding
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModel
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModelFactory
 import site.elahady.alkaukaba.utils.QiblaCalculator
+import site.elahady.alkaukaba.utils.SessionManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.Manifest
 import android.annotation.SuppressLint
@@ -36,6 +37,7 @@ class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var viewModel: KiblatViewModel
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var sensorManager: SensorManager
     private var rotationSensor: Sensor? = null
@@ -59,6 +61,7 @@ class KiblatActivity : AppCompatActivity() {
         window.statusBarColor = Color.TRANSPARENT
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sessionManager = SessionManager(this)
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
@@ -96,6 +99,13 @@ class KiblatActivity : AppCompatActivity() {
         bottomSheetDialog.setContentView(view)
         val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
         bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+
+        val subtitle = view.findViewById<android.widget.TextView>(R.id.tvQiblaBreakdownSubtitle)
+        subtitle.text = if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            "Perhitungan manual (Al Hasib - Alkaukaba Team) — jadi sumber utama sudut & kompas di layar ini (lihat Konfigurasi > Arah Kiblat)."
+        } else {
+            "Perhitungan manual (Al Hasib - Alkaukaba Team), untuk referensi. Sudut & kompas utama di layar ini tetap dari Aladhan API (lihat Konfigurasi > Arah Kiblat)."
+        }
 
         val container = view.findViewById<android.widget.LinearLayout>(R.id.layoutQiblaBreakdownContainer)
         breakdown.rows.forEach { row ->
@@ -153,6 +163,12 @@ class KiblatActivity : AppCompatActivity() {
         }
 
     private fun checkLocationPermission() {
+        if (sessionManager.isManualLocationMode()) {
+            // Setting lokasi global (lihat KonfigurasiActivity) - lewati GPS/permission sama sekali.
+            onLocationReady(sessionManager.getManualLat(), sessionManager.getManualLng())
+            return
+        }
+
         if (hasLocationPermission()) {
             checkGpsEnabled()
         } else {
@@ -203,15 +219,33 @@ class KiblatActivity : AppCompatActivity() {
             }
         }
     }
+    @SuppressLint("SetTextI18n")
     private fun onLocationReady(lat: Double, lon: Double) {
 //        binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
-        getAddressFromLatLong(lat, lon)
-        // hitung Qibla Angle
-        viewModel.fetchQiblaAngle(lat, lon)
+        if (sessionManager.isManualLocationMode()) {
+            // Lokasi manual: tampilkan koordinatnya langsung, jangan reverse-geocode - titik manual
+            // (mis. markaz tanpa nama jalan) sering tidak resolve ke subLocality/locality (null,
+            // null, ...) lewat Geocoder.
+            binding.txtLocation.text = "Lokasi manual: %.4f, %.4f".format(lat, lon)
+        } else {
+            getAddressFromLatLong(lat, lon)
+        }
+        // breakdown perhitungan manual (Al Hasib) - ditampilkan lewat tombol info
+        val breakdown = QiblaCalculator.calculateBreakdown(lat, lon)
+        qiblaBreakdown = breakdown
+
+        // Sumber sudut kiblat yang jadi acuan utama (lihat KonfigurasiActivity > Arah Kiblat).
+        if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            // Set langsung dari rumus manual - JANGAN panggil fetchQiblaAngle di sini, observer-nya
+            // akan menimpa balik nilai ini kalau response Aladhan datang belakangan (race condition).
+            qiblaAngle = breakdown.utsbDegree.toFloat()
+            binding.txtQiblaValue.text = "${breakdown.utsbDegree.toInt()}°"
+        } else {
+            viewModel.fetchQiblaAngle(lat, lon)
+        }
+
         // update compass
         loadQiblaCompass(lat, lon)
-        // breakdown perhitungan manual (Al Hasib) - ditampilkan lewat tombol info
-        qiblaBreakdown = QiblaCalculator.calculateBreakdown(lat, lon)
     }
     @SuppressLint("SetTextI18n")
     private fun getAddressFromLatLong(lat: Double, lon: Double) {
@@ -237,6 +271,13 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun loadQiblaCompass(lat: Double, lon: Double) {
+        if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            // Gambar kompas dari Aladhan membawa sudut hitungan Aladhan sendiri - kalau sumber
+            // yang dipilih user Rumus Manual, jangan tampilkan itu (akan kontradiksi dengan
+            // txtQiblaValue yang sekarang dari rumus lokal). Pakai placeholder generik saja.
+            binding.imgCompass.setImageResource(R.drawable.ic_compass_placeholder)
+            return
+        }
 
         val url =
             "https://api.aladhan.com/v1/qibla/$lat/$lon/compass"

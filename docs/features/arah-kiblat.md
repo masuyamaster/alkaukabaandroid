@@ -31,11 +31,14 @@ sana - cukup satu fungsi kalkulasi langsung.
   - Permission runtime `ACCESS_FINE_LOCATION` + `ACCESS_COARSE_LOCATION`
     (diminta lewat `ActivityResultContracts.RequestMultiplePermissions()` saat
     `onCreate`). Kalau ditolak, cuma tampil `Toast` peringatan — layar tetap
-    terbuka tanpa data lokasi.
+    terbuka tanpa data lokasi. **Kecuali** kalau setting Lokasi di
+    `KonfigurasiActivity` di-set ke Manual (lihat `docs/features/konfigurasi.md`)
+    — permission & GPS dilewati sama sekali, lihat section 3.
   - GPS provider harus aktif — `checkGpsEnabled()` cek
     `LocationManager.GPS_PROVIDER`; kalau mati, user diarahkan ke
     `Settings.ACTION_LOCATION_SOURCE_SETTINGS` (tidak otomatis lanjut, user
-    harus balik manual ke app).
+    harus balik manual ke app). Sama seperti poin di atas, ini juga dilewati
+    total di mode Lokasi Manual.
   - Sensor rotasi perangkat: `Sensor.TYPE_ROTATION_VECTOR` (kompas HP). Tidak
     ada permission Android untuk ini (bukan *dangerous permission*), tapi
     kalau device tidak punya sensor tersebut `rotationSensor` bernilai `null`
@@ -46,10 +49,30 @@ sana - cukup satu fungsi kalkulasi langsung.
 
 ## 3. Titik masuk logika & navigasi
 
-- `KiblatViewModel.fetchQiblaAngle(lat, lon)` — satu-satunya method public,
-  dipanggil dari `KiblatActivity.onLocationReady()` begitu lokasi didapat.
-  Hasilnya di-expose lewat `LiveData<Double> qiblaAngle` (derajat, dari API)
-  dan `LiveData<String> error`.
+- `SessionManager.isManualLocationMode()` — dicek pertama di
+  `checkLocationPermission()`. Kalau true, langsung panggil
+  `onLocationReady(sessionManager.getManualLat(), sessionManager.getManualLng())`
+  dan skip seluruh alur GPS/permission (lihat `docs/features/konfigurasi.md`
+  untuk asal setting ini — ini setting global, dipakai juga oleh
+  `MainActivity` dan `WaktuSholatActivity`).
+- `SessionManager.getQiblaSource()` (`ALADHAN` default, atau
+  `MANUAL_FORMULA`) — dicek di `onLocationReady()`, menentukan sumber mana
+  yang jadi acuan **utama** (`txtQiblaValue` + alignment kompas):
+  - `ALADHAN`: seperti sebelumnya, panggil `viewModel.fetchQiblaAngle(lat, lon)`.
+  - `MANUAL_FORMULA`: **tidak** memanggil `fetchQiblaAngle` sama sekali
+    (sengaja — kalau tetap dipanggil, response Aladhan yang datang belakangan
+    lewat observer akan menimpa balik nilai manual, race condition). Sudut
+    `qiblaAngle`/`txtQiblaValue` diisi langsung dari
+    `qiblaBreakdown.utsbDegree`.
+  - Ini juga menentukan `loadQiblaCompass()`: kalau `MANUAL_FORMULA`, gambar
+    kompas dari Aladhan (yang membawa sudut hitungan Aladhan sendiri) diganti
+    `ic_compass_placeholder` generik, supaya tidak kontradiksi dengan angka
+    yang ditampilkan. **Belum ada kompas visual custom** yang benar-benar
+    menggambar jarum sesuai `qiblaBreakdown.utsbDegree` — lihat Known issues.
+- `KiblatViewModel.fetchQiblaAngle(lat, lon)` — dipanggil dari
+  `KiblatActivity.onLocationReady()` begitu lokasi didapat **dan** sumber
+  aktif adalah `ALADHAN` (lihat poin di atas). Hasilnya di-expose lewat
+  `LiveData<Double> qiblaAngle` (derajat, dari API) dan `LiveData<String> error`.
 - `KiblatRepository.getQiblaAngle(lat, lon)` — jembatan ke
   `AladhanApi.getQiblaDirection(lat, lon)` (endpoint Aladhan
   `GET v1/qibla/{latitude}/{longitude}`), balikin `.data.direction`.
@@ -93,26 +116,37 @@ File yang terlibat:
 | `repo/arahkiblat/KiblatRepository.kt` | `getQiblaAngle()` — satu-satunya pemanggil `AladhanApi.getQiblaDirection` |
 | `api/PrayersApiService.kt` (`AladhanApi` interface + `RetrofitClient`, base URL `https://api.aladhan.com/`) | Retrofit service bersama, dipakai juga oleh fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`) |
 | `utils/QiblaCalculator.kt` | Util murni, hitung breakdown manual arah kiblat (rumus Al Hasib). Dipakai langsung oleh `KiblatActivity` |
+| `utils/SessionManager.kt` | Sumber setting global: `isManualLocationMode()`/`getManualLat()`/`getManualLng()` (lokasi) dan `getQiblaSource()` (Aladhan vs Rumus Manual) — diisi lewat `KonfigurasiActivity`, dibaca di sini |
 | `res/layout/activity_kiblat.xml` | Layout `KiblatActivity`: toolbar, `imgCompass`, `txtQiblaValue`, `btnQiblaDetail`, `txtLocation`, `qiblaAngleContainer` (sekarang `clickable`), `calibrationHint` |
 | `res/layout/dialog_qibla_breakdown.xml` | Bottom sheet Detail Perhitungan — judul + disclosure singkat + container untuk baris breakdown |
 | `res/layout/item_breakdown_row.xml` | Satu baris label/value di breakdown — **dipakai bersama** dengan fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`), bukan file baru khusus Kiblat |
 | `res/layout/activity_arah_kiblat.xml` | Layout `ArahKiblatActivity` (tab layout + `ViewPager`) — hanya dipakai Activity yang dead code |
 
 Alur data (sudut kiblat numerik, `txtQiblaValue`): `KiblatActivity.onCreate()`
-→ `checkLocationPermission()` → `checkGpsEnabled()` →
-`getLastLocation()`/`requestNewLocation()` (via `FusedLocationProviderClient`)
-→ `onLocationReady(lat, lon)` → `viewModel.fetchQiblaAngle(lat, lon)` →
-`KiblatViewModel` (coroutine di `viewModelScope`) → `KiblatRepository
-.getQiblaAngle()` → `AladhanApi.getQiblaDirection(lat, lon)` →
-`.data.direction` → `LiveData qiblaAngle` → observer di Activity set
-`binding.txtQiblaValue.text` **dan** simpan ke variabel `qiblaAngle: Float`
-yang dipakai untuk cek alignment kompas.
+→ `checkLocationPermission()` → **cabang setting lokasi (lihat section 3)**:
+  - Manual: langsung `onLocationReady(manualLat, manualLng)`.
+  - Otomatis: `checkGpsEnabled()` → `getLastLocation()`/`requestNewLocation()`
+    (via `FusedLocationProviderClient`) → `onLocationReady(lat, lon)`.
+
+Dari `onLocationReady(lat, lon)`, **cabang setting sumber kiblat** (section 3):
+  - `ALADHAN`: `viewModel.fetchQiblaAngle(lat, lon)` → `KiblatViewModel`
+    (coroutine di `viewModelScope`) → `KiblatRepository.getQiblaAngle()` →
+    `AladhanApi.getQiblaDirection(lat, lon)` → `.data.direction` →
+    `LiveData qiblaAngle` → observer di Activity set `binding.txtQiblaValue.text`
+    **dan** simpan ke variabel `qiblaAngle: Float` (dipakai alignment kompas).
+  - `MANUAL_FORMULA`: `qiblaAngle` & `txtQiblaValue.text` diisi langsung dari
+    `qiblaBreakdown.utsbDegree` (hasil `QiblaCalculator.calculateBreakdown`
+    yang sudah dihitung tepat sebelumnya) — `fetchQiblaAngle` tidak dipanggil.
 
 Alur data (gambar kompas visual, `imgCompass` background): dipanggil
 langsung dari `onLocationReady()` lewat `loadQiblaCompass(lat, lon)` — **tidak
-lewat ViewModel/Repository**, Activity langsung `Glide.load()` URL
-`https://api.aladhan.com/v1/qibla/{lat}/{lon}/compass` (endpoint Aladhan yang
-mengembalikan gambar kompas siap-pakai bertanda kiblat).
+lewat ViewModel/Repository**. Kalau sumber kiblat `ALADHAN`, Activity
+`Glide.load()` URL `https://api.aladhan.com/v1/qibla/{lat}/{lon}/compass`
+(endpoint Aladhan yang mengembalikan gambar kompas siap-pakai bertanda
+kiblat). Kalau `MANUAL_FORMULA`, **tidak** memanggil Aladhan sama sekali —
+langsung `binding.imgCompass.setImageResource(R.drawable.ic_compass_placeholder)`
+(gambar generik, bukan kompas custom yang benar-benar digambar sesuai sudut
+manual — lihat Known issues).
 
 Alur data (heading/orientasi HP): `onResume()` daftarkan
 `sensorListener` ke `Sensor.TYPE_ROTATION_VECTOR` (`SENSOR_DELAY_GAME`) →
@@ -128,24 +162,43 @@ putih), kalau tidak kembali ke default (`bg_qibla_angle`, teks hitam).
 akurasi sensor rendah/unreliable.
 
 Alur data (breakdown manual, "Detail Perhitungan"): `onLocationReady()` juga
-panggil `QiblaCalculator.calculateBreakdown(lat, lon)`, hasilnya
-(`QiblaBreakdownResult`) disimpan di properti `qiblaBreakdown` (bukan
-`LiveData` — cukup properti biasa karena cuma dibaca sekali saat tap, tidak
-perlu observasi berkelanjutan). Tap `qiblaAngleContainer`/`btnQiblaDetail` →
-`showQiblaBreakdownSheet()` → kalau `qiblaBreakdown` masih `null` (lokasi
-belum siap), tampilkan `Toast`; kalau sudah ada, inflate `item_breakdown_row
-.xml` untuk tiap baris (Lintang/Bujur Ka'bah, Lintang/Bujur lokasi, Selisih
-Bujur, Rumus, hasil B-U/U-B/UTSB) ke dalam `BottomSheetDialog`
-(`dialog_qibla_breakdown.xml`). **Jalur ini independen dari jalur sudut
-kompas** (poin sebelumnya) — angka breakdown dihitung lokal, angka kompas
-dari Aladhan API. Keduanya biasanya sangat dekat (untuk Lamongan, kompas API
-= 294°, breakdown lokal = 294°04'39") tapi tidak dijamin identik karena beda
-sumber/presisi data matahari & Ka'bah.
+panggil `QiblaCalculator.calculateBreakdown(lat, lon)` — **selalu**, terlepas
+dari sumber kiblat aktif apa (dipakai untuk isi sheet breakdown, dan kalau
+sumbernya `MANUAL_FORMULA` juga dipakai sebagai `qiblaAngle` utama, lihat di
+atas). Hasilnya (`QiblaBreakdownResult`) disimpan di properti `qiblaBreakdown`
+(bukan `LiveData` — cukup properti biasa karena cuma dibaca sekali saat tap,
+tidak perlu observasi berkelanjutan). Tap `qiblaAngleContainer`/`btnQiblaDetail`
+→ `showQiblaBreakdownSheet()` → kalau `qiblaBreakdown` masih `null` (lokasi
+belum siap), tampilkan `Toast`; kalau sudah ada, set teks subtitle
+(`tvQiblaBreakdownSubtitle`) sesuai `sessionManager.getQiblaSource()` (jelaskan
+ke user apakah angka di breakdown ini juga yang jadi acuan utama layar, atau
+cuma referensi), lalu inflate `item_breakdown_row.xml` untuk tiap baris
+(Lintang/Bujur Ka'bah, Lintang/Bujur lokasi, Selisih Bujur, Rumus, hasil
+B-U/U-B/UTSB) ke dalam `BottomSheetDialog` (`dialog_qibla_breakdown.xml`).
 
-Alur data (teks lokasi): `onLocationReady()` juga panggil
-`getAddressFromLatLong(lat, lon)` — `Geocoder.getFromLocation()` dipanggil
+**Kapan breakdown ini "cuma referensi" vs "jadi acuan utama"**: kalau sumber
+kiblat aktif `ALADHAN`, breakdown manual di sini murni pembanding — angka
+`txtQiblaValue`/kompas tetap dari Aladhan API, dan **tidak dijamin identik**
+dengan breakdown (beda sumber/presisi data matahari & Ka'bah, contoh nyata:
+untuk Lamongan kompas API pernah menunjukkan 294° sementara breakdown lokal
+294°04'39"). Kalau sumber aktif `MANUAL_FORMULA`, keduanya **selalu identik**
+karena `txtQiblaValue` memang diisi dari angka breakdown yang sama. Lihat
+`docs/features/konfigurasi.md` untuk cara ganti setting ini.
+
+Alur data (teks lokasi): `onLocationReady()` cek `isManualLocationMode()`
+dulu — kalau true, `binding.txtLocation.text` diisi langsung dari koordinat
+manual (`"Lokasi manual: %.4f, %.4f"`), **tidak** memanggil geocoder sama
+sekali. Kalau false (mode Otomatis/GPS), baru panggil `getAddressFromLatLong
+(lat, lon)` seperti sebelumnya — `Geocoder.getFromLocation()` dipanggil
 **sinkron di main thread** (bukan di coroutine/background thread), hasilnya
-langsung di-set ke `binding.txtLocation`.
+langsung di-set ke `binding.txtLocation`. **Bug yang sudah diperbaiki**:
+sebelum ada cabang Manual ini, `getAddressFromLatLong()` dipanggil untuk
+koordinat manapun (termasuk titik manual yang jarang punya nama jalan/desa
+resmi), dan karena fungsinya pakai interpolasi string polos
+`"$kecamatan, $kota, $negara"` (bukan `listOfNotNull(...).joinToString()`
+seperti di `MainViewModel.fetchAddressName()`), hasil `null` dari Geocoder
+tercetak literal jadi teks **"null, null, Indonesia"** di UI kalau
+`subLocality`/`locality` tidak resolve.
 
 ## 5. Dependencies & tech stack khusus
 
@@ -192,7 +245,26 @@ sekali. Verifikasi saat ini manual:
    Kiblat" terbuka, berisi baris Lintang/Bujur Ka'bah, Lintang/Bujur lokasi,
    Selisih Bujur, Rumus, dan tiga baris hasil (B-U/U-B/UTSB).
 
-**Catatan verifikasi sesi ini**: poin 7 sudah dicek benar lewat compile +
+8. Ganti **Konfigurasi → Lokasi → Manual** dengan koordinat tertentu → buka
+   `KiblatActivity` lagi → pastikan **tidak ada** dialog permission GPS yang
+   muncul, `txtLocation` langsung terisi `"Lokasi manual: lat, lng"` (bukan
+   alamat hasil geocode), dan breakdown (`Lintang lokasi`/`Bujur lokasi`)
+   menunjukkan koordinat manual yang sama (dalam format DMS).
+9. Ganti **Konfigurasi → Arah Kiblat → Sumber Perhitungan** ke **Rumus Manual
+   (Al Hasib)** → buka `KiblatActivity` → pastikan `txtQiblaValue` sama
+   persis dengan "Hasil akhir (UTSB)" di breakdown, dan `imgCompass` jadi
+   gambar placeholder generik (bukan gambar kompas dari Aladhan).
+
+**Catatan verifikasi sesi 2026-08-30 (lokasi/sumber kiblat)**: poin 8 & 9 di
+atas sudah dicek **berhasil** di emulator — nilai `SessionManager` di-set
+langsung lewat `adb shell run-as ... cat shared_prefs/AppSession.xml` untuk
+memastikan state persist benar, lalu dikonfirmasi lewat screenshot layar
+Kiblat & Waktu Sholat menampilkan koordinat manual yang sama persis (format
+beda: desimal di Konfigurasi vs DMS di breakdown Kiblat, sudah dicocokkan
+manual dan memang sama). Bug "null, null, Indonesia" (lihat section 4)
+ditemukan & diperbaiki lewat verifikasi ini.
+
+**Catatan verifikasi sesi sebelumnya**: poin 7 sudah dicek benar lewat compile +
 perhitungan manual (hasil breakdown ≈24° B-U untuk lokasi Lamongan, cocok
 dengan contoh di kertas Al Hasib ≈24°04'39"), tapi **belum berhasil dicek
 interaktif di emulator** — `adb shell input tap` gagal terdaftar sama sekali
@@ -207,6 +279,14 @@ dicoba manual di device sungguhan sebelum dianggap selesai 100%.
 
 ## 7. Known issues & TODOs
 
+- [ ] **Kompas visual saat Sumber Perhitungan = Manual masih placeholder
+      generik**, bukan gambar kompas custom yang benar-benar digambar sesuai
+      `qiblaBreakdown.utsbDegree` (lihat `loadQiblaCompass()`). Aladhan API
+      cuma bisa mengembalikan gambar sesuai hitungan Aladhan sendiri, jadi
+      untuk mode Manual sengaja diganti `ic_compass_placeholder` daripada
+      menampilkan gambar yang kontradiksi dengan angka. Kalau mau kompas
+      visual yang benar-benar akurat di mode Manual, perlu render kompas +
+      jarum arah sendiri (Canvas/custom View), bukan sekadar drawable statis.
 - [ ] `ArahKiblatActivity` (beserta `ViewPagerAdapter` dua-tab,
       `KiblatFragment`, `FalakiyahFragment`, layout `activity_arah_kiblat.xml`,
       `fragment_kiblat.xml`, `fragment_falakiyah.xml`) **tidak terdaftar di

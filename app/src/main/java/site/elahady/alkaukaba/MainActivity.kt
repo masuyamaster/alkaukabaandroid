@@ -8,6 +8,7 @@ import site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
 import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
+import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
@@ -147,6 +148,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkLocationPermission() {
+        val sessionManager = SessionManager(this)
+        if (sessionManager.isManualLocationMode()) {
+            // Setting lokasi global (lihat KonfigurasiActivity) - lewati GPS/permission sama sekali.
+            useManualLocation(sessionManager.getManualLat(), sessionManager.getManualLng())
+            return
+        }
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -158,6 +166,13 @@ class MainActivity : AppCompatActivity() {
             // Jika sudah diizinkan, langsung ambil lokasi
             getUserLocation()
         }
+    }
+
+    private fun useManualLocation(lat: Double, lon: Double) {
+        fetchDataByCoordinate(lat, lon)
+        val geocoder = Geocoder(this, Locale("id", "ID"))
+        viewModel.fetchAddressName(geocoder, lat, lon)
+        binding.swipeRefresh.isRefreshing = false
     }
 
     private fun useDefaultLocation() {

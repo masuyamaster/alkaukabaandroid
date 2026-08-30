@@ -40,6 +40,118 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="LOKASI"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"/>
+
+    <LinearLayout
+        android:id="@+id/rowLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_card_rounded"
+        android:layout_marginHorizontal="6dp"
+        android:layout_marginBottom="20dp"
+        android:padding="16dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sumber Lokasi"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/tvCurrentLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Otomatis (GPS)"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="›"
+            android:textSize="24sp"
+            android:textColor="@color/text_hint"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ARAH KIBLAT"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"/>
+
+    <LinearLayout
+        android:id="@+id/rowQiblaSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_card_rounded"
+        android:layout_marginHorizontal="6dp"
+        android:layout_marginBottom="20dp"
+        android:padding="16dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sumber Perhitungan"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/tvCurrentQiblaSource"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Aladhan (Kompas API)"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="›"
+            android:textSize="24sp"
+            android:textColor="@color/text_hint"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="WAKTU SHOLAT"
         android:textSize="12sp"
         android:textStyle="bold"

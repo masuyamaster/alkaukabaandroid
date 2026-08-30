@@ -21,9 +21,10 @@
             android:layout_marginBottom="4dp"/>
 
         <TextView
+            android:id="@+id/tvQiblaBreakdownSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Perhitungan manual (Al Hasib - Alkaukaba Team). Sudut kompas yang ditampilkan tetap dari Aladhan API."
+            android:text="Perhitungan manual (Al Hasib - Alkaukaba Team)."
             android:textSize="11sp"
             android:textColor="#888"
             android:layout_marginBottom="16dp"/>

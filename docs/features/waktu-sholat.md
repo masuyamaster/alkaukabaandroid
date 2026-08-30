@@ -17,6 +17,12 @@ macamnya (Kemenag RI, MWL, ISNA, dll) dan preferensinya beda-beda per user.
   bottom sheet `dialog_prayer_method.xml` berisi daftar preset.
 - Prasyarat: tidak ada permission/API key tambahan — semua preset memakai
   base URL Aladhan API yang sudah dikonfigurasi di `RetrofitClient`.
+- Lokasi (lat/lon) yang dikirim ke Aladhan: dari GPS secara default, atau dari
+  koordinat manual kalau setting **Konfigurasi → Lokasi** di-set ke Manual
+  (lihat `docs/features/konfigurasi.md`) — `WaktuSholatActivity
+  .checkLocationPermission()` cek `SessionManager.isManualLocationMode()`
+  duluan sebelum minta permission GPS, persis pola yang sama dengan
+  `MainActivity` dan `KiblatActivity`.
 
 ## 3. Titik masuk logika & navigasi
 
@@ -49,7 +55,7 @@ File yang terlibat:
 | File | Peran |
 |---|---|
 | `utils/PrayerCalculationMethods.kt` | Data class + daftar preset (id, nama, subtitle) |
-| `utils/SessionManager.kt` | Persistensi pilihan user di `SharedPreferences` |
+| `utils/SessionManager.kt` | Persistensi pilihan user di `SharedPreferences` — metode perhitungan sholat **dan** setting lokasi global (lihat `docs/features/konfigurasi.md`) |
 | `repo/PrayerRepository.kt` | Jembatan ke Aladhan API, resolve method yang benar dikirim |
 | `api/PrayersApiService.kt` (`AladhanApi`) | Interface Retrofit ke `api.aladhan.com`, terima param `method` & `methodSettings` |
 | `viewmodel/waktusholat/PrayerTimesViewModel.kt` | State untuk layar `WaktuSholatActivity`, panggil `PrayerRepository` |
@@ -181,6 +187,12 @@ sekali). Verifikasi saat ini manual:
    proxy bahwa request ke Aladhan benar-benar mengirim `method` yang sesuai.
 6. Buka `WaktuSholatActivity` → tab "Detail Perhitungan" → pastikan isinya
    **cuma** breakdown waktu sholat (tidak ada lagi "PERHITUNGAN ARAH KIBLAT").
+7. Ganti **Konfigurasi → Lokasi → Manual** dengan koordinat tertentu → buka
+   `WaktuSholatActivity` → pastikan **tidak ada** dialog permission GPS, dan
+   label lokasi (`tvLocationName`, format `"Lat: x, Long: y"`) menunjukkan
+   koordinat manual persis (sudah diverifikasi sesi 2026-08-30 lewat
+   `adb shell run-as ... cat shared_prefs/AppSession.xml` + screenshot,
+   koordinat yang tampil identik dengan yang tersimpan).
 
 ## 7. Known issues & TODOs
 

@@ -10,6 +10,7 @@ import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerTimesViewModel
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerViewModelFactory
 import site.elahady.alkaukaba.databinding.ItemPrayerBreakdownBinding
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
+import site.elahady.alkaukaba.utils.SessionManager
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -31,6 +32,7 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWaktuSholatBinding
     private lateinit var viewModel: PrayerTimesViewModel
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
         private val locationPermissionRequest = registerForActivityResult(
@@ -60,6 +62,7 @@ class WaktuSholatActivity : AppCompatActivity() {
         window.statusBarColor = android.graphics.Color.TRANSPARENT
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sessionManager = SessionManager(this)
 
         setupUI()
         setupViewModel()
@@ -264,6 +267,12 @@ class WaktuSholatActivity : AppCompatActivity() {
     }
 
     private fun checkLocationPermission() {
+            if (sessionManager.isManualLocationMode()) {
+                // Setting lokasi global (lihat KonfigurasiActivity) - lewati GPS/permission sama sekali.
+                useManualLocation(sessionManager.getManualLat(), sessionManager.getManualLng())
+                return
+            }
+
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -305,5 +314,11 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     private fun useDefaultLocation() {
         Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun useManualLocation(lat: Double, lon: Double) {
+        binding.tvLocationName.text = "Lat: $lat, Long: $lon"
+        viewModel.loadData(lat, lon)
     }
 }

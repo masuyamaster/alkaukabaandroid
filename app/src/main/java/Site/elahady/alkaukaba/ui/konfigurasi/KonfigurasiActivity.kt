@@ -5,23 +5,45 @@ import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityKonfigurasiBinding
 import site.elahady.alkaukaba.utils.PrayerCalculationMethods
 import site.elahady.alkaukaba.utils.SessionManager
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class KonfigurasiActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityKonfigurasiBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    // Referensi field lat/lon aktif selagi dialog_lokasi terbuka, dipakai callback GPS/permission.
+    private var etManualLatRef: EditText? = null
+    private var etManualLngRef: EditText? = null
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            fetchGpsIntoManualFields()
+        } else {
+            Toast.makeText(this, "Izin lokasi diperlukan untuk mengambil GPS", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,11 +54,16 @@ class KonfigurasiActivity : AppCompatActivity() {
         window.statusBarColor = android.graphics.Color.TRANSPARENT
 
         sessionManager = SessionManager(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.rowLocation.setOnClickListener { showLocationSheet() }
+        binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
         binding.btnLogout.setOnClickListener { showLogoutConfirmation() }
 
+        updateCurrentLocationLabel()
+        updateCurrentQiblaSourceLabel()
         updateCurrentMethodLabel()
     }
 
@@ -60,6 +87,139 @@ class KonfigurasiActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    // --- Lokasi ---
+
+    private fun updateCurrentLocationLabel() {
+        binding.tvCurrentLocation.text = if (sessionManager.isManualLocationMode()) {
+            "Manual: %.4f, %.4f".format(sessionManager.getManualLat(), sessionManager.getManualLng())
+        } else {
+            "Otomatis (GPS)"
+        }
+    }
+
+    private fun showLocationSheet() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_lokasi, null)
+        bottomSheetDialog.setContentView(view)
+        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupLocationMode)
+        val radioAuto = view.findViewById<RadioButton>(R.id.radioLocationAuto)
+        val radioManual = view.findViewById<RadioButton>(R.id.radioLocationManual)
+        val layoutManual = view.findViewById<View>(R.id.layoutManualLocation)
+        val etLat = view.findViewById<EditText>(R.id.etManualLat)
+        val etLng = view.findViewById<EditText>(R.id.etManualLng)
+        val btnUseGps = view.findViewById<AppCompatButton>(R.id.btnUseCurrentGps)
+        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveLocation)
+
+        val isManual = sessionManager.getLocationMode() == SessionManager.LOCATION_MODE_MANUAL
+        radioManual.isChecked = isManual
+        radioAuto.isChecked = !isManual
+        layoutManual.visibility = if (isManual) View.VISIBLE else View.GONE
+        if (sessionManager.hasManualLocation()) {
+            etLat.setText(sessionManager.getManualLat().toString())
+            etLng.setText(sessionManager.getManualLng().toString())
+        }
+
+        etManualLatRef = etLat
+        etManualLngRef = etLng
+
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            layoutManual.visibility = if (checkedId == R.id.radioLocationManual) View.VISIBLE else View.GONE
+        }
+
+        btnUseGps.setOnClickListener { fetchGpsIntoManualFields() }
+
+        btnSave.setOnClickListener {
+            if (radioGroup.checkedRadioButtonId == R.id.radioLocationManual) {
+                val lat = etLat.text.toString().toDoubleOrNull()
+                val lng = etLng.text.toString().toDoubleOrNull()
+                if (lat == null || lng == null || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
+                    Toast.makeText(this, "Isi lintang/bujur dengan angka yang valid", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                sessionManager.setManualLocation(lat, lng)
+                sessionManager.setLocationMode(SessionManager.LOCATION_MODE_MANUAL)
+            } else {
+                sessionManager.setLocationMode(SessionManager.LOCATION_MODE_AUTO)
+            }
+            updateCurrentLocationLabel()
+            Toast.makeText(this, "Lokasi disimpan", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.setOnDismissListener {
+            etManualLatRef = null
+            etManualLngRef = null
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun fetchGpsIntoManualFields() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                etManualLatRef?.setText(location.latitude.toString())
+                etManualLngRef?.setText(location.longitude.toString())
+            } else {
+                Toast.makeText(this, "Lokasi GPS tidak ditemukan, coba lagi", Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener {
+            Toast.makeText(this, "Gagal mengambil lokasi GPS", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- Arah Kiblat ---
+
+    private fun updateCurrentQiblaSourceLabel() {
+        binding.tvCurrentQiblaSource.text = if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            "Rumus Manual (Al Hasib)"
+        } else {
+            "Aladhan (Kompas API)"
+        }
+    }
+
+    private fun showQiblaSourceSheet() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_qibla_source, null)
+        bottomSheetDialog.setContentView(view)
+        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupQiblaSource)
+        val radioAladhan = view.findViewById<RadioButton>(R.id.radioQiblaAladhan)
+        val radioManual = view.findViewById<RadioButton>(R.id.radioQiblaManual)
+        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveQiblaSource)
+
+        val isManual = sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL
+        radioManual.isChecked = isManual
+        radioAladhan.isChecked = !isManual
+
+        btnSave.setOnClickListener {
+            val source = if (radioGroup.checkedRadioButtonId == R.id.radioQiblaManual) {
+                SessionManager.QIBLA_SOURCE_MANUAL
+            } else {
+                SessionManager.QIBLA_SOURCE_ALADHAN
+            }
+            sessionManager.setQiblaSource(source)
+            updateCurrentQiblaSourceLabel()
+            Toast.makeText(this, "Sumber perhitungan kiblat disimpan", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    // --- Waktu Sholat ---
 
     private fun updateCurrentMethodLabel() {
         val method = PrayerCalculationMethods.findById(sessionManager.getPrayerMethodId())
