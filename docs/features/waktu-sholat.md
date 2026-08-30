@@ -85,7 +85,12 @@ tampilkan pesan fallback `tvNoPrayerBreakdown` untuk kasus ini.
 UI-nya sendiri: `WaktuSholatActivity` punya dua tab, **"Waktu Aktual"**
 (`btnTabActual`, jadwal biasa — default aktif) dan **"Detail Perhitungan"**
 (`btnTabDetail`, breakdown ini), diswitch lewat `updateTabState()` yang
-toggle visibility `layoutWaktuSholat` vs `layoutDetailKiblat`. Setiap section
+toggle visibility `layoutWaktuSholat` vs `layoutDetailPerhitungan`. Tab ini
+murni tentang waktu sholat — sebelumnya sempat tercampur dengan detail rumus
+Arah Kiblat (`tvCalculationResult`/`tvResultDegree`/`QiblaCalculator`) di
+layout yang sama (`layoutDetailKiblat`, nama lama), yang keliru karena Arah
+Kiblat itu fitur terpisah (`KiblatActivity`) — sudah dibersihkan, lihat bagian
+"Kenapa Arah Kiblat dikeluarkan" di bawah. Setiap section
 breakdown (per waktu sholat) dirender sebagai card accordion
 (`item_prayer_breakdown.xml`, klik `rowHeader` expand/collapse `layoutBody`,
 `tvChevron` berubah ⌄/⌃) berisi baris-baris rumus (`item_breakdown_row.xml`,
@@ -130,6 +135,29 @@ Ini keputusan sadar, bukan bug:
   karena `1000` bukan id yang dikenali Aladhan dan akan gagal kalau dikirim
   langsung.
 
+### Kenapa Arah Kiblat dikeluarkan dari layar ini
+
+Sebelumnya, tab "Detail Perhitungan" di `WaktuSholatActivity` menampilkan DUA
+hal sekaligus: "1. PERHITUNGAN ARAH KIBLAT" (pakai `QiblaCalculator`, hasil
+`detailFormulaSteps` + derajat) dan "2. DETAIL PERHITUNGAN WAKTU SHOLAT"
+(breakdown Ephemeris). Ini keliru secara scope — Arah Kiblat adalah fitur
+sendiri dengan layarnya sendiri (`ui/arahkiblat/KiblatActivity`), tidak ada
+hubungannya dengan Waktu Sholat selain kebetulan sama-sama butuh lat/long.
+
+Sudah dihapus dari sini: `QiblaCalculator` import, `calculateQibla()`,
+LiveData `qiblaDetailText`/`qiblaDegreeUI` di `PrayerTimesViewModel`, dan
+View terkait (`etCoordinates`, `tvCalculationResult`, `tvResultDegree`,
+"Koordinat Pengguna") di `activity_waktu_sholat.xml`. `layoutDetailKiblat`
+di-rename jadi `layoutDetailPerhitungan` supaya nama file/id tidak lagi
+menyesatkan (isinya sekarang murni waktu sholat).
+
+**Konsekuensi**: `utils/QiblaCalculator.kt` sekarang jadi kelas yatim (tidak
+dipakai di manapun) — `KiblatActivity` punya mekanisme sendiri
+(`KiblatViewModel.fetchQiblaAngle`) yang tidak memakai kelas ini sama sekali.
+File belum dihapus (masih berisi breakdown rumus arah kiblat yang mungkin
+berguna), tapi perlu keputusan: hapus, atau sambungkan ke `KiblatActivity`
+kalau breakdown rumus semacam ini juga diinginkan di sana. Lihat Known Issues.
+
 ## 5. Dependencies & tech stack khusus
 
 Tidak ada tambahan khusus di luar stack umum app — Retrofit + Gson (untuk
@@ -151,6 +179,8 @@ sekali). Verifikasi saat ini manual:
    berubah sesuai pilihan.
 5. (Opsional, kalau mengubah `PrayerRepository`) Cek lewat `adb logcat` atau
    proxy bahwa request ke Aladhan benar-benar mengirim `method` yang sesuai.
+6. Buka `WaktuSholatActivity` → tab "Detail Perhitungan" → pastikan isinya
+   **cuma** breakdown waktu sholat (tidak ada lagi "PERHITUNGAN ARAH KIBLAT").
 
 ## 7. Known issues & TODOs
 
@@ -171,3 +201,7 @@ sekali). Verifikasi saat ini manual:
       `PrayerCalculationBreakdownRegistry` untuk method selain Ephemeris.
       Kalau mau breakdown juga tersedia untuk metode lain, perlu provider
       baru per metode (lihat titik ekstensi di section 3).
+- [ ] `utils/QiblaCalculator.kt` sekarang yatim piatu (tidak dipakai di
+      manapun) setelah dikeluarkan dari layar ini — lihat "Kenapa Arah Kiblat
+      dikeluarkan". Perlu keputusan: hapus, atau sambungkan ke `KiblatActivity`
+      kalau breakdown rumus arah kiblat memang diinginkan di sana.

@@ -1,7 +1,6 @@
 package site.elahady.alkaukaba.viewmodel.waktusholat
 import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.api.TimingPrayers
-import site.elahady.alkaukaba.utils.QiblaCalculator
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -35,12 +34,6 @@ class PrayerTimesViewModel(private val repository: PrayerRepository) : ViewModel
     private val _prayerSchedule = MutableLiveData<PrayerScheduleUiState>()
     val prayerSchedule: LiveData<PrayerScheduleUiState> = _prayerSchedule
 
-    private val _qiblaDetailText = MutableLiveData<String>()
-    val qiblaDetailText: LiveData<String> = _qiblaDetailText
-
-    private val _qiblaDegreeUI = MutableLiveData<String>()
-    val qiblaDegreeUI: LiveData<String> = _qiblaDegreeUI
-
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
@@ -53,7 +46,6 @@ class PrayerTimesViewModel(private val repository: PrayerRepository) : ViewModel
 
     fun loadData(lat: Double, long: Double) {
         _isLoading.value = true
-        calculateQibla(lat, long)
         calculatePrayerBreakdown(lat, long)
         fetchPrayerTimes(lat, long)
     }
@@ -63,12 +55,6 @@ class PrayerTimesViewModel(private val repository: PrayerRepository) : ViewModel
         val timeZoneHour = offsetMillis / (1000.0 * 60 * 60)
         val provider = PrayerCalculationBreakdownRegistry.providerFor(repository.getSelectedMethodId())
         _calculationBreakdown.value = provider?.breakdown(lat, long, timeZoneHour)
-    }
-
-    private fun calculateQibla(lat: Double, long: Double) {
-        val result = QiblaCalculator.calculateQibla(lat, long)
-        _qiblaDetailText.value = result.detailFormulaSteps
-        _qiblaDegreeUI.value = String.format("%.0f° UTSB", 270 + result.qiblaDegree)
     }
 
     private fun fetchPrayerTimes(lat: Double, long: Double) {

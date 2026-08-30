@@ -109,7 +109,7 @@ class WaktuSholatActivity : AppCompatActivity() {
 
             // 3. Tampilkan Layout yang sesuai
             binding.layoutWaktuSholat.visibility = View.VISIBLE
-            binding.layoutDetailKiblat.visibility = View.GONE
+            binding.layoutDetailPerhitungan.visibility = View.GONE
 
         } else {
             // --- KONDISI: DETAIL PERHITUNGAN AKTIF ---
@@ -128,7 +128,7 @@ class WaktuSholatActivity : AppCompatActivity() {
 
             // 3. Tampilkan Layout yang sesuai
             binding.layoutWaktuSholat.visibility = View.GONE
-            binding.layoutDetailKiblat.visibility = View.VISIBLE
+            binding.layoutDetailPerhitungan.visibility = View.VISIBLE
         }
     }
 
@@ -212,16 +212,7 @@ class WaktuSholatActivity : AppCompatActivity() {
             state?.let { updateNextPrayerUI(it) }
         }
 
-        // 2. Observe Detail Rumus Kiblat
-        viewModel.qiblaDetailText.observe(this) { detailText ->
-            binding.tvCalculationResult.text = detailText
-        }
-
-        // 3. Observe Hasil Sudut (Kotak)
-        viewModel.qiblaDegreeUI.observe(this) { degreeText ->
-            binding.tvResultDegree.text = degreeText
-        }
-
+        // 2. Observe breakdown perhitungan waktu sholat
         viewModel.calculationBreakdown.observe(this) { sections ->
             renderPrayerBreakdown(sections)
         }
@@ -306,7 +297,6 @@ class WaktuSholatActivity : AppCompatActivity() {
 
             // Update UI Lokasi
             binding.tvLocationName.text = "Lat: $lat, Long: $long"
-            binding.etCoordinates.setText("$lat, $long")
 
             // PENTING: Panggil ViewModel untuk memproses data
             viewModel.loadData(lat, long)
