@@ -11,6 +11,15 @@ hasil hitung berdasarkan lokasi GPS. Saat heading HP sejajar dengan sudut
 kiblat (dalam toleransi tertentu), tampilan kompas berubah warna sebagai
 penanda "sudah pas".
 
+Sejak update ini, badge "Qibla Angle" juga bisa di-tap untuk membuka **Detail
+Perhitungan** — breakdown manual (Al Hasib - Alkaukaba Team) yang menjelaskan
+"angka ini didapat dari mana", mengikuti rumus segitiga bola dari kertas
+"Perhitungan Arah Qiblat (Dengan Teori Segitiga Siku-Siku)" - M. Khoirul Anam.
+Ini pola yang sama dengan breakdown Ephemeris di fitur Waktu Sholat (lihat
+`docs/features/waktu-sholat.md`), tapi lebih sederhana: Arah Kiblat cuma satu
+hasil (bukan per-waktu-sholat), jadi tidak butuh registry/provider seperti di
+sana - cukup satu fungsi kalkulasi langsung.
+
 ## 2. Entry point & prasyarat
 
 - Dari `MainActivity`: tap tombol **`btKiblat`** → `startActivity(Intent(...,
@@ -44,21 +53,24 @@ penanda "sudah pas".
 - `KiblatRepository.getQiblaAngle(lat, lon)` — jembatan ke
   `AladhanApi.getQiblaDirection(lat, lon)` (endpoint Aladhan
   `GET v1/qibla/{latitude}/{longitude}`), balikin `.data.direction`.
-- `QiblaCalculator.calculateQibla(userLat, userLong)` — util murni (object,
-  bukan class), hitung sudut kiblat sendiri secara lokal pakai trigonometri
-  bola (tanpa panggil API). **Bukan dipakai oleh `KiblatActivity`/
-  `KiblatViewModel`** — satu-satunya pemakainya saat ini adalah
-  `PrayerTimesViewModel.calculateQibla()` (lihat `docs/features/waktu-sholat.md`
-  tidak menyebutnya, tapi kodenya ada di
-  `viewmodel/waktusholat/PrayerTimesViewModel.kt` baris 68-72) untuk
-  menyusun teks "Detail Rumus Kiblat" (`qiblaDetailText`) yang ditampilkan di
-  layar Waktu Sholat, bukan di layar Arah Kiblat ini. Lihat bagian "Kenapa"
-  di bawah untuk konsekuensinya.
+- `QiblaCalculator.calculateBreakdown(userLat, userLong)` — util murni
+  (object), hitung breakdown manual arah kiblat pakai rumus
+  `tan⁻¹(cos φ × tan φ_Kabah ÷ sin C − sin φ ÷ tan C)` (kertas Al Hasib).
+  **Sekarang dipakai langsung oleh `KiblatActivity`** (dipanggil di
+  `onLocationReady()`, hasilnya disimpan di properti `qiblaBreakdown` dan
+  ditampilkan lewat `showQiblaBreakdownSheet()` saat badge sudut di-tap).
+  Sebelumnya kelas ini (dengan nama fungsi lama `calculateQibla()`) dipakai
+  `PrayerTimesViewModel` untuk teks detail di layar Waktu Sholat — itu sudah
+  dihapus (lihat `docs/features/waktu-sholat.md`, bagian "Kenapa Arah Kiblat
+  dikeluarkan") karena keliru secara scope. Sekarang `QiblaCalculator` cuma
+  dipakai di fitur Arah Kiblat sendiri, tempat yang seharusnya.
 - Navigasi: `MainActivity` → `KiblatActivity` via `Intent` biasa, satu arah,
   tanpa extra. Tombol back di toolbar (`binding.toolbar
   .setNavigationOnClickListener`) memanggil `onBackPressedDispatcher
-  .onBackPressed()`. Tidak ada navigasi lanjutan ke Activity lain di dalam
-  fitur ini.
+  .onBackPressed()`. Di dalam layar ini, tap badge `qiblaAngleContainer`
+  (atau ikon kecil `btnQiblaDetail` di dalamnya) membuka `BottomSheetDialog`
+  (`dialog_qibla_breakdown.xml`) — modal, bukan Activity terpisah, sama
+  seperti pola bottom sheet di `KonfigurasiActivity`.
 - `ArahKiblatActivity` (di file terpisah, folder yang sama) berisi struktur
   navigasi lain — `ViewPager` dua tab (`KiblatFragment` "Kiblat" dan
   `FalakiyahFragment` "Detail Perhitungan") lewat
@@ -80,8 +92,10 @@ File yang terlibat:
 | `viewmodel/arahkiblat/KiblatViewModelFactory.kt` | DI manual (tanpa framework) — construct `KiblatRepository(RetrofitClient.instance)` lalu `KiblatViewModel` |
 | `repo/arahkiblat/KiblatRepository.kt` | `getQiblaAngle()` — satu-satunya pemanggil `AladhanApi.getQiblaDirection` |
 | `api/PrayersApiService.kt` (`AladhanApi` interface + `RetrofitClient`, base URL `https://api.aladhan.com/`) | Retrofit service bersama, dipakai juga oleh fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`) |
-| `utils/QiblaCalculator.kt` | Util murni, hitung sudut kiblat lokal dengan trigonometri bola. Dipakai oleh `PrayerTimesViewModel`, **bukan** oleh fitur Arah Kiblat ini |
-| `res/layout/activity_kiblat.xml` | Layout `KiblatActivity`: toolbar, `imgCompass`, `txtQiblaValue`, `txtLocation`, `qiblaAngleContainer`, `calibrationHint` |
+| `utils/QiblaCalculator.kt` | Util murni, hitung breakdown manual arah kiblat (rumus Al Hasib). Dipakai langsung oleh `KiblatActivity` |
+| `res/layout/activity_kiblat.xml` | Layout `KiblatActivity`: toolbar, `imgCompass`, `txtQiblaValue`, `btnQiblaDetail`, `txtLocation`, `qiblaAngleContainer` (sekarang `clickable`), `calibrationHint` |
+| `res/layout/dialog_qibla_breakdown.xml` | Bottom sheet Detail Perhitungan — judul + disclosure singkat + container untuk baris breakdown |
+| `res/layout/item_breakdown_row.xml` | Satu baris label/value di breakdown — **dipakai bersama** dengan fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`), bukan file baru khusus Kiblat |
 | `res/layout/activity_arah_kiblat.xml` | Layout `ArahKiblatActivity` (tab layout + `ViewPager`) — hanya dipakai Activity yang dead code |
 
 Alur data (sudut kiblat numerik, `txtQiblaValue`): `KiblatActivity.onCreate()`
@@ -112,6 +126,21 @@ panggil `checkQiblaAlignment()` yang membandingkan `currentAzimuth` vs
 putih), kalau tidak kembali ke default (`bg_qibla_angle`, teks hitam).
 `onAccuracyChanged()` juga menampilkan/menyembunyikan `calibrationHint` saat
 akurasi sensor rendah/unreliable.
+
+Alur data (breakdown manual, "Detail Perhitungan"): `onLocationReady()` juga
+panggil `QiblaCalculator.calculateBreakdown(lat, lon)`, hasilnya
+(`QiblaBreakdownResult`) disimpan di properti `qiblaBreakdown` (bukan
+`LiveData` — cukup properti biasa karena cuma dibaca sekali saat tap, tidak
+perlu observasi berkelanjutan). Tap `qiblaAngleContainer`/`btnQiblaDetail` →
+`showQiblaBreakdownSheet()` → kalau `qiblaBreakdown` masih `null` (lokasi
+belum siap), tampilkan `Toast`; kalau sudah ada, inflate `item_breakdown_row
+.xml` untuk tiap baris (Lintang/Bujur Ka'bah, Lintang/Bujur lokasi, Selisih
+Bujur, Rumus, hasil B-U/U-B/UTSB) ke dalam `BottomSheetDialog`
+(`dialog_qibla_breakdown.xml`). **Jalur ini independen dari jalur sudut
+kompas** (poin sebelumnya) — angka breakdown dihitung lokal, angka kompas
+dari Aladhan API. Keduanya biasanya sangat dekat (untuk Lamongan, kompas API
+= 294°, breakdown lokal = 294°04'39") tapi tidak dijamin identik karena beda
+sumber/presisi data matahari & Ka'bah.
 
 Alur data (teks lokasi): `onLocationReady()` juga panggil
 `getAddressFromLatLong(lat, lon)` — `Geocoder.getFromLocation()` dipanggil
@@ -159,6 +188,22 @@ sekali. Verifikasi saat ini manual:
 6. Cabut sinyal sensor rotasi (kalau memungkinkan) atau uji di device tanpa
    sensor rotasi untuk memverifikasi tidak ada crash (hanya diam, sesuai
    kode saat ini).
+7. Tap badge "Qibla Angle" → pastikan bottom sheet "Detail Perhitungan Arah
+   Kiblat" terbuka, berisi baris Lintang/Bujur Ka'bah, Lintang/Bujur lokasi,
+   Selisih Bujur, Rumus, dan tiga baris hasil (B-U/U-B/UTSB).
+
+**Catatan verifikasi sesi ini**: poin 7 sudah dicek benar lewat compile +
+perhitungan manual (hasil breakdown ≈24° B-U untuk lokasi Lamongan, cocok
+dengan contoh di kertas Al Hasib ≈24°04'39"), tapi **belum berhasil dicek
+interaktif di emulator** — `adb shell input tap` gagal terdaftar sama sekali
+di layar ini selama sesi debugging (bahkan tombol back toolbar bawaan pun
+tidak merespons tap sintetis, sementara `KEYCODE_BACK` fisik berhasil).
+Dugaan kuat: `sensorListener` yang update `imgCompass.rotation` +
+`qiblaAngleContainer.background` di setiap event sensor (`SENSOR_DELAY_GAME`)
+membuat main thread terlalu sibuk untuk memproses touch event sintetis dari
+adb pada emulator ini. Belum tentu terjadi di device fisik (sensor asli
+biasanya jauh lebih jarang update dibanding simulasi emulator), tapi perlu
+dicoba manual di device sungguhan sebelum dianggap selesai 100%.
 
 ## 7. Known issues & TODOs
 
@@ -176,16 +221,26 @@ sekali. Verifikasi saat ini manual:
       pendekatan single-screen `KiblatActivity` yang sekarang benar-benar
       dipakai. Perlu diputuskan: hapus semua file ini, atau lanjutkan
       implementasinya dan daftarkan ke manifest.
-- [ ] Ada dua jalur hitung arah kiblat yang terpisah dan tidak saling
-      terhubung: `KiblatActivity`/`KiblatViewModel`/`KiblatRepository`
-      mengambil sudut kiblat dari **Aladhan API** (`GET v1/qibla/{lat}/{lon}`),
-      sedangkan `QiblaCalculator` (rumus trigonometri bola lokal) dipakai
-      hanya oleh `PrayerTimesViewModel.calculateQibla()` untuk teks detail
-      rumus di layar Waktu Sholat. Tidak ada validasi bahwa kedua hasil
-      konsisten satu sama lain. Kalau nanti fitur "Detail Perhitungan"
-      (rencana `FalakiyahFragment` yang belum jadi) mau dibangun beneran,
-      perlu diputuskan pakai sumber yang mana — atau sekalian pakai
-      `QiblaCalculator` juga di `KiblatActivity` supaya konsisten.
+- [x] ~~Ada dua jalur hitung arah kiblat yang terpisah~~ — **selesai**.
+      `QiblaCalculator` sekarang dipakai langsung oleh `KiblatActivity`
+      sendiri (breakdown manual lewat tap badge), bukan nyasar ke
+      `PrayerTimesViewModel`/layar Waktu Sholat lagi. Sudut kompas (Aladhan
+      API) dan breakdown manual (`QiblaCalculator`) tetap dua sumber angka
+      yang independen (disengaja, sama seperti pola Ephemeris di Waktu
+      Sholat) — bukan lagi "tidak saling terhubung secara scope", tapi
+      "sengaja dua sumber, sama-sama ditampilkan di layar yang sama".
+- [ ] **Verifikasi interaktif breakdown belum tuntas** — lihat catatan di
+      bagian Testing poin 7. Perlu dicoba tap manual di device fisik/emulator
+      lain untuk memastikan `showQiblaBreakdownSheet()` benar-benar terbuka
+      saat disentuh user sungguhan, bukan cuma lewat code review + compile.
+- [ ] `checkQiblaAlignment()` mengganti `qiblaAngleContainer.background`
+      (`ContextCompat.getDrawable(...)`, alokasi Drawable baru) di **setiap**
+      callback sensor (`SENSOR_DELAY_GAME`, bisa puluhan kali per detik).
+      Kemungkinan pemicu isu tap sintetis di atas, dan berpotensi boros
+      alokasi objek / kerja main thread meski secara visual tidak masalah.
+      Pertimbangkan cache dua `Drawable` (`aligned`/`notAligned`) sekali di
+      awal lalu tinggal `if/else` assignment, alih-alih `getDrawable()`
+      berulang.
 - [ ] `getAddressFromLatLong()` di `KiblatActivity.kt` memanggil
       `Geocoder.getFromLocation()` secara **sinkron di main thread** (bukan
       lewat coroutine/`Dispatchers.IO`) — berisiko ANR terutama di device

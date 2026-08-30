@@ -3,6 +3,8 @@ package site.elahady.alkaukaba.ui.arahkiblat
 import site.elahady.alkaukaba.databinding.ActivityKiblatBinding
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModel
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModelFactory
+import site.elahady.alkaukaba.utils.QiblaCalculator
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -46,6 +48,8 @@ class KiblatActivity : AppCompatActivity() {
     private val smoothingFactor = 0.15f   // 0.1 – 0.2 ideal
     private val qiblaThresshold = 3f // derajat
     private var isCalibrationVisible = false
+    private var qiblaBreakdown: QiblaCalculator.QiblaBreakdownResult? = null
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +79,33 @@ class KiblatActivity : AppCompatActivity() {
         binding.toolbar.setNavigationOnClickListener{
             onBackPressedDispatcher.onBackPressed()
         }
+
+        binding.qiblaAngleContainer.setOnClickListener { showQiblaBreakdownSheet() }
+        binding.btnQiblaDetail.setOnClickListener { showQiblaBreakdownSheet() }
+    }
+
+    private fun showQiblaBreakdownSheet() {
+        val breakdown = qiblaBreakdown
+        if (breakdown == null) {
+            Toast.makeText(this, "Lokasi belum siap, coba lagi sebentar", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_qibla_breakdown, null)
+        bottomSheetDialog.setContentView(view)
+        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+
+        val container = view.findViewById<android.widget.LinearLayout>(R.id.layoutQiblaBreakdownContainer)
+        breakdown.rows.forEach { row ->
+            val rowView = layoutInflater.inflate(R.layout.item_breakdown_row, container, false)
+            rowView.findViewById<android.widget.TextView>(R.id.tvRowLabel).text = row.label
+            rowView.findViewById<android.widget.TextView>(R.id.tvRowValue).text = row.value
+            container.addView(rowView)
+        }
+
+        bottomSheetDialog.show()
     }
     @SuppressLint("SetTextI18n")
     private fun observeViewModel() {
@@ -179,6 +210,8 @@ class KiblatActivity : AppCompatActivity() {
         viewModel.fetchQiblaAngle(lat, lon)
         // update compass
         loadQiblaCompass(lat, lon)
+        // breakdown perhitungan manual (Al Hasib) - ditampilkan lewat tombol info
+        qiblaBreakdown = QiblaCalculator.calculateBreakdown(lat, lon)
     }
     @SuppressLint("SetTextI18n")
     private fun getAddressFromLatLong(lat: Double, lon: Double) {

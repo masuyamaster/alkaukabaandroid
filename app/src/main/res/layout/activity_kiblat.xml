@@ -71,6 +71,8 @@
         android:orientation="horizontal"
         android:background="@drawable/bg_qibla_angle"
         android:elevation="6dp"
+        android:clickable="true"
+        android:focusable="true"
         app:layout_constraintBottom_toTopOf="@id/locationContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -95,6 +97,20 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/btnQiblaDetail"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:text="ⓘ"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
     </LinearLayout>
 
