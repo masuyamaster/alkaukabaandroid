@@ -32,6 +32,11 @@ macamnya (Kemenag RI, MWL, ISNA, dll) dan preferensinya beda-beda per user.
   aktif sekarang" (dari `TimingPrayers` mentah jadi `PrayerScheduleUiState`
   siap-render). Sengaja di ViewModel, bukan `WaktuSholatActivity`, supaya
   Activity cuma bind data ke View (lihat catatan clean-code di bawah).
+- `PrayerCalculationBreakdownRegistry.providerFor(methodId)` — titik ekstensi
+  untuk breakdown detail perhitungan ("kenapa hasilnya segini") per metode.
+  Untuk menambah breakdown ke metode lain: implement interface
+  `PrayerCalculationBreakdownProvider`, daftarkan di map registry ini —
+  ViewModel/Activity tidak perlu diubah.
 - Navigasi: `MainActivity` → `KonfigurasiActivity` via `Intent` biasa (tidak
   ada extra yang dibawa). Dari dalam `KonfigurasiActivity`, bottom sheet metode
   dan konfirmasi logout keduanya modal (`BottomSheetDialog` / `AlertDialog`),
@@ -51,6 +56,11 @@ File yang terlibat:
 | `viewmodel/MainViewModel.kt` | State untuk widget waktu sholat di home, juga lewat `PrayerRepository` |
 | `ui/konfigurasi/KonfigurasiActivity.kt` + `activity_konfigurasi.xml`, `dialog_prayer_method.xml` | UI pemilihan metode & logout |
 | `ui/waktusholat/WaktuSholatActivity.kt` | Murni bind `PrayerScheduleUiState` ke View (icon, warna, teks) — tidak ada logika "mana yang aktif" di sini |
+| `utils/prayerbreakdown/PrayerCalculationBreakdownRegistry.kt` | Map `methodId -> PrayerCalculationBreakdownProvider`; hari ini isinya cuma Ephemeris |
+| `utils/prayerbreakdown/PrayerBreakdownModels.kt` | `PrayerBreakdownSection`/`PrayerBreakdownRow` (data) + interface `PrayerCalculationBreakdownProvider` |
+| `utils/prayerbreakdown/EphemerisPrayerCalculator.kt` | Implementasi breakdown untuk Ephemeris — deklinasi matahari & Equation of Time pakai pendekatan sinusoidal sederhana, bukan tabel ephemeris presisi tinggi |
+| `res/layout/item_prayer_breakdown.xml` | Card accordion per waktu sholat (header klik untuk expand/collapse + body berisi baris rumus) |
+| `res/layout/item_breakdown_row.xml` | Satu baris rumus di dalam card (`tvRowLabel`/`tvRowValue`) |
 
 Alur data (pilih metode): `KonfigurasiActivity` (radio pilih preset) →
 `SessionManager` (simpan id) → `PrayerRepository` (baca id saat request
@@ -61,6 +71,25 @@ Alur data (render jadwal di `WaktuSholatActivity`): `PrayerRepository`
 `activeIndex`, susun `PrayerScheduleItem` per baris) → `PrayerScheduleUiState`
 lewat LiveData `prayerSchedule` → Activity `updateNextPrayerUI()` cuma
 mem-bind ke `binding.row*`, tanpa logika bisnis apa pun.
+
+Alur data (breakdown perhitungan): `PrayerTimesViewModel.loadData()` panggil
+`calculatePrayerBreakdown()` → `PrayerCalculationBreakdownRegistry.providerFor(
+repository.getSelectedMethodId())` (pakai id method yang **dipilih user**,
+bukan hasil fallback Aladhan) → kalau ada provider, `EphemerisPrayerCalculator
+.breakdown()` dipanggil dan hasilnya (`List<PrayerBreakdownSection>?`) di-set
+ke LiveData `calculationBreakdown`. Null/kosong kalau metode aktif tidak punya
+breakdown terdaftar (semua metode Aladhan selain Ephemeris) → Activity
+`renderPrayerBreakdown()` sembunyikan `layoutPrayerBreakdownContainer` dan
+tampilkan pesan fallback `tvNoPrayerBreakdown` untuk kasus ini.
+
+UI-nya sendiri: `WaktuSholatActivity` punya dua tab, **"Waktu Aktual"**
+(`btnTabActual`, jadwal biasa — default aktif) dan **"Detail Perhitungan"**
+(`btnTabDetail`, breakdown ini), diswitch lewat `updateTabState()` yang
+toggle visibility `layoutWaktuSholat` vs `layoutDetailKiblat`. Setiap section
+breakdown (per waktu sholat) dirender sebagai card accordion
+(`item_prayer_breakdown.xml`, klik `rowHeader` expand/collapse `layoutBody`,
+`tvChevron` berubah ⌄/⌃) berisi baris-baris rumus (`item_breakdown_row.xml`,
+`tvRowLabel`/`tvRowValue`) dari `PrayerBreakdownSection.rows`.
 
 ### Preset yang tersedia
 
@@ -136,3 +165,9 @@ sekali). Verifikasi saat ini manual:
          lokal) — saat ini keduanya diasumsikan selalu berasal dari Aladhan
          (`Response<PrayerResponse>` / `Response<PrayerTimeResponse>`).
 - [ ] Belum ada test otomatis (lihat bagian Testing di atas).
+- [ ] Tab "Detail Perhitungan" cuma berguna untuk metode **Ephemeris** — untuk
+      semua metode Aladhan lain, tab ini hanya menampilkan pesan fallback
+      (`tvNoPrayerBreakdown`) karena memang tidak ada breakdown terdaftar di
+      `PrayerCalculationBreakdownRegistry` untuk method selain Ephemeris.
+      Kalau mau breakdown juga tersedia untuk metode lain, perlu provider
+      baru per metode (lihat titik ekstensi di section 3).

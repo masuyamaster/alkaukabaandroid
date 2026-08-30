@@ -78,7 +78,7 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Fitur | Dokumen | Status |
 |---|---|---|
 | Waktu Sholat (metode perhitungan) | [features/waktu-sholat.md](features/waktu-sholat.md) | Terdokumentasi |
-| Arah Kiblat | — | Belum |
-| Bulan Hijriyah / Awal Bulan | — | Belum |
-| Kalender | — | Belum |
-| Autentikasi (login/register) | — | Belum |
+| Arah Kiblat | [features/arah-kiblat.md](features/arah-kiblat.md) | Terdokumentasi |
+| Bulan Hijriyah / Awal Bulan | [features/bulan-hijriyah.md](features/bulan-hijriyah.md) | Terdokumentasi |
+| Kalender | [features/kalender.md](features/kalender.md) | Terdokumentasi |
+| Autentikasi (login/register) | [features/autentikasi.md](features/autentikasi.md) | Terdokumentasi |
