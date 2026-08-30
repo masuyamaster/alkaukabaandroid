@@ -80,6 +80,7 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Waktu Sholat (metode perhitungan) | [features/waktu-sholat.md](features/waktu-sholat.md) | Terdokumentasi |
 | Arah Kiblat | [features/arah-kiblat.md](features/arah-kiblat.md) | Terdokumentasi |
 | Bulan Hijriyah / Awal Bulan | [features/bulan-hijriyah.md](features/bulan-hijriyah.md) | Terdokumentasi |
+| Gerhana | [features/gerhana.md](features/gerhana.md) | Terdokumentasi |
 | Kalender | [features/kalender.md](features/kalender.md) | Terdokumentasi |
 | Autentikasi (login/register) | [features/autentikasi.md](features/autentikasi.md) | Terdokumentasi |
 | Konfigurasi (Lokasi, Sumber Kiblat, Metode Sholat) | [features/konfigurasi.md](features/konfigurasi.md) | Terdokumentasi |

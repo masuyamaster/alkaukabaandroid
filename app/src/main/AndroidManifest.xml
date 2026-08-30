@@ -49,6 +49,9 @@
             android:name="site.elahady.alkaukaba.ui.calendar.CalendarActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.gerhana.GerhanaActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.konfigurasi.KonfigurasiActivity"
             android:exported="false" />
         <activity
