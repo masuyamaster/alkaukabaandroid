@@ -12,6 +12,7 @@ import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupHeaderDate() {
         val dateFormatFull = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
         binding.tvDateNow.text = dateFormatFull.format(Date())
+        binding.tvDateHijri.text = HijriDateUtil.fullDateLabel(Calendar.getInstance())
     }
 
     private fun checkLocationPermission() {
@@ -226,6 +228,9 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, site.elahady.alkaukaba.ui.konfigurasi.KonfigurasiActivity::class.java))
+        }
+        binding.btnProfile.setOnClickListener {
+            startActivity(Intent(this, site.elahady.alkaukaba.ui.profile.ProfileActivity::class.java))
         }
         binding.btAwalbulan.setOnClickListener {
             startActivity(Intent(this, AwalBulanActivity::class.java))

@@ -55,6 +55,9 @@
             android:name="site.elahady.alkaukaba.ui.konfigurasi.KonfigurasiActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.profile.ProfileActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity"
             android:exported="false" />
     </application>

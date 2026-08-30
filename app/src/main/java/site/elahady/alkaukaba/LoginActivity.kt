@@ -20,6 +20,7 @@ import site.elahady.alkaukaba.databinding.ActivityLoginBinding
 import site.elahady.alkaukaba.model.GoogleLoginRequest
 import site.elahady.alkaukaba.model.LoginRequest
 import site.elahady.alkaukaba.model.RegisterRequest
+import site.elahady.alkaukaba.model.UserData
 import site.elahady.alkaukaba.utils.AuthClient
 import site.elahady.alkaukaba.utils.SessionManager
 
@@ -203,6 +204,7 @@ class LoginActivity : AppCompatActivity() {
 
                             val sessionManager = SessionManager(this@LoginActivity)
                             sessionManager.setLogin(true)
+                            persistUserData(sessionManager, apiResponse.data)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -245,6 +247,7 @@ class LoginActivity : AppCompatActivity() {
 
                             val sessionManager = SessionManager(this@LoginActivity)
                             sessionManager.setLogin(true)
+                            persistUserData(sessionManager, apiResponse.data)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -261,5 +264,13 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun persistUserData(sessionManager: SessionManager, data: UserData?) {
+        if (data == null) return
+        sessionManager.setUserId(data.id)
+        sessionManager.setUserName(data.username)
+        sessionManager.setEmail(data.email)
+        data.token?.let { sessionManager.setAuthToken(it) }
     }
 }

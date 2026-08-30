@@ -15,6 +15,7 @@
     <color name="header_start">#5A6B88</color>
     <color name="header_end">#3B4A63</color>
     <color name="accent_yellow">#FBBF24</color>
+    <color name="navy_dongker">#1E3A5F</color>
 
     <color name="card_white">#FFFFFF</color>
     <color name="text_primary">#1E293B</color>
@@ -48,5 +49,13 @@
     <color name="waktu_sholat_icon_bg_inactive">#F1F5F9</color>
     <color name="waktu_sholat_row_active_bg">#E8F0FE</color>
     <color name="waktu_sholat_row_active_border">#F1F5F9</color>
+
+    <color name="hero_card_bg">#EEF2FF</color>
+    <color name="pill_green_bg">#DCFCE7</color>
+    <color name="pill_green_text">#15803D</color>
+    <color name="pill_red_bg">#FEE2E2</color>
+    <color name="pill_red_text">#B91C1C</color>
+    <color name="divider_soft">#EEF1F4</color>
+    <color name="input_inline_bg">#F1F5F9</color>
 
 </resources>

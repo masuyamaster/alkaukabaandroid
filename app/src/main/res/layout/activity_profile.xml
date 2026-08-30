@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F7FA"
+    tools:context=".ui.profile.ProfileActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <ScrollView
+        android:id="@+id/scrollContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ================= A. INFORMASI AKUN ================= -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="@color/card_white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:padding="24dp">
+
+                    <ImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:padding="18dp"
+                        android:background="@drawable/bg_circle_button"
+                        android:backgroundTint="@color/accent_yellow"
+                        android:src="@drawable/ic_person"
+                        app:tint="@android:color/white"
+                        android:contentDescription="@string/app_name" />
+
+                    <TextView
+                        android:id="@+id/tvUserName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/loading"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:id="@+id/tvUserEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/loading"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnEditProfile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="24dp"
+                        android:text="Edit Profil"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_primary"
+                        android:background="@drawable/bg_input_outline" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ================= C. BANTUAN & INFORMASI ================= -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BANTUAN &amp; INFORMASI"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:letterSpacing="0.05"
+                android:paddingHorizontal="4dp"
+                android:paddingBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/rowHelp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/card_white"
+                android:layout_marginBottom="12dp"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Hubungi Kami / Bantuan"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/text_hint" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowPrivacy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/card_white"
+                android:layout_marginBottom="24dp"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Kebijakan Privasi &amp; Syarat Ketentuan"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/text_hint" />
+            </LinearLayout>
+
+            <!-- ================= D. KEAMANAN & TINDAKAN AKUN ================= -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="KEAMANAN &amp; AKUN"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:letterSpacing="0.05"
+                android:paddingHorizontal="4dp"
+                android:paddingBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/rowChangePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/card_white"
+                android:layout_marginBottom="12dp"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ubah Kata Sandi"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/text_hint" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/card_white"
+                android:layout_marginBottom="12dp"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Keluar"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/pill_red_text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowDeleteAccount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/pill_red_bg"
+                android:layout_marginBottom="16dp"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Hapus Akun"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/pill_red_text" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

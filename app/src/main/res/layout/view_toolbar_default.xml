@@ -17,8 +17,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:padding="10dp"
-        android:background="@drawable/bg_circle_button"
-        android:backgroundTint="@color/waktu_sholat_icon_bg_inactive"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_arrow_back"
         app:tint="#374151"
         android:contentDescription="Kembali" />

@@ -55,7 +55,7 @@ terdekat ke depan dari waktu sekarang** — tidak ada pilihan bulan manual.
 | `viewmodel/hilal/HilalViewModel.kt` | `LiveData<HilalResult> calculationResult`; jembatan Activity -> `EphemerisCalculator`/`HilalPdfService` |
 | `model/HilalModels.kt` | `HilalInput` (lat, lng, heightMeters) dan `HilalResult` (label, status, tinggi hilal, elongasi, mukuts, `breakdownSections`, `calculationLog`) |
 | `utils/EphemerisCalculator.kt` | Mesin hisab real — lihat section 5 |
-| `utils/HijriDateUtil.kt` | Konversi Masehi->Hijriyah tabular (Kuwaiti algorithm), **hanya** untuk label tampilan "bulan Hijriyah yang dicek" |
+| `utils/HijriDateUtil.kt` | Konversi Masehi->Hijriyah tabular (Kuwaiti algorithm) untuk label tampilan — dipakai untuk "bulan Hijriyah yang dicek" di sini (`nextMonthLabel()`) **dan** tanggal Hijriyah hari ini di kartu Sholat Berikutnya `MainActivity` (`fullDateLabel()`, sejak 2026-08-30) |
 | `utils/HilalPdfService.kt` | Render `HilalResult.calculationLog` jadi PDF via `android.graphics.pdf.PdfDocument`, simpan ke folder Download publik — tidak diubah dari versi lama |
 | `utils/Astronomy.kt` | "Astronomy Engine" (`io.github.cosinekitty.astronomy`) — sekarang **dipakai** oleh `EphemerisCalculator` (`Observer`, `Time`, `searchMoonQuarter`/`nextMoonQuarter`, `searchRiseSet`, `equator`, `horizon`, `elongation`, `illumination`) |
 | `utils/prayerbreakdown/PrayerBreakdownModels.kt` | Model accordion (`PrayerBreakdownSection`/`PrayerBreakdownRow`) — di-reuse dari fitur Waktu Sholat, bukan model baru khusus fitur ini |

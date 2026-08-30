@@ -75,13 +75,13 @@ class GerhanaActivity : AppCompatActivity() {
     }
 
     private fun updateTabState(isLunar: Boolean) {
-        val colorActive = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorActive = ContextCompat.getColor(this, R.color.navy_dongker)
         val colorInactive = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
 
         val activeTab = if (isLunar) binding.btnTabBulan else binding.btnTabMatahari
         val inactiveTab = if (isLunar) binding.btnTabMatahari else binding.btnTabBulan
 
-        activeTab.setBackgroundResource(R.drawable.bg_tab_underline_active)
+        activeTab.setBackgroundResource(R.drawable.bg_tab_underline_active_navy)
         activeTab.setTextColor(colorActive)
         activeTab.setTypeface(null, android.graphics.Typeface.BOLD)
 
@@ -173,7 +173,7 @@ class GerhanaActivity : AppCompatActivity() {
 
     // Ubah koordinat mentah jadi nama lokasi (kabupaten/kota, provinsi) via reverse geocoding.
     private fun resolveLocationName(lat: Double, lng: Double) {
-        binding.tvLocationName.text = "📍 Mendeteksi lokasi..."
+        binding.tvLocationName.text = "Mendeteksi lokasi..."
         lifecycleScope.launch(Dispatchers.IO) {
             val placeName = try {
                 @Suppress("DEPRECATION")
@@ -186,8 +186,8 @@ class GerhanaActivity : AppCompatActivity() {
                 null
             }
             withContext(Dispatchers.Main) {
-                binding.tvLocationName.text = "📍 " + (placeName
-                    ?: "%.4f, %.4f".format(Locale.US, lat, lng))
+                binding.tvLocationName.text = placeName
+                    ?: "%.4f, %.4f".format(Locale.US, lat, lng)
             }
         }
     }

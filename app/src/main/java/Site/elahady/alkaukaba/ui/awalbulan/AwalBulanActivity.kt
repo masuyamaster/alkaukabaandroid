@@ -2,13 +2,13 @@ package site.elahady.alkaukaba.ui.awalbulan
 
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
-import site.elahady.alkaukaba.databinding.ItemHilalResultCardBinding
-import site.elahady.alkaukaba.databinding.ItemPrayerBreakdownBinding
+import site.elahady.alkaukaba.databinding.ItemHilalBreakdownRowBinding
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
 import site.elahady.alkaukaba.viewmodel.hilal.HilalViewModel
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.view.View
@@ -16,12 +16,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class AwalBulanActivity : AppCompatActivity() {
@@ -68,42 +73,37 @@ class AwalBulanActivity : AppCompatActivity() {
     private fun setupObservers() {
         viewModel.calculationResult.observe(this) { result ->
             binding.layoutResultContainer.visibility = View.VISIBLE
-            binding.tvHasil.visibility = View.VISIBLE
 
             binding.tvBulanHijriyah.text = result.bulanHijriyahLabel
-            binding.tvTanggalGhurub.text = "Ghurub markaz: ${result.tanggalGhurubLabel}"
+            binding.tvTanggalGhurub.text = "📅 Ghurub: ${result.tanggalGhurubLabel}"
             binding.tvStatusBadge.text = result.statusBadge
-            binding.tvStatusBadge.setBackgroundResource(
-                if (result.hilalMemenuhiKriteria) android.R.color.holo_green_dark
-                else android.R.color.holo_red_dark
-            )
+            if (result.hilalMemenuhiKriteria) {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_pill_green)
+                binding.tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.pill_green_text))
+            } else {
+                binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_pill_red)
+                binding.tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.pill_red_text))
+            }
 
-            bindMetricCard(binding.cardTinggiHilal, "Tinggi Hilal Mar'i", "%.4f°".format(Locale.US, result.tinggiHilal))
-            bindMetricCard(binding.cardElongasi, "Elongasi", "%.4f°".format(Locale.US, result.elongasi))
-            bindMetricCard(binding.cardMukuts, "Mukuts (Lama di Atas Ufuk)", "%.1f menit".format(Locale.US, result.mukutsMenit))
+            binding.tvTinggiHilalValue.text = "%.2f°".format(Locale.US, result.tinggiHilal)
+            binding.tvElongasiValue.text = "%.2f°".format(Locale.US, result.elongasi)
+            binding.tvMukutsValue.text = "%.1f menit".format(Locale.US, result.mukutsMenit)
 
             renderBreakdown(result.breakdownSections)
         }
     }
 
-    private fun bindMetricCard(card: ItemHilalResultCardBinding, title: String, value: String) {
-        card.tvTitle.text = title
-        card.tvValue.text = value
-        card.tvSubtitle.visibility = View.GONE
-        card.tvDetailLink.visibility = View.GONE
-    }
-
-    // Accordion rincian perhitungan - reuse komponen yang sama dipakai fitur Waktu Sholat
-    // (item_prayer_breakdown.xml + item_breakdown_row.xml), lihat WaktuSholatActivity.renderPrayerBreakdown().
+    // Accordion rincian perhitungan - satu kartu memanjang dengan pemisah garis tipis antar seksi.
     private fun renderBreakdown(sections: List<PrayerBreakdownSection>) {
         binding.layoutHilalBreakdownContainer.removeAllViews()
 
-        sections.forEach { section ->
-            val itemBinding = ItemPrayerBreakdownBinding.inflate(
+        sections.forEachIndexed { index, section ->
+            val itemBinding = ItemHilalBreakdownRowBinding.inflate(
                 layoutInflater, binding.layoutHilalBreakdownContainer, false
             )
-            itemBinding.tvPrayerLabel.text = section.prayerLabel
-            itemBinding.tvResultTime.text = section.resultTime
+            itemBinding.tvSectionLabel.text = section.prayerLabel
+            itemBinding.tvSectionValue.text = section.resultTime
+            itemBinding.divider.visibility = if (index == sections.lastIndex) View.GONE else View.VISIBLE
 
             section.rows.forEach { row ->
                 val rowView = layoutInflater.inflate(R.layout.item_breakdown_row, itemBinding.layoutBody, false)
@@ -115,7 +115,7 @@ class AwalBulanActivity : AppCompatActivity() {
             itemBinding.rowHeader.setOnClickListener {
                 val isExpanded = itemBinding.layoutBody.visibility == View.VISIBLE
                 itemBinding.layoutBody.visibility = if (isExpanded) View.GONE else View.VISIBLE
-                itemBinding.tvChevron.text = if (isExpanded) "⌄" else "⌃"
+                itemBinding.ivChevron.animate().rotation(if (isExpanded) 0f else 180f).setDuration(150).start()
             }
 
             binding.layoutHilalBreakdownContainer.addView(itemBinding.root)
@@ -173,8 +173,29 @@ class AwalBulanActivity : AppCompatActivity() {
     }
 
     private fun updateCoordinateDisplay() {
-        binding.etCoordinates.setText("$currentLat, $currentLng")
-        binding.tvLatLongDetail.text = "Latitude: $currentLat Longitude: $currentLng"
+        binding.tvLatLongDetail.text = "Lintang: %.4f | Bujur: %.4f".format(Locale.US, currentLat, currentLng)
+        resolveLocationName(currentLat, currentLng)
+    }
+
+    // Ubah koordinat mentah jadi nama lokasi (kabupaten/kota, provinsi) via reverse geocoding.
+    private fun resolveLocationName(lat: Double, lng: Double) {
+        binding.tvLocationName.text = "📍 Mendeteksi lokasi..."
+        lifecycleScope.launch(Dispatchers.IO) {
+            val placeName = try {
+                @Suppress("DEPRECATION")
+                val results = Geocoder(this@AwalBulanActivity, Locale("in", "ID")).getFromLocation(lat, lng, 1)
+                val address = results?.firstOrNull()
+                listOfNotNull(address?.subAdminArea ?: address?.adminArea, address?.countryName)
+                    .joinToString(", ")
+                    .ifBlank { null }
+            } catch (e: Exception) {
+                null
+            }
+            withContext(Dispatchers.Main) {
+                binding.tvLocationName.text = "📍 " + (placeName
+                    ?: "%.4f, %.4f".format(Locale.US, lat, lng))
+            }
+        }
     }
 
     private fun runCalculation() {

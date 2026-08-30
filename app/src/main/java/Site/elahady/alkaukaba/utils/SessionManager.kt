@@ -102,4 +102,33 @@ class SessionManager(context: Context) {
     fun isLoggedIn(): Boolean {
         return prefs.getBoolean("IS_LOGGED_IN", false)
     }
+
+    fun getUserName(): String? = prefs.getString("USERNAME", null)
+
+    fun getEmail(): String? = prefs.getString("EMAIL", null)
+
+    fun setUserId(id: Int) {
+        prefs.edit().putInt("USER_ID", id).apply()
+    }
+
+    fun getUserId(): Int = prefs.getInt("USER_ID", -1)
+
+    /** Sanctum bearer token (lihat AuthController::userResponse di alkaukabaweb) - dipakai untuk
+     * update_profile/change_password/delete_account, action publik (login/register/google_login)
+     * tidak butuh ini. */
+    fun setAuthToken(token: String) {
+        prefs.edit().putString("AUTH_TOKEN", token).apply()
+    }
+
+    fun getAuthToken(): String? = prefs.getString("AUTH_TOKEN", null)
+
+    fun clearUserData() {
+        prefs.edit()
+            .remove("IS_LOGGED_IN")
+            .remove("USERNAME")
+            .remove("EMAIL")
+            .remove("USER_ID")
+            .remove("AUTH_TOKEN")
+            .apply()
+    }
 }
