@@ -24,6 +24,8 @@ import androidx.core.view.WindowCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 
 class KonfigurasiActivity : AppCompatActivity() {
 
@@ -52,11 +54,14 @@ class KonfigurasiActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
+        binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         sessionManager = SessionManager(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        binding.btnBack.setOnClickListener { finish() }
+        binding.includeToolbar.tvToolbarTitle.text = "Konfigurasi"
+        binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
         binding.rowLocation.setOnClickListener { showLocationSheet() }
         binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
@@ -102,8 +107,6 @@ class KonfigurasiActivity : AppCompatActivity() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_lokasi, null)
         bottomSheetDialog.setContentView(view)
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupLocationMode)
         val radioAuto = view.findViewById<RadioButton>(R.id.radioLocationAuto)
@@ -192,8 +195,6 @@ class KonfigurasiActivity : AppCompatActivity() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_qibla_source, null)
         bottomSheetDialog.setContentView(view)
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupQiblaSource)
         val radioAladhan = view.findViewById<RadioButton>(R.id.radioQiblaAladhan)
@@ -230,8 +231,6 @@ class KonfigurasiActivity : AppCompatActivity() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_prayer_method, null)
         bottomSheetDialog.setContentView(view)
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupMethods)
         val layoutCustomAngle = view.findViewById<View>(R.id.layoutCustomAngle)

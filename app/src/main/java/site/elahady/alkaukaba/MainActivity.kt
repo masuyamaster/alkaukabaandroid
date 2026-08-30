@@ -10,6 +10,7 @@ import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.mainContent.applySystemBarInsetsPadding(applyBottom = true)
 
         setupViewModel()
         setupHeaderDate()

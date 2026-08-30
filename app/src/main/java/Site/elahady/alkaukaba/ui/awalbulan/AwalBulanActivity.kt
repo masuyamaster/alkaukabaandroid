@@ -16,7 +16,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import java.util.Locale
@@ -36,6 +39,10 @@ class AwalBulanActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAwalBulanBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
+        binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         viewModel = ViewModelProvider(this)[HilalViewModel::class.java]
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -47,10 +54,15 @@ class AwalBulanActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        binding.btnBack.setOnClickListener { finish() }
+        binding.includeToolbar.tvToolbarTitle.text = "Awal Bulan Hijriyah"
+        binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        binding.includeToolbar.btnToolbarAction.apply {
+            visibility = View.VISIBLE
+            setImageResource(R.drawable.ic_pdf_icon)
+            setOnClickListener { viewModel.generatePdf(this@AwalBulanActivity) }
+        }
         binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
         binding.btnCalculate.setOnClickListener { runCalculation() }
-        binding.btnDownloadPdf.setOnClickListener { viewModel.generatePdf(this) }
     }
 
     private fun setupObservers() {

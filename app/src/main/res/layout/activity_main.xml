@@ -15,6 +15,7 @@
         android:fillViewport="true">
 
 <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/mainContent"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingBottom="32dp">

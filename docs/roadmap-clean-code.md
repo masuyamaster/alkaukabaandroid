@@ -70,6 +70,63 @@ sudah terasa perlu.
   Ephemeris beneran menjadi satu-satunya sumber (lihat item TODO di
   `features/waktu-sholat.md`).
 
+- [x] **Top bar & window insets konsisten di semua layar (fix overlap nav bar,
+  shadow bottom sheet jelek, top bar tidak seragam).** Dipicu laporan user
+  lewat 3 screenshot: kartu Kalender & tombol "Hitung Ulang" ketutupan gesture
+  nav bar, shadow di bottom sheet "Detail Perhitungan Arah Kiblat" nongol
+  kotak di balik kartu bulat, dan tiap activity punya gaya top bar/back button
+  sendiri-sendiri.
+
+  **Root cause overlap nav bar**: semua activity manggil
+  `WindowCompat.setDecorFitsSystemWindows(window, false)` (edge-to-edge) tapi
+  **tidak ada satupun** yang consume `WindowInsetsCompat` - padding
+  bawah/atas yang ada selama ini cuma angka tebakan manual (`paddingTop=20dp`,
+  `marginTop=48dp`, dst), tidak dinamis mengikuti tinggi bar sungguhan di
+  device. `AwalBulanActivity` malah tidak manggil `setDecorFitsSystemWindows`
+  sama sekali, tapi tetap kena edge-to-edge karena `targetSdk 36` (Android 15+
+  mulai mem-force edge-to-edge terlepas dari pemanggilan itu).
+
+  **Root cause shadow bottom sheet**: `BottomSheetDialog` bawaan Material
+  Components punya container (`design_bottom_sheet`) bersudut persegi; kode
+  lama nutup warnanya jadi transparan (`setBackgroundColor(TRANSPARENT)`) dan
+  gambar sudut membulat sendiri di konten satu level di dalamnya
+  (`bg_card_up_rounded`). Elevation shadow tetap mengikuti outline persegi si
+  container, jadi nongol di balik kartu yang membulat.
+
+  Yang dibangun:
+  - `utils/InsetsUtils.kt` - dua extension function (`applySystemBarInsetsPadding`,
+    `applyTopSystemBarInsetAsMargin`) yang menambah inset system bar **di atas**
+    padding/margin dasar yang sudah ada di XML, dipasang di titik
+    scroll/tombol/container paling bawah (dan atas untuk toolbar) tiap activity.
+  - `res/layout/view_toolbar_default.xml` - komponen top bar bersama (tombol
+    back bulat + judul + slot ikon aksi opsional), dipasang via `<include>` di
+    `KonfigurasiActivity`, `WaktuSholatActivity`, `AwalBulanActivity`, dan
+    `KiblatActivity` (yang terakhir tadinya pakai `Toolbar` asli dengan
+    back-press ganda - `OnBackPressedDispatcher` **dan** override
+    `onBackPressed()` deprecated sekaligus - sekarang disatukan jadi satu
+    jalur). **Keputusan user**: halaman `CalendarActivity` sengaja **tidak**
+    ikut dikonversi ke komponen ini - tetap pakai header gradient teal seperti
+    dashboard, cuma margin/padding-nya dibikin dinamis lewat `InsetsUtils`.
+    `MainActivity` (dashboard) juga tidak disentuh top bar-nya (branded, tanpa
+    back button), cuma overlap bawahnya yang difix.
+  - `themes.xml` - `bottomSheetDialogTheme` baru
+    (`ThemeOverlay.AlKaukaba.BottomSheetDialog` → `Widget.AlKaukaba.BottomSheet.Modal`
+    → `ShapeAppearance.AlKaukaba.BottomSheet`, sudut atas 16dp) supaya
+    `design_bottom_sheet` sendiri yang membulat dan shadow ikut bentuknya.
+    Efeknya app-wide - semua `BottomSheetDialog` (termasuk 3 dialog di
+    `KonfigurasiActivity`) kebagian fix ini, bukan cuma dialog Kiblat. Hack
+    `setBackgroundColor(TRANSPARENT)` yang lama dihapus di 4 titik karena
+    sekarang jadi kontraproduktif (menutup shadow yang sudah dibetulkan).
+
+  **Diverifikasi**: build `assembleDebug` + install ke HP fisik (bukan cuma
+  emulator) via `adb install -r`, bukan sekadar compile check.
+
+  **Known gap**: `LoginActivity` dan `Splashscreen` belum disentuh (tidak ada
+  laporan masalah di situ, dan `LoginActivity` memang tidak punya back
+  button). Kalau nanti ada activity baru yang butuh top bar dengan back
+  button, pakai `view_toolbar_default.xml` + `InsetsUtils` supaya konsisten,
+  jangan hand-roll header baru lagi.
+
 ## Belum waktunya, jadi konsesi untuk nanti
 
 - [ ] **Domain layer tipis untuk logika yang punya business rule nyata.**

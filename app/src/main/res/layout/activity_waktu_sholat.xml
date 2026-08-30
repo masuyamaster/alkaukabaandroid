@@ -5,35 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingTop="20dp"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     tools:context=".ui.waktusholat.WaktuSholatActivity"
     android:background="#F5F7FA">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:padding="16dp">
-        <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="10dp"
-            android:background="@drawable/bg_circle_button"
-            android:backgroundTint="@color/waktu_sholat_icon_bg_inactive"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="#374151"/>
-        <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Waktu Sholat"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginStart="16dp"
-        android:textColor="#111827"/>
-    </LinearLayout>
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default"
+        android:layout_marginStart="-10dp"
+        android:layout_marginEnd="-10dp"
+        android:layout_marginTop="4dp" />
 
     <LinearLayout
         android:id="@+id/tabContainer"
@@ -72,6 +54,7 @@
     </LinearLayout>
 
     <ScrollView
+        android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="10dp">

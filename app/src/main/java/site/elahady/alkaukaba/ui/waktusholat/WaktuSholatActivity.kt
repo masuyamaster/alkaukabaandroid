@@ -27,6 +27,8 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 
 class WaktuSholatActivity : AppCompatActivity() {
 
@@ -60,6 +62,8 @@ class WaktuSholatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
+        binding.scrollContent.applySystemBarInsetsPadding(applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sessionManager = SessionManager(this)
@@ -91,7 +95,8 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.btnTabDetail.setOnClickListener {
             updateTabState(isActual = false)
         }
-        binding.btnBack.setOnClickListener { finish() }
+        binding.includeToolbar.tvToolbarTitle.text = "Waktu Sholat"
+        binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
     }
 
     private fun updateTabState(isActual: Boolean) {

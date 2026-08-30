@@ -28,6 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import java.util.*
@@ -59,6 +60,7 @@ class KiblatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
+        binding.root.applySystemBarInsetsPadding(applyTop = true, applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sessionManager = SessionManager(this)
@@ -79,7 +81,8 @@ class KiblatActivity : AppCompatActivity() {
             binding.txtQiblaValue.text = "${angle.toInt()}°"
         }
 
-        binding.toolbar.setNavigationOnClickListener{
+        binding.includeToolbar.tvToolbarTitle.text = getString(R.string.titleArahKiblat)
+        binding.includeToolbar.btnBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
@@ -97,8 +100,6 @@ class KiblatActivity : AppCompatActivity() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.dialog_qibla_breakdown, null)
         bottomSheetDialog.setContentView(view)
-        val bottomSheet = bottomSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
 
         val subtitle = view.findViewById<android.widget.TextView>(R.id.tvQiblaBreakdownSubtitle)
         subtitle.text = if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
@@ -367,11 +368,6 @@ class KiblatActivity : AppCompatActivity() {
         binding.imgCompass.rotation = -currentAzimuth
 
         checkQiblaAlignment()
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finish()
     }
 
     private fun unwrapAngle(newAngle: Float, prevAngle: Float): Float {
