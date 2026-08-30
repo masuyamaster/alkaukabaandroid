@@ -46,7 +46,7 @@
     <color name="waktu_sholat_pill_text">#D1D5DB</color>
     <color name="waktu_sholat_icon_muted">#6B7280</color>
     <color name="waktu_sholat_icon_bg_inactive">#F1F5F9</color>
-    <color name="waktu_sholat_row_active_bg">#F8FAFC</color>
+    <color name="waktu_sholat_row_active_bg">#E8F0FE</color>
     <color name="waktu_sholat_row_active_border">#F1F5F9</color>
 
 </resources>

@@ -14,8 +14,13 @@ import site.elahady.alkaukaba.utils.SessionManager
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -25,8 +30,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 
@@ -100,44 +109,22 @@ class WaktuSholatActivity : AppCompatActivity() {
     }
 
     private fun updateTabState(isActual: Boolean) {
-        if (isActual) {
-            // --- KONDISI: WAKTU AKTUAL AKTIF ---
+        val colorActive = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorInactive = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
 
-            // 1. Ubah Style Tombol Kiri (Aktif)
-            binding.btnTabActual.setBackgroundResource(R.drawable.bg_tab_active)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabActual.setTextColor(getColor(android.R.color.white))
-            }
+        val activeTab = if (isActual) binding.btnTabActual else binding.btnTabDetail
+        val inactiveTab = if (isActual) binding.btnTabDetail else binding.btnTabActual
 
-            // 2. Ubah Style Tombol Kanan (Non-Aktif)
-            binding.btnTabDetail.setBackgroundResource(R.drawable.bg_tab_inactive)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabDetail.setTextColor(getColor(R.color.black))
-            }
+        activeTab.setBackgroundResource(R.drawable.bg_tab_underline_active)
+        activeTab.setTextColor(colorActive)
+        activeTab.setTypeface(null, android.graphics.Typeface.BOLD)
 
-            // 3. Tampilkan Layout yang sesuai
-            binding.layoutWaktuSholat.visibility = View.VISIBLE
-            binding.layoutDetailPerhitungan.visibility = View.GONE
+        inactiveTab.setBackgroundResource(R.drawable.bg_tab_underline_inactive)
+        inactiveTab.setTextColor(colorInactive)
+        inactiveTab.setTypeface(null, android.graphics.Typeface.NORMAL)
 
-        } else {
-            // --- KONDISI: DETAIL PERHITUNGAN AKTIF ---
-
-            // 1. Ubah Style Tombol Kiri (Non-Aktif)
-            binding.btnTabActual.setBackgroundResource(R.drawable.bg_tab_inactive)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabActual.setTextColor(getColor(R.color.black))
-            }
-
-            // 2. Ubah Style Tombol Kanan (Aktif)
-            binding.btnTabDetail.setBackgroundResource(R.drawable.bg_tab_active)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabDetail.setTextColor(getColor(android.R.color.white))
-            }
-
-            // 3. Tampilkan Layout yang sesuai
-            binding.layoutWaktuSholat.visibility = View.GONE
-            binding.layoutDetailPerhitungan.visibility = View.VISIBLE
-        }
+        binding.layoutWaktuSholat.visibility = if (isActual) View.VISIBLE else View.GONE
+        binding.layoutDetailPerhitungan.visibility = if (isActual) View.GONE else View.VISIBLE
     }
 
     // 1. Menampilkan Tanggal Masehi & Hijriyah
@@ -163,8 +150,19 @@ class WaktuSholatActivity : AppCompatActivity() {
             ""
         }
 
-        // Set ke TextView (Format: 11 Rajab 1446H | 11 Januari 2025)
-        binding.tvDate.text = if (hijriString.isNotEmpty()) "$hijriString | $masehiString" else masehiString
+        // Set ke TextView: tanggal Hijriyah ditebalkan & lebih terang, dipisah bullet dari tanggal Masehi
+        // (Format: 11 Rajab 1446H  •  11 Januari 2025)
+        binding.tvDate.text = if (hijriString.isNotEmpty()) {
+            SpannableStringBuilder().apply {
+                append(hijriString)
+                setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                setSpan(ForegroundColorSpan(ContextCompat.getColor(this@WaktuSholatActivity, android.R.color.white)), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                append("  •  ")
+                append(masehiString)
+            }
+        } else {
+            masehiString
+        }
     }
 
     // 2. Bind 8 baris waktu (Tsulutsul Lail Akhir s/d Isya) & tandai periode yang sedang aktif.
@@ -309,8 +307,7 @@ class WaktuSholatActivity : AppCompatActivity() {
             val lat = location?.latitude ?: -6.2088
             val long = location?.longitude ?: 106.8456
 
-            // Update UI Lokasi
-            binding.tvLocationName.text = "Lat: $lat, Long: $long"
+            updateLocationDisplay(lat, long)
 
             // PENTING: Panggil ViewModel untuk memproses data
             viewModel.loadData(lat, long)
@@ -323,7 +320,35 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun useManualLocation(lat: Double, lon: Double) {
-        binding.tvLocationName.text = "Lat: $lat, Long: $lon"
+        updateLocationDisplay(lat, lon)
         viewModel.loadData(lat, lon)
+    }
+
+    // Nama lokasi (mis. "Surabaya, Jawa Timur") ditampilkan di hero card - koordinat mentah
+    // dipindah ke tab Detail Perhitungan supaya halaman utama tidak terlalu teknis.
+    @SuppressLint("SetTextI18n")
+    private fun updateLocationDisplay(lat: Double, lon: Double) {
+        binding.tvDetailCoordinates.text = "Koordinat: Lat $lat, Long $lon"
+        binding.tvLocationName.text = "Mencari nama lokasi..."
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val placeName = resolvePlaceName(lat, lon)
+            withContext(Dispatchers.Main) {
+                binding.tvLocationName.text = placeName ?: "Lokasi Anda"
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun resolvePlaceName(lat: Double, lon: Double): String? {
+        return try {
+            val geocoder = Geocoder(this, java.util.Locale("id", "ID"))
+            val address = geocoder.getFromLocation(lat, lon, 1)?.firstOrNull() ?: return null
+            val kota = address.subAdminArea ?: address.locality
+            val provinsi = address.adminArea
+            listOfNotNull(kota, provinsi).joinToString(", ").ifBlank { null }
+        } catch (e: Exception) {
+            null
+        }
     }
 }

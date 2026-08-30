@@ -102,6 +102,48 @@ breakdown (per waktu sholat) dirender sebagai card accordion
 `tvChevron` berubah ⌄/⌃) berisi baris-baris rumus (`item_breakdown_row.xml`,
 `tvRowLabel`/`tvRowValue`) dari `PrayerBreakdownSection.rows`.
 
+### Polish UI hero card, tab, & lokasi (2026-08-30)
+
+Perombakan visual atas masukan review UX, semuanya di `WaktuSholatActivity`
+dan `activity_waktu_sholat.xml`, tanpa mengubah logika `PrayerTimesViewModel`:
+
+- **Nama lokasi human-readable**: `tvLocationName` di hero card sekarang
+  menampilkan hasil reverse-geocode (`"Kota, Provinsi"`, mis. "Surabaya, Jawa
+  Timur") lewat `resolvePlaceName()` (pakai `android.location.Geocoder`,
+  pola yang sama dengan `MainViewModel.fetchAddressName` dan
+  `KiblatActivity.getAddressFromLatLong`), bukan lagi string mentah
+  `"Lat: x, Long: y"`. Koordinat mentah dipindah ke `tvDetailCoordinates`
+  (baru) di tab Detail Perhitungan — dipanggil dari `updateLocationDisplay()`
+  yang jadi titik tunggal setiap kali lokasi berubah (GPS via `getLocation()`
+  maupun manual via `useManualLocation()`). Geocoding jalan di
+  `lifecycleScope.launch(Dispatchers.IO)` supaya tidak blok main thread;
+  kalau gagal/alamat tidak ketemu (umum untuk titik lokasi manual/markaz),
+  fallback teksnya `"Lokasi Anda"`.
+- **Kontras ikon pin lokasi**: `ic_gis_location_poi` aslinya solid merah
+  gelap (`#850000`) — kontras jelek di atas pill gelap hero card. Tidak
+  diubah warna aslinya di file vector (drawable ini dipakai juga di
+  `activity_awal_bulan.xml`), melainkan di-tint per-pemakaian lewat
+  `app:drawableTint="@color/waktu_sholat_pill_text"` di `tvLocationName`.
+- **Tab navigasi**: diganti dari toggle abu-abu (`bg_tab_container` +
+  `bg_tab_active`/`bg_tab_inactive`, kotak solid) jadi gaya tab Material —
+  teks polos berjajar, tab aktif ditandai underline 3dp
+  (`bg_tab_underline_active.xml`, warna `waktu_sholat_dark_bg`) di
+  `updateTabState()`. Drawable lama (`bg_tab_container`/`bg_tab_active`/
+  `bg_tab_inactive`) dibiarkan ada (belum dipakai di tempat lain, belum
+  dihapus — lihat Known Issues) demi tidak menyentuh file yang mungkin
+  sedang dipakai/di-refactor sesi lain.
+- **Highlight baris sholat aktif**: warna `waktu_sholat_row_active_bg`
+  diubah dari abu nyaris putih (`#F8FAFC`) ke biru pastel yang kelihatan
+  (`#E8F0FE`) supaya baris Maghrib (mis.) yang sedang aktif langsung
+  kebaca tanpa harus mencari teks yang di-bold. `rowRoot` di
+  `item_prayer_row.xml` sudah full-width sejak awal, jadi tidak perlu ubah
+  struktur layout.
+- **Tanggal Hijriyah/Masehi**: `updateDateDisplay()` sekarang membangun
+  `tvDate` pakai `SpannableStringBuilder` — bagian Hijriyah dibuat bold +
+  putih (lebih terang dari teks Masehi yang tetap `waktu_sholat_date_muted`),
+  dipisah bullet `"  •  "` (sebelumnya `" | "` polos, sama-sama abu tanpa
+  penekanan).
+
 ### Preset yang tersedia
 
 | Preset | id (dikirim ke Aladhan sbg `method`) | Catatan |
@@ -189,10 +231,18 @@ sekali). Verifikasi saat ini manual:
    **cuma** breakdown waktu sholat (tidak ada lagi "PERHITUNGAN ARAH KIBLAT").
 7. Ganti **Konfigurasi → Lokasi → Manual** dengan koordinat tertentu → buka
    `WaktuSholatActivity` → pastikan **tidak ada** dialog permission GPS, dan
-   label lokasi (`tvLocationName`, format `"Lat: x, Long: y"`) menunjukkan
-   koordinat manual persis (sudah diverifikasi sesi 2026-08-30 lewat
-   `adb shell run-as ... cat shared_prefs/AppSession.xml` + screenshot,
-   koordinat yang tampil identik dengan yang tersimpan).
+   `tvDetailCoordinates` di tab Detail Perhitungan (format `"Koordinat: Lat x,
+   Long y"`) menunjukkan koordinat manual persis (sudah diverifikasi sesi
+   2026-08-30 lewat `adb shell run-as ... cat shared_prefs/AppSession.xml` +
+   screenshot, koordinat yang tampil identik dengan yang tersimpan).
+8. Cek `tvLocationName` di hero card menampilkan nama tempat ("Kota,
+   Provinsi"), bukan koordinat mentah — untuk titik lokasi manual yang tidak
+   ke-resolve Geocoder (mis. markaz tanpa alamat jalan), pastikan fallback
+   `"Lokasi Anda"` yang tampil, bukan crash/teks kosong.
+9. Tap tab "Detail Perhitungan" → pastikan tab aktif ditandai underline biru
+   dongker di bawah teksnya (bukan lagi tombol abu-abu solid), dan baris
+   sholat yang sedang aktif di tab "Waktu Aktual" (mis. Maghrib) punya
+   background biru pastel dari ujung kiri ke kanan.
 
 ## 7. Known issues & TODOs
 
@@ -217,3 +267,8 @@ sekali). Verifikasi saat ini manual:
       manapun) setelah dikeluarkan dari layar ini — lihat "Kenapa Arah Kiblat
       dikeluarkan". Perlu keputusan: hapus, atau sambungkan ke `KiblatActivity`
       kalau breakdown rumus arah kiblat memang diinginkan di sana.
+- [ ] `res/drawable/bg_tab_container.xml`, `bg_tab_active.xml`,
+      `bg_tab_inactive.xml` jadi tidak terpakai lagi setelah tab diganti ke
+      gaya underline (`bg_tab_underline_active.xml`/`bg_tab_underline_inactive.xml`,
+      lihat "Polish UI hero card, tab, & lokasi" di atas). Belum dihapus —
+      cek dulu tidak dipakai layar lain sebelum dibuang.

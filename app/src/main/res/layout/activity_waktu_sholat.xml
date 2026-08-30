@@ -21,20 +21,20 @@
         android:id="@+id/tabContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_tab_container"
+        android:background="@color/card_white"
         android:orientation="horizontal"
-        android:layout_margin="16dp">
+        android:layout_marginTop="8dp">
 
         <TextView
             android:id="@+id/btnTabActual"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_tab_inactive"
+            android:background="@drawable/bg_tab_underline_active"
             android:gravity="center"
-            android:paddingVertical="10dp"
+            android:paddingVertical="14dp"
             android:text="Waktu Aktual"
-            android:textColor="#333333"
+            android:textColor="@color/waktu_sholat_dark_bg"
             android:textStyle="bold"
             android:textSize="14sp" />
 
@@ -43,12 +43,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_tab_inactive"
+            android:background="@drawable/bg_tab_underline_inactive"
             android:gravity="center"
-            android:paddingVertical="10dp"
+            android:paddingVertical="14dp"
             android:text="Detail Perhitungan"
-            android:textColor="#333333"
-            android:textStyle="bold"
+            android:textColor="@color/waktu_sholat_icon_muted"
+            android:textStyle="normal"
             android:textSize="14sp" />
 
     </LinearLayout>
@@ -85,7 +85,6 @@
                         android:text="@string/loading"
                         android:textColor="@color/waktu_sholat_date_muted"
                         android:textSize="13sp"
-                        android:textStyle="bold"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -128,6 +127,7 @@
                         android:textSize="11sp"
                         android:textStyle="bold"
                         app:drawableStartCompat="@drawable/ic_gis_location_poi"
+                        app:drawableTint="@color/waktu_sholat_pill_text"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/tvNextPrayer" />
 
@@ -176,6 +176,15 @@
                     android:layout_height="wrap_content"
                     android:text="Breakdown perhitungan (Ephemeris Approximation)"
                     android:textSize="10sp"
+                    android:textColor="#888"/>
+
+                <TextView
+                    android:id="@+id/tvDetailCoordinates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/loading"
+                    android:textSize="11sp"
                     android:textColor="#888"/>
 
                 <LinearLayout
