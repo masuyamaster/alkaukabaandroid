@@ -78,6 +78,7 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Fitur | Dokumen | Status |
 |---|---|---|
 | Waktu Sholat (metode perhitungan) | [features/waktu-sholat.md](features/waktu-sholat.md) | Terdokumentasi |
+| Waktu Sholat — rumus hisab Ephemeris (referensi rumus, bukan arsitektur) | [features/rumus-hisab-ephemeris.md](features/rumus-hisab-ephemeris.md) | Terdokumentasi |
 | Arah Kiblat | [features/arah-kiblat.md](features/arah-kiblat.md) | Terdokumentasi |
 | Bulan Hijriyah / Awal Bulan | [features/bulan-hijriyah.md](features/bulan-hijriyah.md) | Terdokumentasi |
 | Gerhana | [features/gerhana.md](features/gerhana.md) | Terdokumentasi |

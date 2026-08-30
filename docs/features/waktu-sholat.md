@@ -64,7 +64,7 @@ File yang terlibat:
 | `ui/waktusholat/WaktuSholatActivity.kt` | Murni bind `PrayerScheduleUiState` ke View (icon, warna, teks) — tidak ada logika "mana yang aktif" di sini |
 | `utils/prayerbreakdown/PrayerCalculationBreakdownRegistry.kt` | Map `methodId -> PrayerCalculationBreakdownProvider`; hari ini isinya cuma Ephemeris |
 | `utils/prayerbreakdown/PrayerBreakdownModels.kt` | `PrayerBreakdownSection`/`PrayerBreakdownRow` (data) + interface `PrayerCalculationBreakdownProvider` |
-| `utils/prayerbreakdown/EphemerisPrayerCalculator.kt` | Implementasi breakdown untuk Ephemeris — deklinasi matahari & Equation of Time pakai pendekatan sinusoidal sederhana, bukan tabel ephemeris presisi tinggi |
+| `utils/prayerbreakdown/EphemerisPrayerCalculator.kt` | Implementasi breakdown untuk Ephemeris — deklinasi matahari & Equation of Time diturunkan dari posisi matahari riil (Astronomy Engine), rumus gabungan per waktu sholat (Kwd, h°, t, ikhtiyat) mengikuti prosedur hisab klasik, lihat `docs/features/rumus-hisab-ephemeris.md` |
 | `res/layout/item_prayer_breakdown.xml` | Card accordion per waktu sholat (header klik untuk expand/collapse + body berisi baris rumus) |
 | `res/layout/item_breakdown_row.xml` | Satu baris rumus di dalam card (`tvRowLabel`/`tvRowValue`) |
 
@@ -143,6 +143,43 @@ dan `activity_waktu_sholat.xml`, tanpa mengubah logika `PrayerTimesViewModel`:
   putih (lebih terang dari teks Masehi yang tetap `waktu_sholat_date_muted`),
   dipisah bullet `"  •  "` (sebelumnya `" | "` polos, sama-sama abu tanpa
   penekanan).
+
+### Rumus hisab Ephemeris jadi presisi & sesuai prosedur klasik (2026-08-30)
+
+`EphemerisPrayerCalculator.kt` sebelumnya pakai pendekatan sinusoidal
+sederhana untuk deklinasi matahari & Equation of Time (rumus perkiraan
+berbasis hari-ke-berapa dalam setahun, bukan data matahari riil), dan rumus
+gabungan tiap waktu sholat tidak konsisten (mis. Imsak dihitung sebagai
+"Subuh - 10 menit" alih-alih sudut tersendiri, tanda `+`/`-` untuk `t`/`i`
+tidak seragam per waktu). Diganti total mengikuti handout **"Perhitungan
+Waktu Sholat"** (M. Khoirul Anam) yang didokumentasikan lengkap di
+[`rumus-hisab-ephemeris.md`](rumus-hisab-ephemeris.md):
+
+- **δ & e riil, bukan aproksimasi**: diturunkan dari posisi matahari
+  sebenarnya lewat `searchHourAngle(Sun, 0°)` (fungsi Astronomy Engine yang
+  sudah dipakai `EphemerisCalculator.kt` untuk Awal Bulan) untuk mencari
+  waktu transit/istiwa' matahari hari itu, lalu `equator(Sun, ...)` untuk
+  deklinasi pada saat itu. Equation of time diturunkan dari selisih transit
+  riil terhadap tengah hari rata-rata (`12 - λ/15`).
+- **Rumus gabungan sesuai buku**: Dzuhur `12-e+Kwd+i`; Ashar/Maghrib/Isya
+  `12-e+t+Kwd+i`; Subuh/Imsak/Dhuha `12-e-t+Kwd+i`; khusus Terbit/Syuruq `i`
+  dikurangkan (`12-e-t+Kwd-i`). Tinggi matahari (h°) per waktu & rumus
+  `cotan h° = tan|φ-δ|+1` untuk Ashar mengikuti tabel di dokumen rujukan.
+- **2 section breakdown baru**: Terbit/Syuruq dan Dhuha ditambahkan (dulu
+  cuma Dzuhur/Ashar/Maghrib/Isya/Subuh/Imsak) — urutan section juga
+  dibikin kronologis (Imsak → Subuh → Terbit → Dhuha → Dzuhur → Ashar →
+  Maghrib → Isya), tidak perlu ubah `WaktuSholatActivity` karena rendering
+  breakdown sudah dinamis per-list (`renderPrayerBreakdown()`).
+- Baris breakdown baru per section: `Koreksi Waktu Daerah (Kwd)`,
+  `Tinggi Matahari (h°)`, `Sudut Waktu Matahari (t)`, `Ikhtiyat (i)`, dan
+  `Rumus` (formula yang dipakai) — lebih dekat ke istilah buku aslinya
+  dibanding versi sebelumnya.
+
+Catatan: ini cuma mengubah **breakdown "Detail Perhitungan"**, bukan jadwal
+di tab "Waktu Aktual" — jadwal utama tetap dari Aladhan API (fallback
+`method=20`/Kemenag RI), lihat "Kenapa Ephemeris fallback ke Kemenag RI" di
+bawah. Menyambungkan hasil hitung lokal ini ke jadwal utama masih TODO
+terpisah (lihat Known Issues).
 
 ### Preset yang tersedia
 
@@ -243,6 +280,12 @@ sekali). Verifikasi saat ini manual:
    dongker di bawah teksnya (bukan lagi tombol abu-abu solid), dan baris
    sholat yang sedang aktif di tab "Waktu Aktual" (mis. Maghrib) punya
    background biru pastel dari ujung kiri ke kanan.
+10. Tab "Detail Perhitungan" dengan metode Ephemeris aktif → pastikan ada
+    8 card (Imsak, Subuh, Terbit/Syuruq, Dhuha, Dzuhur, Ashar, Maghrib, Isya)
+    urut kronologis, tiap card di-expand menampilkan baris Lintang/Bujur/
+    Deklinasi/Equation of Time/Kwd/h°/t/Ikhtiyat/Rumus, dan jam hasil naik
+    monoton dari Imsak ke Isya (tidak ada waktu yang lebih awal dari waktu
+    sebelumnya).
 
 ## 7. Known issues & TODOs
 

@@ -1,5 +1,12 @@
 package site.elahady.alkaukaba.utils.prayerbreakdown
 
+import io.github.cosinekitty.astronomy.Aberration
+import io.github.cosinekitty.astronomy.Body
+import io.github.cosinekitty.astronomy.EquatorEpoch
+import io.github.cosinekitty.astronomy.Observer
+import io.github.cosinekitty.astronomy.Time
+import io.github.cosinekitty.astronomy.equator
+import io.github.cosinekitty.astronomy.searchHourAngle
 import java.util.Calendar
 import kotlin.math.abs
 import kotlin.math.acos
@@ -11,101 +18,172 @@ import kotlin.math.sin
 import kotlin.math.tan
 
 /**
- * Breakdown perhitungan waktu sholat untuk metode Ephemeris (Al Hasib - Alkaukaba Team).
+ * Breakdown perhitungan waktu sholat untuk metode Ephemeris (Al Hasib - Alkaukaba Team),
+ * mengikuti prosedur hisab klasik "Perhitungan Waktu Sholat" (M. Khoirul Anam) - lihat
+ * docs/features/rumus-hisab-ephemeris.md untuk rumus & contoh perhitungan manual lengkap
+ * yang jadi rujukan implementasi ini.
  *
- * Rumus deklinasi & Equation of Time di sini pakai pendekatan sinusoidal sederhana
- * berbasis hari-ke-berapa-dalam-setahun, BUKAN tabel ephemeris presisi tinggi
- * (Buku Ephemeris / algoritma Jean Meeus). Ini didokumentasikan apa adanya di UI
- * ("Ephemeris Approximation") - kalau nanti ada sumber data matahari yang lebih
- * presisi, ganti bagian deklinasi & Equation of Time di sini saja, struktur
- * breakdown-nya tidak perlu berubah.
+ * Deklinasi matahari (δ) dan Equation of Time (e) TIDAK lagi didekati lewat rumus
+ * sinusoidal (seperti versi sebelumnya) - keduanya diturunkan dari posisi matahari
+ * riil hasil "Astronomy Engine" (utils/Astronomy.kt, sudah dipakai juga oleh
+ * EphemerisCalculator untuk Awal Bulan), lewat waktu transit/istiwa' yang dicari
+ * dengan searchHourAngle(Sun, 0°). Rumus gabungan per waktu sholat (Kwd, h° per
+ * waktu, sudut waktu matahari t, ikhtiyat) tetap persis mengikuti buku rujukan di atas.
  */
 object EphemerisPrayerCalculator : PrayerCalculationBreakdownProvider {
 
-    override fun breakdown(lat: Double, lng: Double, timeZoneHour: Double): List<PrayerBreakdownSection> {
-        val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+    private const val IKHTIYAT_HOURS = 2.0 / 60.0
 
-        val bRad = Math.toRadians((360.0 / 365.0) * (dayOfYear - 81))
-        val eot = 9.87 * sin(2 * bRad) - 7.53 * cos(bRad) - 1.5 * sin(bRad)
-        val declination = 23.45 * sin(bRad)
+    override fun breakdown(lat: Double, lng: Double, timeZoneHour: Double): List<PrayerBreakdownSection> {
+        val observer = Observer(lat, lng, 0.0)
+        val startOfDay = localMidnight()
+
+        // Transit matahari (istiwa') hari ini - sumber δ & e yang akurat, menggantikan
+        // pendekatan sinusoidal versi sebelumnya.
+        val transit = searchHourAngle(Body.Sun, observer, 0.0, startOfDay, +1).time
+        val declination = equator(Body.Sun, transit, observer, EquatorEpoch.OfDate, Aberration.Corrected).dec
+
+        val zoneMeridian = timeZoneHour * 15.0
+        val kwdHours = (zoneMeridian - lng) / 15.0
+        val transitZoneHours = utDecimalHours(transit) + timeZoneHour
+        val meanNoonUtHours = 12.0 - lng / 15.0
+        val eMinutes = (meanNoonUtHours - utDecimalHours(transit)) * 60.0
 
         val dataMatahari = listOf(
-            PrayerBreakdownRow("Lintang (φ)", "$lat°"),
-            PrayerBreakdownRow("Bujur (λ)", "$lng°"),
-            PrayerBreakdownRow("Deklinasi Matahari (δ)", "${"%.4f".format(declination)}°"),
-            PrayerBreakdownRow("Equation of Time (e)", "${"%.4f".format(eot)} menit")
+            PrayerBreakdownRow("Lintang (φ)", degreesToDms(lat)),
+            PrayerBreakdownRow("Bujur (λ)", degreesToDms(lng)),
+            PrayerBreakdownRow("Deklinasi Matahari (δ)", degreesToDms(declination)),
+            PrayerBreakdownRow("Equation of Time (e)", "%+.2f menit".format(eMinutes)),
+            PrayerBreakdownRow("Koreksi Waktu Daerah (Kwd)", hoursToClock(kwdHours))
         )
 
-        val dzuhurBase = 12 + timeZoneHour - (lng / 15.0) - (eot / 60.0)
+        fun section(
+            label: String,
+            altitudeDeg: Double?,
+            altitudeLabel: String,
+            beforeTransit: Boolean,
+            ikhtiyatHours: Double,
+            rumus: String,
+            extraNote: String? = null
+        ): PrayerBreakdownSection {
+            val t = altitudeDeg?.let { hourAngleHours(lat, declination, it) }
+            val time = when {
+                altitudeDeg == null -> transitZoneHours + ikhtiyatHours
+                t == null -> null
+                beforeTransit -> transitZoneHours - t + ikhtiyatHours
+                else -> transitZoneHours + t + ikhtiyatHours
+            }
+            val rows = dataMatahari.toMutableList()
+            if (altitudeDeg != null) rows += PrayerBreakdownRow(altitudeLabel, degreesToDms(altitudeDeg))
+            if (t != null) rows += PrayerBreakdownRow("Sudut Waktu Matahari (t)", hoursToClock(t))
+            rows += PrayerBreakdownRow("Ikhtiyat (i)", "%+.0f detik".format(ikhtiyatHours * 3600))
+            rows += PrayerBreakdownRow("Rumus", rumus)
+            extraNote?.let { rows += PrayerBreakdownRow("Catatan", it) }
 
-        val sections = mutableListOf<PrayerBreakdownSection>()
+            return PrayerBreakdownSection(
+                prayerLabel = label,
+                resultTime = time?.let { convertDecToTime(it) } ?: "-",
+                rows = rows
+            )
+        }
 
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Dzuhur",
-            resultTime = convertDecToTime(dzuhurBase),
-            rows = dataMatahari + PrayerBreakdownRow("Rumus", "12 + TZ - (λ/15) - (e/60)")
+        return listOf(
+            section(
+                "Imsak", -22.0, "Tinggi Matahari (h°)", beforeTransit = true, ikhtiyatHours = 0.0,
+                rumus = "12 - e - t + Kwd",
+                extraNote = "Margin kehati-hatian sebelum Subuh sudah ada di sudut -22° (Subuh -20° dikurangi 2°), tidak ditambah ikhtiyat lagi"
+            ),
+            section(
+                "Subuh", -20.0, "Tinggi Matahari (h°)", beforeTransit = true, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e - t + Kwd + i"
+            ),
+            section(
+                "Terbit/Syuruq", 1.0, "Tinggi Matahari (h°, dari ufuk Timur)", beforeTransit = true, ikhtiyatHours = -IKHTIYAT_HOURS,
+                rumus = "12 - e - t + Kwd - i",
+                extraNote = "Ikhtiyat dikurangkan (bukan ditambah) supaya waktu Terbit tidak dinyatakan lebih lambat dari kejadian sebenarnya"
+            ),
+            section(
+                "Dhuha", 4.5, "Tinggi Matahari (h°, dari ufuk Timur)", beforeTransit = true, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e - t + Kwd + i"
+            ),
+            section(
+                "Dzuhur", null, "", beforeTransit = false, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e + Kwd + i"
+            ),
+            section(
+                "Ashar", asharAltitudeDeg(lat, declination), "Tinggi Matahari (h°)", beforeTransit = false, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e + t + Kwd + i",
+                extraNote = "h° dari Cotan h° = tan|φ - δ| + 1 (panjang bayangan = panjang benda + bayangan saat istiwa')"
+            ),
+            section(
+                "Maghrib", -1.0, "Tinggi Matahari (h°, dari ufuk Barat)", beforeTransit = false, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e + t + Kwd + i"
+            ),
+            section(
+                "Isya", -18.0, "Tinggi Matahari (h°)", beforeTransit = false, ikhtiyatHours = IKHTIYAT_HOURS,
+                rumus = "12 - e + t + Kwd + i"
+            )
         )
-
-        val altAsharDeg = Math.toDegrees(atan(1.0 / (1.0 + tan(Math.toRadians(abs(lat - declination))))))
-        val asharTime = calculateHourAngle(lat, declination, altAsharDeg, dzuhurBase, isAfternoon = true)
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Ashar",
-            resultTime = convertDecToTime(asharTime),
-            rows = dataMatahari + PrayerBreakdownRow("Sudut elevasi matahari", "${"%.2f".format(altAsharDeg)}°")
-        )
-
-        val maghribAngle = -0.833
-        val maghribTime = calculateHourAngle(lat, declination, maghribAngle, dzuhurBase, isAfternoon = true)
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Maghrib",
-            resultTime = convertDecToTime(maghribTime),
-            rows = dataMatahari + PrayerBreakdownRow("Sudut terbenam (refraksi)", "$maghribAngle°")
-        )
-
-        val isyaAngle = -18.0
-        val isyaTime = calculateHourAngle(lat, declination, isyaAngle, dzuhurBase, isAfternoon = true)
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Isya",
-            resultTime = convertDecToTime(isyaTime),
-            rows = dataMatahari + PrayerBreakdownRow("Sudut depresi matahari", "$isyaAngle°")
-        )
-
-        val subuhAngle = -20.0
-        val subuhTime = calculateHourAngle(lat, declination, subuhAngle, dzuhurBase, isAfternoon = false)
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Subuh",
-            resultTime = convertDecToTime(subuhTime),
-            rows = dataMatahari + PrayerBreakdownRow("Sudut fajar", "$subuhAngle°")
-        )
-
-        val imsakDec = subuhTime - (10.0 / 60.0)
-        sections += PrayerBreakdownSection(
-            prayerLabel = "Imsak",
-            resultTime = convertDecToTime(imsakDec),
-            rows = dataMatahari + PrayerBreakdownRow("Rumus", "Waktu Subuh - 10 menit ikhtiyat")
-        )
-
-        return sections
     }
 
-    private fun calculateHourAngle(lat: Double, dec: Double, altitude: Double, transit: Double, isAfternoon: Boolean): Double {
+    /** Cotan h° = tan|φ - δ| + 1 → h° = arctan(1 / (tan|φ - δ| + 1)), lihat rumus Ashar di dokumen rujukan. */
+    private fun asharAltitudeDeg(lat: Double, dec: Double): Double =
+        Math.toDegrees(atan(1.0 / (1.0 + tan(Math.toRadians(abs(lat - dec))))))
+
+    /** Cos t = -tan φ tan δ + sin h / cos φ / cos δ, dikembalikan sebagai jam (t°/15). Null kalau matahari tidak pernah mencapai ketinggian ini di lintang ini. */
+    private fun hourAngleHours(lat: Double, dec: Double, altitudeDeg: Double): Double? {
         val latRad = Math.toRadians(lat)
         val decRad = Math.toRadians(dec)
-        val altRad = Math.toRadians(altitude)
+        val altRad = Math.toRadians(altitudeDeg)
 
-        val cosH = (sin(altRad) - sin(latRad) * sin(decRad)) / (cos(latRad) * cos(decRad))
-        if (cosH < -1 || cosH > 1) return 0.0
+        val cosT = (sin(altRad) - sin(latRad) * sin(decRad)) / (cos(latRad) * cos(decRad))
+        if (cosT < -1.0 || cosT > 1.0) return null
 
-        val hourDiff = Math.toDegrees(acos(cosH)) / 15.0
-        return if (isAfternoon) transit + hourDiff else transit - hourDiff
+        return Math.toDegrees(acos(cosT)) / 15.0
     }
 
-    private fun convertDecToTime(decimalTime: Double): String {
+    private fun localMidnight(): Time {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return Time.fromMillisecondsSince1970(cal.timeInMillis)
+    }
+
+    private fun utDecimalHours(time: Time): Double {
+        val cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = time.toMillisecondsSince1970()
+        return cal.get(Calendar.HOUR_OF_DAY) + cal.get(Calendar.MINUTE) / 60.0 + cal.get(Calendar.SECOND) / 3600.0
+    }
+
+    private fun degreesToDms(value: Double): String {
+        val sign = if (value < 0) "-" else ""
+        val absVal = abs(value)
+        val d = floor(absVal).toInt()
+        val m = floor((absVal - d) * 60).toInt()
+        val s = ((absVal - d) * 60 - m) * 60
+        return "%s%d° %d' %.0f\"".format(sign, d, m, s)
+    }
+
+    private fun hoursToClock(value: Double): String {
+        val sign = if (value < 0) "-" else ""
+        val absVal = abs(value)
+        val h = floor(absVal).toInt()
+        val m = floor((absVal - h) * 60).toInt()
+        val s = round(((absVal - h) * 60 - m) * 60).toInt()
+        return "%s%02d:%02d:%02d".format(sign, h, m, s)
+    }
+
+    private fun convertDecToTime(decimalTimeRaw: Double): String {
+        var decimalTime = decimalTimeRaw % 24.0
+        if (decimalTime < 0) decimalTime += 24.0
+
         val hours = floor(decimalTime).toInt()
         val minutes = round((decimalTime - hours) * 60).toInt()
 
         return if (minutes == 60) {
-            "%02d:00".format(hours + 1)
+            "%02d:00".format((hours + 1) % 24)
         } else {
             "%02d:%02d".format(hours, minutes)
         }
