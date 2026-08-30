@@ -21,11 +21,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="LOKASI"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/navy_dongker"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
+        android:paddingTop="20dp"
         android:paddingBottom="8dp"/>
 
     <LinearLayout
@@ -40,6 +41,14 @@
         android:padding="16dp"
         android:clickable="true"
         android:focusable="true">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="14dp"
+            android:src="@drawable/ic_gis_location_poi"
+            app:tint="@color/navy_dongker"
+            android:contentDescription="@null" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -77,9 +86,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="ARAH KIBLAT"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/navy_dongker"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
         android:paddingBottom="8dp"/>
@@ -96,6 +105,14 @@
         android:padding="16dp"
         android:clickable="true"
         android:focusable="true">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="14dp"
+            android:src="@drawable/ic_menu_compass"
+            app:tint="@color/navy_dongker"
+            android:contentDescription="@null" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -133,9 +150,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="WAKTU SHOLAT"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/navy_dongker"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
         android:paddingBottom="8dp"/>
@@ -148,9 +165,18 @@
         android:gravity="center_vertical"
         android:background="@drawable/bg_card_rounded"
         android:layout_marginHorizontal="6dp"
+        android:layout_marginBottom="20dp"
         android:padding="16dp"
         android:clickable="true"
         android:focusable="true">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="14dp"
+            android:src="@drawable/ic_menu_clock"
+            app:tint="@color/navy_dongker"
+            android:contentDescription="@null" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -183,20 +209,5 @@
             android:textSize="24sp"
             android:textColor="@color/text_hint"/>
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="6dp"
-        android:layout_marginBottom="40dp"
-        android:text="Logout"
-        android:background="@drawable/bg_btn_main_dark"
-        android:textColor="@android:color/white"/>
 
 </LinearLayout>

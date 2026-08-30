@@ -1,13 +1,11 @@
 package site.elahady.alkaukaba.ui.konfigurasi
 
-import site.elahady.alkaukaba.LoginActivity
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityKonfigurasiBinding
 import site.elahady.alkaukaba.utils.PrayerCalculationMethods
 import site.elahady.alkaukaba.utils.SessionManager
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
@@ -16,7 +14,6 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
@@ -65,32 +62,10 @@ class KonfigurasiActivity : AppCompatActivity() {
         binding.rowLocation.setOnClickListener { showLocationSheet() }
         binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
-        binding.btnLogout.setOnClickListener { showLogoutConfirmation() }
 
         updateCurrentLocationLabel()
         updateCurrentQiblaSourceLabel()
         updateCurrentMethodLabel()
-    }
-
-    private fun showLogoutConfirmation() {
-        AlertDialog.Builder(this)
-            .setTitle("Konfirmasi Logout")
-            .setMessage("Apakah Anda yakin ingin keluar dari aplikasi?")
-            .setPositiveButton("Ya") { dialog, _ ->
-                dialog.dismiss()
-                performLogout()
-            }
-            .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
-
-    private fun performLogout() {
-        sessionManager.clearUserData()
-
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
     }
 
     // --- Lokasi ---

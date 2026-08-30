@@ -74,12 +74,32 @@ File yang terlibat:
 
 | File | Peran |
 |---|---|
-| `ui/konfigurasi/KonfigurasiActivity.kt` | Satu-satunya Activity untuk layar ini: wiring 3 row + 3 sheet + logout |
+| `ui/konfigurasi/KonfigurasiActivity.kt` | Satu-satunya Activity untuk layar ini: wiring 3 row + 3 sheet (tidak ada logout di sini lagi, lihat catatan 2026-08-30 di bawah) |
 | `utils/SessionManager.kt` | Persistensi semua setting (lokasi, sumber kiblat, metode sholat) di `SharedPreferences "AppSession"` |
-| `res/layout/activity_konfigurasi.xml` | Layout utama: 3 section (LOKASI, ARAH KIBLAT, WAKTU SHOLAT) masing-masing satu row card, plus tombol Logout |
+| `res/layout/activity_konfigurasi.xml` | Layout utama: 3 section (LOKASI, ARAH KIBLAT, WAKTU SHOLAT), masing-masing satu row card |
 | `res/layout/dialog_lokasi.xml` | Bottom sheet Lokasi: radio Otomatis/Manual, field lat/lon, tombol GPS, tombol Simpan |
 | `res/layout/dialog_qibla_source.xml` | Bottom sheet Arah Kiblat: radio Aladhan/Rumus Manual, tombol Simpan |
 | `res/layout/dialog_prayer_method.xml` | Bottom sheet Waktu Sholat — sudah ada sebelumnya, tidak berubah |
+
+Per 2026-08-30: `activity_konfigurasi.xml` di-polish murni visual (tidak ada
+perubahan logika) — tiap row menu (Lokasi/Kiblat/Waktu Sholat) dapat ikon
+(`ic_gis_location_poi`, `ic_menu_compass`, `ic_menu_clock` — file baru, belum
+ada icon jam sebelumnya) tint `navy_dongker`, dan label kategori (LOKASI/ARAH
+KIBLAT/WAKTU SHOLAT) warna `text_secondary` → `navy_dongker`. Header
+(`view_toolbar_default`) tidak disentuh — sudah konsisten dari commit
+`955430f`. Diverifikasi visual di emulator (`Pixel6_API34`) — pada percobaan
+pertama `ic_menu_clock.xml` render aneh karena dua path lingkaran
+tumpang-tindih (salin-tempel keliru dari referensi Material icon), diperbaiki
+jadi satu lingkaran + jarum jam.
+
+Per 2026-08-30 (follow-up): dua revisi lanjutan dari review visual di
+emulator: (1) jarak antara header dan label "LOKASI" sempat mepet tanpa
+spasi sama sekali — ditambah `paddingTop="20dp"` pada label pertama; (2)
+tombol Logout **dipindah keluar dari halaman ini** ke halaman Profil,
+menggantikan row teks polos "Keluar" yang sudah ada di sana (lihat
+`docs/features/profil.md`) — `btnLogout`, `showLogoutConfirmation()`, dan
+`performLogout()` dihapus dari `KonfigurasiActivity.kt` karena redundan
+dengan logout yang sudah ada di Profil.
 
 Alur data (simpan Lokasi Manual): user isi `etManualLat`/`etManualLng` (atau
 tap "Pakai lokasi GPS saat ini" untuk auto-isi sekali dari GPS) → tap Simpan

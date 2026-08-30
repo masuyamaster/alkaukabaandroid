@@ -79,6 +79,73 @@ section 7 untuk histori bug-nya).
 | `model/AuthModels.kt` | `UpdateProfileRequest`, `ChangePasswordRequest`, `DeleteAccountRequest`; `UserData` nambah field `token: String?` |
 | `utils/SessionManager.kt` | `getUserId()`/`setUserId()`, `getAuthToken()`/`setAuthToken()`, `clearUserData()` (hapus semua state user sekaligus) |
 
+Per 2026-08-30: row `rowLogout` di `activity_profile.xml` diganti dari
+`LinearLayout` teks polos ("Keluar", tanpa border) jadi
+`AppCompatButton` pill outline merah (`bg_btn_outline_danger` + ikon
+`ic_logout`, keduanya awalnya dibuat untuk Konfigurasi — lihat
+`docs/features/konfigurasi.md`) supaya jelas ini destructive action tapi
+tetap secondary (bukan tombol solid utama). Logout dipindah ke sini karena
+sebelumnya ada dua tombol Logout terpisah (Konfigurasi & Profil) yang
+redundan — Konfigurasi sekarang tidak punya logout sama sekali.
+`ProfileActivity.kt` tidak berubah (id `rowLogout` dipertahankan, listener
+lama tetap jalan di atas view baru). Sempat ada bug visual: tanpa
+`paddingHorizontal`, ikon logout terlalu dekat dengan lengkungan border
+pill hingga terlihat "nabrak" — diperbaiki dengan `paddingHorizontal="24dp"`.
+
+Per 2026-08-30 (redesign lanjutan, menyeragamkan dengan Konfigurasi):
+- **Hero info akun** (avatar/nama/email) dikeluarkan dari `CardView` besar
+  — sekarang `LinearLayout` polos yang menyatu dengan background halaman
+  (center-aligned, tanpa kotak putih). Avatar (`bg_circle_button` +
+  `ic_person`) warna diganti dari `accent_yellow` ke `navy_dongker`.
+  `btnEditProfile` diganti dari outline abu-abu (`bg_input_outline`) jadi
+  pill kapsul latar biru muda (`bg_pill_navy_light`, drawable baru,
+  reuse `@color/hero_card_bg`) + teks navy, dengan `stateListAnimator=null`
+  supaya flat (tanpa shadow bawaan `Widget.MaterialComponents.Button`).
+- **`rowHelp` + `rowPrivacy` digabung jadi satu card** (sebelumnya dua
+  card putih terpisah) dengan satu `View` divider 1dp (`divider_soft`,
+  inset 52dp mengikuti lebar ikon) di antaranya. Ditambah ikon di kiri tiap
+  baris: `ic_menu_support` (headset, baru) untuk Hubungi Kami, dan
+  `ic_menu_document` (baru) untuk Kebijakan Privasi.
+- **`rowChangePassword`** dapat ikon `ic_menu_lock` (baru).
+- Label kategori (BANTUAN & INFORMASI / KEAMANAN & AKUN) warna
+  `text_secondary` → `navy_dongker`, menyamakan konvensi label kategori di
+  `docs/features/konfigurasi.md`.
+- **`rowLogout` dibuat flat**: `Theme.AlKaukaba` berbasis
+  `Theme.MaterialComponents`, yang otomatis memberi `AppCompatButton`
+  bawaan `stateListAnimator` (elevation/shadow) lewat `buttonStyle` tema —
+  ini sumber drop shadow yang terlihat di review visual sebelumnya.
+  Ditambah `android:stateListAnimator="@null"` + `android:elevation="0dp"`
+  untuk menghilangkannya, konsisten dengan `btnEditProfile` di atas.
+- **`rowDeleteAccount`** (sebelumnya card pink besar) diturunkan jadi
+  `TextView` text-link kecil (13sp, `?attr/selectableItemBackground`,
+  tanpa card/box) di bawah tombol Logout dengan jarak 20dp — sengaja dibuat
+  tidak semenonjol Logout karena ini aksi permanen yang sangat jarang
+  dipakai (mencegah salah pencet). `ProfileActivity.kt` tidak berubah sama
+  sekali di seluruh redesign ini — semua id (`rowHelp`, `rowPrivacy`,
+  `rowChangePassword`, `rowLogout`, `rowDeleteAccount`) dipertahankan,
+  hanya tipe View & isi visualnya yang berubah.
+
+Per 2026-08-30 (polish lanjutan): dua revisi dari feedback visual:
+1. **`rowLogout` teks tidak benar-benar center** — `AppCompatButton` dengan
+   `drawableStart` + `gravity="center"` men-center gabungan ikon+teks
+   sebagai satu blok, bukan teks itu sendiri terhadap lebar tombol, jadi
+   teks terlihat sedikit bergeser kanan. Diganti jadi `FrameLayout` (id
+   `rowLogout` dipertahankan): `TextView` `match_parent` dengan
+   `gravity="center"` (teks benar-benar center 100% lebar tombol) +
+   `ImageView` ikon `layout_gravity="start|center_vertical"` mengambang
+   independen di kiri (`marginStart=24dp`) — tidak memengaruhi posisi teks
+   sama sekali. `clipToOutline="true"` ditambah supaya ripple
+   (`?attr/selectableItemBackground` sebagai `android:foreground`) tidak
+   tumpah keluar sudut membulat pill.
+2. **Ikon `✏️`/`🗑️` di `btnEditProfile`/`rowDeleteAccount` masih emoji**,
+   tidak konsisten dengan ikon vektor flat di menu lain. Diganti jadi
+   vektor baru: `ic_edit.xml` (fillColor `navy_dongker` di-bake langsung ke
+   path — dipakai lewat `drawableStart` pada `Button`, bukan `ImageView`
+   terpisah, jadi tidak bisa pakai `app:tint` compat) untuk Edit Profil, dan
+   `ic_delete.xml` (fillColor putih + `app:tint="@color/pill_red_text"` di
+   `ImageView` terpisah, karena `rowDeleteAccount` sekarang `LinearLayout`
+   horizontal ikon+teks, bukan `TextView` tunggal) untuk Hapus Akun.
+
 Alur data (contoh Ubah Kata Sandi, pola sama untuk Edit Profil & Hapus
 Akun): `ProfileActivity` (validasi client-side) → `requireBearerToken()` →
 coroutine IO → `AuthApiService.changePassword(bearer, request)` → backend
