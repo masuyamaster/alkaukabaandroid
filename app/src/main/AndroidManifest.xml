@@ -31,6 +31,9 @@
             android:name="site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.Splashscreen"
             android:exported="true">
             <intent-filter>

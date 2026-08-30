@@ -55,7 +55,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Perhitungan"
+                android:text="Markaz"
                 android:textStyle="bold"
                 android:textColor="#333"
                 android:layout_marginBottom="12dp"/>
@@ -116,75 +116,20 @@
                         android:textSize="11sp"
                         android:layout_marginTop="4dp"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="12dp">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginEnd="8dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Altitude (m)"
-                                android:textSize="12sp"/>
-
-                            <EditText
-                                android:id="@+id/etAltitude"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/bg_input_outline"
-                                android:padding="10dp"
-                                android:text="10"
-                                android:inputType="numberDecimal"
-                                android:textColor="#333"/>
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginStart="8dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Tanggal"
-                                android:textSize="12sp"/>
-
-                            <TextView
-                                android:id="@+id/tvDateInput"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/bg_input_outline"
-                                android:padding="10dp"
-                                android:text="Pilih Tanggal"
-                                android:textColor="#333"
-                                app:drawableEndCompat="@drawable/ic_calendar"/>
-                        </LinearLayout>
-                    </LinearLayout>
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Refraksi"
+                        android:text="Ketinggian (mdpl)"
                         android:textSize="12sp"
                         android:layout_marginTop="12dp"/>
 
                     <EditText
-                        android:id="@+id/etRefraksi"
+                        android:id="@+id/etKetinggian"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_input_outline"
                         android:padding="10dp"
-                        android:text="0.034"
+                        android:text="0"
                         android:inputType="numberDecimal"
                         android:textColor="#333"/>
 
@@ -210,9 +155,72 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardIjtima"/>
-                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardGhurub"/>
-                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardHilalHeight"/>
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@android:color/white">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvBulanHijriyah"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Menjelang Ramadhan 1447 H"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:textColor="#000000"/>
+
+                        <TextView
+                            android:id="@+id/tvTanggalGhurub"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Ghurub markaz: -"
+                            android:textSize="12sp"
+                            android:textColor="#757575"/>
+
+                        <TextView
+                            android:id="@+id/tvStatusBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="6dp"
+                            android:text="Hilal Mungkin Terlihat"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/bg_btn_dark"/>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardTinggiHilal"/>
+                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardElongasi"/>
+                <include layout="@layout/item_hilal_result_card" android:id="@+id/cardMukuts"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="Rincian Perhitungan"
+                    android:textStyle="bold"
+                    android:textColor="#333"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutHilalBreakdownContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
 
             </LinearLayout>
 
@@ -223,7 +231,7 @@
         android:id="@+id/btnCalculate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hitung"
+        android:text="Hitung Ulang"
         android:backgroundTint="#2C3E50"
         android:textColor="@android:color/white"
         android:layout_margin="16dp"

@@ -5,6 +5,7 @@ import site.elahady.alkaukaba.adapter.CalendarAdapter
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.RetrofitClient
 import site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
+import site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity
 import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
@@ -222,6 +223,9 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, site.elahady.alkaukaba.ui.konfigurasi.KonfigurasiActivity::class.java))
+        }
+        binding.btAwalbulan.setOnClickListener {
+            startActivity(Intent(this, AwalBulanActivity::class.java))
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
