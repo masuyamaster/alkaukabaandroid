@@ -29,7 +29,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
-import com.bumptech.glide.Glide
 import com.google.android.gms.location.*
 import java.util.*
 import site.elahady.alkaukaba.R
@@ -86,7 +85,7 @@ class KiblatActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        binding.qiblaAngleContainer.setOnClickListener { showQiblaBreakdownSheet() }
+        binding.infoCard.setOnClickListener { showQiblaBreakdownSheet() }
         binding.btnQiblaDetail.setOnClickListener { showQiblaBreakdownSheet() }
     }
 
@@ -244,9 +243,6 @@ class KiblatActivity : AppCompatActivity() {
         } else {
             viewModel.fetchQiblaAngle(lat, lon)
         }
-
-        // update compass
-        loadQiblaCompass(lat, lon)
     }
     @SuppressLint("SetTextI18n")
     private fun getAddressFromLatLong(lat: Double, lon: Double) {
@@ -269,25 +265,6 @@ class KiblatActivity : AppCompatActivity() {
             e.printStackTrace()
             binding.txtLocation.text = getString(R.string.infoLokasi)
         }
-    }
-
-    private fun loadQiblaCompass(lat: Double, lon: Double) {
-        if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
-            // Gambar kompas dari Aladhan membawa sudut hitungan Aladhan sendiri - kalau sumber
-            // yang dipilih user Rumus Manual, jangan tampilkan itu (akan kontradiksi dengan
-            // txtQiblaValue yang sekarang dari rumus lokal). Pakai placeholder generik saja.
-            binding.imgCompass.setImageResource(R.drawable.ic_compass_placeholder)
-            return
-        }
-
-        val url =
-            "https://api.aladhan.com/v1/qibla/$lat/$lon/compass"
-
-        Glide.with(this)
-            .load(url)
-            .placeholder(R.drawable.ic_compass_placeholder)
-            .error(R.drawable.ic_compass_error)
-            .into(binding.imgCompass)
     }
 
     private fun lowPassFilter(input: Float, output: Float): Float {
@@ -351,21 +328,10 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun rotateCompassSmooth() {
-
-//        val target = -currentAzimuth
-//
-//        if (!hasInitialRotation) {
-//            lastRotation = target
-//            binding.imgCompass.rotation = lastRotation
-//            hasInitialRotation = true
-//            return
-//        }
-//
-//        val smoothTarget = getShortestRotation(lastRotation, target)
-//
-//        lastRotation = smoothTarget
-//        println("qibla angle $qiblaAngle azimuth $currentAzimuth lastrotation $lastRotation")
-        binding.imgCompass.rotation = -currentAzimuth
+        // Dial berputar mengikuti heading device supaya marker Utara tetap akurat.
+        binding.imgCompassDial.rotation = -currentAzimuth
+        // Jarum kiblat independen dari dial - selalu menunjuk arah kiblat relatif ke layar.
+        binding.imgCompassNeedle.rotation = qiblaAngle - currentAzimuth
 
         checkQiblaAlignment()
     }
@@ -378,18 +344,12 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun checkQiblaAlignment() {
+        val accentColor = ContextCompat.getColor(this, R.color.accent_yellow)
 
         if (isAlignedToQibla()) {
-            binding.qiblaAngleContainer.background =
-                ContextCompat.getDrawable(this, R.drawable.bg_qibla_match)
-            binding.txtQiblaLabel.setTextColor(Color.WHITE)
-            binding.txtQiblaValue.setTextColor(Color.WHITE)
-
+            binding.txtQiblaValue.setTextColor(accentColor)
         } else {
-            binding.qiblaAngleContainer.background =
-                ContextCompat.getDrawable(this, R.drawable.bg_qibla_angle)
-            binding.txtQiblaLabel.setTextColor(Color.BLACK)
-            binding.txtQiblaValue.setTextColor(Color.BLACK)
+            binding.txtQiblaValue.setTextColor(Color.WHITE)
         }
     }
 

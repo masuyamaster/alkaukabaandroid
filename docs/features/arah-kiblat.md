@@ -20,6 +20,17 @@ Ini pola yang sama dengan breakdown Ephemeris di fitur Waktu Sholat (lihat
 hasil (bukan per-waktu-sholat), jadi tidak butuh registry/provider seperti di
 sana - cukup satu fungsi kalkulasi langsung.
 
+**Update 2026-08-30 — modernisasi visual kompas & info card**: kompas gambar
+vintage (dimuat dari endpoint gambar Aladhan lewat Glide) diganti dua layer
+vector drawable flat/minimalis yang dirotasi manual di kode (lihat section 3 &
+4) — sekaligus **menghapus dependensi jaringan dari elemen visual kompas** dan
+menutup known-issue lama soal kompas placeholder di mode Sumber Kiblat Manual
+(section 7). Badge sudut kiblat + baris lokasi (dulu dua "pill" terpisah, satu
+outline hijau satu solid navy) disatukan jadi satu **Card** (`infoCard`,
+`bg_card_rounded` + tint `waktu_sholat_dark_bg`) — komponen & warna yang sama
+persis dengan Hero Card di `docs/features/waktu-sholat.md`, supaya kedua layar
+konsisten.
+
 ## 2. Entry point & prasyarat
 
 - Dari `MainActivity`: tap tombol **`btKiblat`** → `startActivity(Intent(...,
@@ -45,7 +56,10 @@ sana - cukup satu fungsi kalkulasi langsung.
     dan kompas visual sekadar diam — tidak ada pesan error ke user untuk
     kasus ini (lihat Known issues).
   - `INTERNET` (dideklarasikan app-wide di manifest) — dipakai untuk request
-    sudut kiblat ke Aladhan API dan load gambar kompas via Glide.
+    sudut kiblat ke Aladhan API (`ALADHAN` source). **Sejak update
+    2026-08-30**, kompas visual sendiri sudah tidak butuh internet sama
+    sekali — dial & jarum dirotasi dari `qiblaAngle` yang sudah ada di memori,
+    bukan gambar yang di-fetch (lihat section 3 & 4).
 
 ## 3. Titik masuk logika & navigasi
 
@@ -64,11 +78,12 @@ sana - cukup satu fungsi kalkulasi langsung.
     lewat observer akan menimpa balik nilai manual, race condition). Sudut
     `qiblaAngle`/`txtQiblaValue` diisi langsung dari
     `qiblaBreakdown.utsbDegree`.
-  - Ini juga menentukan `loadQiblaCompass()`: kalau `MANUAL_FORMULA`, gambar
-    kompas dari Aladhan (yang membawa sudut hitungan Aladhan sendiri) diganti
-    `ic_compass_placeholder` generik, supaya tidak kontradiksi dengan angka
-    yang ditampilkan. **Belum ada kompas visual custom** yang benar-benar
-    menggambar jarum sesuai `qiblaBreakdown.utsbDegree` — lihat Known issues.
+  - **Sejak update 2026-08-30**, `loadQiblaCompass()` (dan Glide) sudah
+    dihapus total — kompas visual (`imgCompassDial` + `imgCompassNeedle`)
+    dirotasi langsung dari variabel `qiblaAngle`/`currentAzimuth` di
+    `rotateCompassSmooth()` (lihat alur data di bawah), jadi baik source
+    `ALADHAN` maupun `MANUAL_FORMULA` sama-sama dapat jarum yang akurat —
+    tidak ada lagi cabang khusus/placeholder generik untuk mode Manual.
 - `KiblatViewModel.fetchQiblaAngle(lat, lon)` — dipanggil dari
   `KiblatActivity.onLocationReady()` begitu lokasi didapat **dan** sumber
   aktif adalah `ALADHAN` (lihat poin di atas). Hasilnya di-expose lewat
@@ -88,12 +103,14 @@ sana - cukup satu fungsi kalkulasi langsung.
   dikeluarkan") karena keliru secara scope. Sekarang `QiblaCalculator` cuma
   dipakai di fitur Arah Kiblat sendiri, tempat yang seharusnya.
 - Navigasi: `MainActivity` → `KiblatActivity` via `Intent` biasa, satu arah,
-  tanpa extra. Tombol back di toolbar (`binding.toolbar
-  .setNavigationOnClickListener`) memanggil `onBackPressedDispatcher
-  .onBackPressed()`. Di dalam layar ini, tap badge `qiblaAngleContainer`
-  (atau ikon kecil `btnQiblaDetail` di dalamnya) membuka `BottomSheetDialog`
-  (`dialog_qibla_breakdown.xml`) — modal, bukan Activity terpisah, sama
-  seperti pola bottom sheet di `KonfigurasiActivity`.
+  tanpa extra. Tombol back pakai `view_toolbar_default` bersama
+  (`binding.includeToolbar.btnBack.setOnClickListener`) memanggil
+  `onBackPressedDispatcher.onBackPressed()`. Di dalam layar ini, tap Card
+  `infoCard` (dulu bernama `qiblaAngleContainer`, sekarang satu Card penuh —
+  lihat Update 2026-08-30 di section 1) atau ikon kecil `btnQiblaDetail` di
+  dalamnya membuka `BottomSheetDialog` (`dialog_qibla_breakdown.xml`) — modal,
+  bukan Activity terpisah, sama seperti pola bottom sheet di
+  `KonfigurasiActivity`.
 - `ArahKiblatActivity` (di file terpisah, folder yang sama) berisi struktur
   navigasi lain — `ViewPager` dua tab (`KiblatFragment` "Kiblat" dan
   `FalakiyahFragment` "Detail Perhitungan") lewat
@@ -107,7 +124,7 @@ File yang terlibat:
 
 | File | Peran |
 |---|---|
-| `ui/arahkiblat/KiblatActivity.kt` | Activity aktif satu-satunya untuk fitur ini (terdaftar di manifest, dipicu dari `MainActivity`). Urus permission lokasi, cek GPS aktif, ambil lokasi via `FusedLocationProviderClient`, dengarkan sensor rotasi, render gambar kompas via Glide, hitung alignment heading vs sudut kiblat |
+| `ui/arahkiblat/KiblatActivity.kt` | Activity aktif satu-satunya untuk fitur ini (terdaftar di manifest, dipicu dari `MainActivity`). Urus permission lokasi, cek GPS aktif, ambil lokasi via `FusedLocationProviderClient`, dengarkan sensor rotasi, rotasikan dial+jarum kompas vector lokal (bukan Glide lagi), hitung alignment heading vs sudut kiblat |
 | `ui/arahkiblat/ArahKiblatActivity.kt` | Activity alternatif ber-tab (`ViewPager`) — **tidak terdaftar di manifest, dead code**, lihat Known issues |
 | `ui/arahkiblat/KiblatFragment.kt` + `res/layout/fragment_kiblat.xml` | Tab pertama `ArahKiblatActivity` — masih boilerplate "blank fragment" bawaan Android Studio (`TODO: Update blank fragment layout`, teks `hello_blank_fragment`), tidak ada implementasi |
 | `ui/arahkiblat/FalakiyahFragment.kt` + `res/layout/fragment_falakiyah.xml` | Tab kedua `ArahKiblatActivity` ("Detail Perhitungan") — sama, masih blank fragment boilerplate, tidak ada implementasi |
@@ -117,7 +134,9 @@ File yang terlibat:
 | `api/PrayersApiService.kt` (`AladhanApi` interface + `RetrofitClient`, base URL `https://api.aladhan.com/`) | Retrofit service bersama, dipakai juga oleh fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`) |
 | `utils/QiblaCalculator.kt` | Util murni, hitung breakdown manual arah kiblat (rumus Al Hasib). Dipakai langsung oleh `KiblatActivity` |
 | `utils/SessionManager.kt` | Sumber setting global: `isManualLocationMode()`/`getManualLat()`/`getManualLng()` (lokasi) dan `getQiblaSource()` (Aladhan vs Rumus Manual) — diisi lewat `KonfigurasiActivity`, dibaca di sini |
-| `res/layout/activity_kiblat.xml` | Layout `KiblatActivity`: toolbar, `imgCompass`, `txtQiblaValue`, `btnQiblaDetail`, `txtLocation`, `qiblaAngleContainer` (sekarang `clickable`), `calibrationHint` |
+| `res/layout/activity_kiblat.xml` | Layout `KiblatActivity`: toolbar (`view_toolbar_default`), `imgCompassDial` + `imgCompassNeedle` (dua layer vector, dirotasi independen), `calibrationHint`, dan Card `infoCard` (`clickable`) berisi `txtQiblaLabel`/`txtQiblaValue`/`btnQiblaDetail`/`txtLocation` |
+| `res/drawable/ic_compass_dial_modern.xml` | Vector dial kompas: ring tipis, tick derajat tiap 15°, marker segitiga merah "Utara" di atas. Dirotasi `-currentAzimuth` |
+| `res/drawable/ic_qibla_needle.xml` | Vector jarum kiblat, satu panah tebal warna `waktu_sholat_dark_bg` (biru dongker, sama dengan Hero Card Waktu Sholat). Dirotasi `qiblaAngle - currentAzimuth`, independen dari dial |
 | `res/layout/dialog_qibla_breakdown.xml` | Bottom sheet Detail Perhitungan — judul + disclosure singkat + container untuk baris breakdown |
 | `res/layout/item_breakdown_row.xml` | Satu baris label/value di breakdown — **dipakai bersama** dengan fitur Waktu Sholat (lihat `docs/features/waktu-sholat.md`), bukan file baru khusus Kiblat |
 | `res/layout/activity_arah_kiblat.xml` | Layout `ArahKiblatActivity` (tab layout + `ViewPager`) — hanya dipakai Activity yang dead code |
@@ -138,28 +157,39 @@ Dari `onLocationReady(lat, lon)`, **cabang setting sumber kiblat** (section 3):
     `qiblaBreakdown.utsbDegree` (hasil `QiblaCalculator.calculateBreakdown`
     yang sudah dihitung tepat sebelumnya) — `fetchQiblaAngle` tidak dipanggil.
 
-Alur data (gambar kompas visual, `imgCompass` background): dipanggil
-langsung dari `onLocationReady()` lewat `loadQiblaCompass(lat, lon)` — **tidak
-lewat ViewModel/Repository**. Kalau sumber kiblat `ALADHAN`, Activity
-`Glide.load()` URL `https://api.aladhan.com/v1/qibla/{lat}/{lon}/compass`
-(endpoint Aladhan yang mengembalikan gambar kompas siap-pakai bertanda
-kiblat). Kalau `MANUAL_FORMULA`, **tidak** memanggil Aladhan sama sekali —
-langsung `binding.imgCompass.setImageResource(R.drawable.ic_compass_placeholder)`
-(gambar generik, bukan kompas custom yang benar-benar digambar sesuai sudut
-manual — lihat Known issues).
+Alur data (kompas visual, `imgCompassDial` + `imgCompassNeedle`) — **diubah
+total di update 2026-08-30**: tidak ada lagi fetch gambar dari network sama
+sekali (Glide, `loadQiblaCompass()`, `ic_compass_placeholder`,
+`ic_compass_error` semuanya dihapus). Dua `ImageView` bertumpuk di
+`contentContainer`, masing-masing pakai vector drawable statis lokal, dirotasi
+lewat property `.rotation` murni di `rotateCompassSmooth()` (lihat alur
+heading di bawah) berdasarkan `qiblaAngle` yang sudah tersedia di memori
+Activity — sehingga berlaku identik untuk source `ALADHAN` maupun
+`MANUAL_FORMULA`, tidak ada percabangan lagi seperti sebelumnya.
 
 Alur data (heading/orientasi HP): `onResume()` daftarkan
 `sensorListener` ke `Sensor.TYPE_ROTATION_VECTOR` (`SENSOR_DELAY_GAME`) →
 `onSensorChanged()` hitung rotation matrix → azimuth mentah → dihaluskan
 (`unwrapAngle()` + `lowPassFilter()`, faktor `0.15f`) jadi `currentAzimuth` →
-`rotateCompassSmooth()` rotasikan `imgCompass` sebesar `-currentAzimuth` lalu
-panggil `checkQiblaAlignment()` yang membandingkan `currentAzimuth` vs
-`qiblaAngle` (dari API di alur pertama) dengan threshold `3°`
-(`qiblaThresshold`) — kalau selaras, background & warna teks
-`qiblaAngleContainer` berubah jadi versi "match" (`bg_qibla_match`, teks
-putih), kalau tidak kembali ke default (`bg_qibla_angle`, teks hitam).
+`rotateCompassSmooth()`:
+  - `imgCompassDial.rotation = -currentAzimuth` — dial (ring + tick + marker
+    "Utara") berputar mengikuti heading device, supaya marker Utara tetap
+    akurat terhadap utara geografis.
+  - `imgCompassNeedle.rotation = qiblaAngle - currentAzimuth` — jarum kiblat
+    dihitung **independen** dari dial, langsung dari selisih sudut kiblat vs
+    heading saat ini, jadi selalu menunjuk kiblat relatif ke layar tanpa
+    tergantung gambar network apa pun.
+  - lalu panggil `checkQiblaAlignment()`, yang membandingkan `currentAzimuth`
+    vs `qiblaAngle` dengan threshold `3°` (`qiblaThresshold`) — kalau selaras,
+    `txtQiblaValue` (di dalam `infoCard`) berganti warna teks jadi
+    `accent_yellow` (emas), kalau tidak kembali ke putih. **Beda dari
+    sebelumnya**: dulu seluruh `Drawable` background badge diganti
+    (`bg_qibla_match`/`bg_qibla_angle`, alokasi objek baru tiap event sensor —
+    lihat Known issues lama), sekarang cukup `setTextColor()` memakai warna
+    yang sudah pasti ter-resolve, jadi TODO alokasi berlebih itu otomatis
+    tertutup.
 `onAccuracyChanged()` juga menampilkan/menyembunyikan `calibrationHint` saat
-akurasi sensor rendah/unreliable.
+akurasi sensor rendah/unreliable — tidak berubah dari sebelumnya.
 
 Alur data (breakdown manual, "Detail Perhitungan"): `onLocationReady()` juga
 panggil `QiblaCalculator.calculateBreakdown(lat, lon)` — **selalu**, terlepas
@@ -167,7 +197,7 @@ dari sumber kiblat aktif apa (dipakai untuk isi sheet breakdown, dan kalau
 sumbernya `MANUAL_FORMULA` juga dipakai sebagai `qiblaAngle` utama, lihat di
 atas). Hasilnya (`QiblaBreakdownResult`) disimpan di properti `qiblaBreakdown`
 (bukan `LiveData` — cukup properti biasa karena cuma dibaca sekali saat tap,
-tidak perlu observasi berkelanjutan). Tap `qiblaAngleContainer`/`btnQiblaDetail`
+tidak perlu observasi berkelanjutan). Tap `infoCard`/`btnQiblaDetail`
 → `showQiblaBreakdownSheet()` → kalau `qiblaBreakdown` masih `null` (lokasi
 belum siap), tampilkan `Toast`; kalau sudah ada, set teks subtitle
 (`tvQiblaBreakdownSubtitle`) sesuai `sessionManager.getQiblaSource()` (jelaskan
@@ -202,8 +232,12 @@ tercetak literal jadi teks **"null, null, Indonesia"** di UI kalau
 
 ## 5. Dependencies & tech stack khusus
 
-- **Glide** — hanya dipakai di fitur ini (`KiblatActivity.loadQiblaCompass()`)
-  untuk load gambar kompas dari URL Aladhan; tidak dipakai di fitur lain.
+- **Glide** — **sejak update 2026-08-30 tidak dipakai lagi di fitur ini**
+  (dulu untuk load gambar kompas dari URL Aladhan lewat `loadQiblaCompass()`,
+  sekarang kompas visual pakai vector drawable lokal yang dirotasi manual,
+  lihat section 3 & 4). Cek dependency Glide di `build.gradle` sebelum
+  dihapus total dari project — kemungkinan masih dipakai fitur lain (mis.
+  foto profil).
 - **Google Play Services Location** (`FusedLocationProviderClient`,
   `LocationRequest`, `Priority.PRIORITY_HIGH_ACCURACY`) — ambil lokasi GPS
   presisi tinggi.
@@ -230,14 +264,15 @@ sekali. Verifikasi saat ini manual:
 3. Izinkan permission lokasi saat diminta → pastikan kalau GPS mati, app
    mengarahkan ke halaman setting lokasi.
 4. Setelah lokasi didapat: pastikan `txtLocation` terisi teks lokasi,
-   `txtQiblaValue` terisi angka derajat, dan gambar kompas (`imgCompass`)
-   termuat (bukan placeholder/error drawable — cek koneksi internet emulator
-   kalau gagal).
+   `txtQiblaValue` (di dalam Card `infoCard`) terisi angka derajat, dan dial +
+   jarum kompas (`imgCompassDial`/`imgCompassNeedle`) langsung tampil (vector
+   lokal, tidak butuh koneksi internet lagi untuk elemen visual ini).
 5. Putar device fisik/emulator (rotasi kompas emulator lewat "Extended
-   controls" > Virtual sensors kalau di emulator) → pastikan `imgCompass`
-   berputar mengikuti orientasi, dan saat heading mendekati sudut kiblat,
-   `qiblaAngleContainer` berubah warna (background + teks) menandakan sudah
-   sejajar.
+   controls" > Virtual sensors kalau di emulator) → pastikan `imgCompassDial`
+   berputar mengikuti orientasi (marker segitiga merah "Utara" tetap akurat),
+   `imgCompassNeedle` menunjuk kiblat secara independen, dan saat heading
+   mendekati sudut kiblat, warna `txtQiblaValue` berubah jadi emas
+   (`accent_yellow`) menandakan sudah sejajar.
 6. Cabut sinyal sensor rotasi (kalau memungkinkan) atau uji di device tanpa
    sensor rotasi untuk memverifikasi tidak ada crash (hanya diam, sesuai
    kode saat ini).
@@ -252,8 +287,23 @@ sekali. Verifikasi saat ini manual:
    menunjukkan koordinat manual yang sama (dalam format DMS).
 9. Ganti **Konfigurasi → Arah Kiblat → Sumber Perhitungan** ke **Rumus Manual
    (Al Hasib)** → buka `KiblatActivity` → pastikan `txtQiblaValue` sama
-   persis dengan "Hasil akhir (UTSB)" di breakdown, dan `imgCompass` jadi
-   gambar placeholder generik (bukan gambar kompas dari Aladhan).
+   persis dengan "Hasil akhir (UTSB)" di breakdown, **dan** `imgCompassNeedle`
+   tetap berputar menunjuk sudut yang sama (sejak update 2026-08-30, mode ini
+   tidak lagi jatuh ke placeholder generik — lihat Known issues, item selesai).
+
+**Catatan verifikasi sesi 2026-08-30 (modernisasi visual kompas & info card)**:
+perubahan ini (dial+jarum vector, Card `infoCard`) **belum dicoba interaktif
+di emulator/device** — environment sesi ini tidak punya `JAVA_HOME`/JDK
+terpasang jadi `gradlew` tidak bisa dijalankan sama sekali untuk compile-check
+maupun install APK. Yang sudah dipastikan: referensi id antar
+`activity_kiblat.xml` ↔ `KiblatActivity.kt` sudah dicocokkan manual (baca
+ulang kedua file), drawable yang dihapus (`bg_qibla_angle`, `bg_qibla_match`,
+`bg_location`, `ic_compass_placeholder`, `ic_compass_error`) sudah digrep dan
+dipastikan tidak dipakai file lain. **Perlu di-build & dicoba langsung di
+Android Studio** sebelum dianggap selesai 100% — cek proporsi ukuran dial vs
+jarum (`padding="24dp"`/`"56dp"` di kedua `ImageView`, lihat section 4) enak
+dilihat di device sungguhan, dan pastikan rotasi jarum & dial tetap mulus
+seperti versi gambar lama.
 
 **Catatan verifikasi sesi 2026-08-30 (lokasi/sumber kiblat)**: poin 8 & 9 di
 atas sudah dicek **berhasil** di emulator — nilai `SessionManager` di-set
@@ -279,14 +329,13 @@ dicoba manual di device sungguhan sebelum dianggap selesai 100%.
 
 ## 7. Known issues & TODOs
 
-- [ ] **Kompas visual saat Sumber Perhitungan = Manual masih placeholder
-      generik**, bukan gambar kompas custom yang benar-benar digambar sesuai
-      `qiblaBreakdown.utsbDegree` (lihat `loadQiblaCompass()`). Aladhan API
-      cuma bisa mengembalikan gambar sesuai hitungan Aladhan sendiri, jadi
-      untuk mode Manual sengaja diganti `ic_compass_placeholder` daripada
-      menampilkan gambar yang kontradiksi dengan angka. Kalau mau kompas
-      visual yang benar-benar akurat di mode Manual, perlu render kompas +
-      jarum arah sendiri (Canvas/custom View), bukan sekadar drawable statis.
+- [x] ~~Kompas visual saat Sumber Perhitungan = Manual masih placeholder
+      generik~~ — **selesai (2026-08-30)**. `loadQiblaCompass()` dan Glide
+      sudah dihapus total; kompas sekarang dua vector drawable
+      (`ic_compass_dial_modern.xml` dial + `ic_qibla_needle.xml` jarum,
+      lihat section 4) yang dirotasi langsung dari `qiblaAngle` yang sudah di
+      memori, jadi akurat untuk source `ALADHAN` maupun `MANUAL_FORMULA`
+      tanpa percabangan/placeholder khusus lagi.
 - [ ] `ArahKiblatActivity` (beserta `ViewPagerAdapter` dua-tab,
       `KiblatFragment`, `FalakiyahFragment`, layout `activity_arah_kiblat.xml`,
       `fragment_kiblat.xml`, `fragment_falakiyah.xml`) **tidak terdaftar di
@@ -313,14 +362,12 @@ dicoba manual di device sungguhan sebelum dianggap selesai 100%.
       bagian Testing poin 7. Perlu dicoba tap manual di device fisik/emulator
       lain untuk memastikan `showQiblaBreakdownSheet()` benar-benar terbuka
       saat disentuh user sungguhan, bukan cuma lewat code review + compile.
-- [ ] `checkQiblaAlignment()` mengganti `qiblaAngleContainer.background`
-      (`ContextCompat.getDrawable(...)`, alokasi Drawable baru) di **setiap**
-      callback sensor (`SENSOR_DELAY_GAME`, bisa puluhan kali per detik).
-      Kemungkinan pemicu isu tap sintetis di atas, dan berpotensi boros
-      alokasi objek / kerja main thread meski secara visual tidak masalah.
-      Pertimbangkan cache dua `Drawable` (`aligned`/`notAligned`) sekali di
-      awal lalu tinggal `if/else` assignment, alih-alih `getDrawable()`
-      berulang.
+- [x] ~~`checkQiblaAlignment()` mengganti background Drawable tiap callback
+      sensor~~ — **selesai (2026-08-30)** sebagai efek samping dari
+      penggantian pill jadi Card `infoCard`: alignment sekarang cuma
+      `txtQiblaValue.setTextColor(...)` (dua warna solid, tidak ada alokasi
+      `Drawable` baru sama sekali), dipanggil dari `checkQiblaAlignment()` di
+      setiap callback sensor seperti sebelumnya tapi jauh lebih murah.
 - [ ] `getAddressFromLatLong()` di `KiblatActivity.kt` memanggil
       `Geocoder.getFromLocation()` secara **sinkron di main thread** (bukan
       lewat coroutine/`Dispatchers.IO`) — berisiko ANR terutama di device
@@ -330,8 +377,7 @@ dicoba manual di device sungguhan sebelum dianggap selesai 100%.
       visual sekadar diam tanpa pesan/fallback apa pun ke user.
 - [ ] Belum ada test otomatis sama sekali untuk fitur ini (lihat bagian
       Testing di atas).
-- [ ] Ada kode rotasi kompas yang di-comment-out di
-      `KiblatActivity.rotateCompassSmooth()` (percobaan animasi rotasi
-      dengan `getShortestRotation`/`lastRotation` yang sudah tidak dipakai)
-      — technical debt kecil, sebaiknya dibersihkan kalau file ini disentuh
-      lagi.
+- [x] ~~Ada kode rotasi kompas yang di-comment-out di
+      `KiblatActivity.rotateCompassSmooth()`~~ — **selesai (2026-08-30)**,
+      dibersihkan sekalian saat fungsi ini ditulis ulang untuk dial+jarum dua
+      layer (lihat section 3 & 4).
