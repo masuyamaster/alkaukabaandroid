@@ -33,6 +33,20 @@ login ulang setiap buka app.
 - Prasyarat lain: permission `INTERNET` (sudah ada di manifest app-wide,
   bukan spesifik fitur ini). Google Sign-In butuh Web Client ID yang
   di-hardcode di `LoginActivity.kt` (lihat catatan security di section 7).
+- **Aset logo**: `ivLogo` di `LoginActivity` pakai
+  `@drawable/icon_al_kaukaba_black` (teks hitam, kontras di atas
+  `color_secondary` abu-kebiruan muda), sedangkan `Splashscreen` pakai
+  `@drawable/icon_al_kaukaba_white` (teks putih, kontras di atas
+  `color_primary` navy gelap) — dua varian warna dari logo yang sama, dipilih
+  sesuai background masing-masing layar. Per 2026-08-30,
+  `icon_al_kaukaba_black.png` di-upgrade dari 126x54px (buram) ke 1003x413px,
+  di-generate dari `icon_al_kaukaba_white.png` yang sudah high-res
+  (`drawable-xxxhdpi/`) lewat script PowerShell + `System.Drawing`: pixel
+  putih/abu-abu (teks & tagline) di-remap ke hitam murni `#000000`
+  berdasarkan kemiripan channel RGB, bulan sabit emas (`#E8BA5C`) dan alpha
+  antialiasing dipertahankan apa adanya. Kalau butuh varian warna logo baru
+  lagi ke depan, pakai pendekatan remap-warna yang sama dari source
+  high-res yang sudah ada, daripada minta desain ulang dari nol.
 
 ## 3. Titik masuk logika & navigasi
 
