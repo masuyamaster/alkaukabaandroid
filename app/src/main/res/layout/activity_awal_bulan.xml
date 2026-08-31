@@ -1,28 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#F5F7FA"
     tools:context=".ui.awalbulan.AwalBulanActivity">
 
-    <LinearLayout
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <include
-            android:id="@+id/includeToolbar"
-            layout="@layout/view_toolbar_default" />
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:padding="16dp"
-            android:paddingBottom="96dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -315,15 +310,12 @@
                 </LinearLayout>
 
             </LinearLayout>
-        </ScrollView>
-
-    </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/btnCalculate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
         android:text="HITUNG ULANG"
         android:textColor="@android:color/white"
@@ -332,4 +324,4 @@
         android:elevation="6dp"
         android:padding="16dp"/>
 
-</RelativeLayout>
+</LinearLayout>

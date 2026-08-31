@@ -66,6 +66,15 @@ Alur data (hitung): lokasi resolved -> `HilalViewModel.calculateHilal()` ->
 accordion rincian (`ItemPrayerBreakdownBinding` + `item_breakdown_row.xml`,
 pola yang sama dengan `WaktuSholatActivity.renderPrayerBreakdown()`).
 
+Per 2026-08-31: `activity_awal_bulan.xml` diubah dari `RelativeLayout`
+(tombol `btnCalculate` posisi `alignParentBottom` mengambang **di atas**
+`ScrollView`) jadi `LinearLayout` vertikal (`toolbar -> ScrollView weight=1 ->
+Button` sebagai sibling biasa) — sebelumnya tombol "Hitung Ulang" menutupi
+baris terakhir accordion begitu salah satu section di-expand (tinggi konten
+bertambah, padding-bottom tetap statis). Dengan restrukturisasi ini tombol
+selalu punya baris sendiri di layout flow, jadi tidak mungkin menutupi konten
+apa pun di skenario scroll/expand manapun.
+
 ## 5. Mesin hisab (`EphemerisCalculator`)
 
 1. **Ijtima' (konjungsi)**: `searchMoonQuarter`/`nextMoonQuarter` dari waktu
