@@ -12,6 +12,29 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.AlKaukaba.BottomSheetDialog</item>
+    </style>
+
+    <!-- BottomSheetDialog default di Material Components punya sudut persegi pada container
+         (design_bottom_sheet), sementara konten di dalamnya (mis. dialog_qibla_breakdown.xml)
+         menggambar sudut membulat sendiri lewat bg_card_up_rounded - hasilnya shadow/elevation
+         mengikuti outline persegi si container, jadi terlihat "nongol" di balik kartu yang
+         membulat. shapeAppearanceOverlay di sini bikin container-nya sendiri yang membulat,
+         supaya shadow ikut mengikuti bentuk membulat itu. -->
+    <style name="ThemeOverlay.AlKaukaba.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.AlKaukaba.BottomSheet.Modal</item>
+    </style>
+
+    <style name="Widget.AlKaukaba.BottomSheet.Modal" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.AlKaukaba.BottomSheet</item>
+    </style>
+
+    <style name="ShapeAppearance.AlKaukaba.BottomSheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

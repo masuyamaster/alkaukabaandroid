@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba.ui.calendar
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.RetrofitClient
@@ -14,6 +14,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +34,7 @@ class CalendarActivity : AppCompatActivity() {
     private var filterEndDate: Date? = null
 
     private val repository by lazy {
-        PrayerRepository(RetrofitClient.instance)
+        PrayerRepository(RetrofitClient.instance, applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +43,8 @@ class CalendarActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.btnBack.applyTopSystemBarInsetAsMargin()
+        binding.rvHolidays.applySystemBarInsetsPadding(applyBottom = true)
 
         setupRecyclerView()
         setupSearchAndFilter() // Setup Listener
@@ -157,12 +161,15 @@ class CalendarActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val allHolidays = mutableListOf<HolidayItem>()
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            val today = Calendar.getInstance()
+            val currentYear = today.get(Calendar.YEAR)
+            val currentMonth = today.get(Calendar.MONTH) + 1
             val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
             val outputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val todayStr = outputDateFormat.format(today.time)
 
             try {
-                for (month in 1..12) {
+                for (month in currentMonth..12) {
                     val response = repository.getIslamicHolidays(lat, lng, month, currentYear)
                     if (response.isSuccessful && response.body() != null) {
                         val rawData = response.body()!!.data
@@ -189,9 +196,15 @@ class CalendarActivity : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
-                    if (allHolidays.isNotEmpty()) {
+
+                    // Hanya tampilkan hari besar dari hari ini dan seterusnya
+                    val upcomingHolidays = allHolidays
+                        .filter { it.tanggal >= todayStr }
+                        .sortedBy { it.tanggal }
+
+                    if (upcomingHolidays.isNotEmpty()) {
                         // SIMPAN KE ORIGINAL LIST
-                        originalList = allHolidays.sortedBy { it.tanggal }
+                        originalList = upcomingHolidays
 
                         // Tampilkan semua data pertama kali (tanpa filter)
                         adapter.setData(originalList)

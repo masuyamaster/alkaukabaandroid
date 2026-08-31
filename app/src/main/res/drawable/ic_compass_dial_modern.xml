@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer ring, thin and minimalist -->
+    <path
+        android:strokeColor="#CBD5E1"
+        android:strokeWidth="2"
+        android:pathData="M100,10 A90,90 0 1,1 99.9,10 Z" />
+
+    <!-- Minor degree ticks, every 15 deg -->
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="2"
+        android:pathData="M123.29,13.07 L121.22,20.79
+                          M145.00,22.06 L141.00,28.99
+                          M163.64,36.36 L157.98,42.02
+                          M177.94,55.00 L171.01,59.00
+                          M186.93,76.71 L179.21,78.78
+                          M186.93,123.29 L179.21,121.22
+                          M177.94,145.00 L171.01,141.00
+                          M163.64,163.64 L157.98,157.98
+                          M145.00,177.94 L141.00,171.01
+                          M123.29,186.93 L121.22,179.21
+                          M76.71,186.93 L78.78,179.21
+                          M55.00,177.94 L59.00,171.01
+                          M36.36,163.64 L42.02,157.98
+                          M22.06,145.00 L28.99,141.00
+                          M13.07,123.29 L20.79,121.22
+                          M13.07,76.71 L20.79,78.78
+                          M22.06,55.00 L28.99,59.00
+                          M36.36,36.36 L42.02,42.02
+                          M55.00,22.06 L59.00,28.99
+                          M76.71,13.07 L78.78,20.79" />
+
+    <!-- Major ticks at E / S / W -->
+    <path
+        android:strokeColor="#64748B"
+        android:strokeWidth="3"
+        android:pathData="M190.00,100.00 L174.00,100.00
+                          M100.00,190.00 L100.00,174.00
+                          M10.00,100.00 L26.00,100.00" />
+
+    <!-- North reference marker (small red triangle at top of the dial) -->
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M100,8 L110,27 L90,27 Z" />
+</vector>

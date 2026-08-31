@@ -1,30 +1,49 @@
 package site.elahady.alkaukaba.ui.waktusholat
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.api.RetrofitClient
-import site.elahady.alkaukaba.api.TimingPrayers
 import site.elahady.alkaukaba.databinding.ActivityWaktuSholatBinding
+import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerKind
+import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerScheduleUiState
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerTimesViewModel
 import site.elahady.alkaukaba.viewmodel.waktusholat.PrayerViewModelFactory
+import site.elahady.alkaukaba.databinding.ItemPrayerBreakdownBinding
+import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
+import site.elahady.alkaukaba.utils.SessionManager
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 
 class WaktuSholatActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityWaktuSholatBinding
     private lateinit var viewModel: PrayerTimesViewModel
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
         private val locationPermissionRequest = registerForActivityResult(
@@ -52,8 +71,11 @@ class WaktuSholatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
+        binding.scrollContent.applySystemBarInsetsPadding(applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sessionManager = SessionManager(this)
 
         setupUI()
         setupViewModel()
@@ -64,7 +86,7 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     private fun setupViewModel() {
         val apiService = RetrofitClient.instance
-        val repository = PrayerRepository(apiService)
+        val repository = PrayerRepository(apiService, applicationContext)
         val factory = PrayerViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[PrayerTimesViewModel::class.java]
     }
@@ -82,49 +104,27 @@ class WaktuSholatActivity : AppCompatActivity() {
         binding.btnTabDetail.setOnClickListener {
             updateTabState(isActual = false)
         }
-        binding.btnTabDetail.visibility = View.GONE
-        binding.btnBack.setOnClickListener { finish() }
+        binding.includeToolbar.tvToolbarTitle.text = "Waktu Sholat"
+        binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
     }
 
     private fun updateTabState(isActual: Boolean) {
-        if (isActual) {
-            // --- KONDISI: WAKTU AKTUAL AKTIF ---
+        val colorActive = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorInactive = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
 
-            // 1. Ubah Style Tombol Kiri (Aktif)
-            binding.btnTabActual.setBackgroundResource(R.drawable.bg_tab_active)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabActual.setTextColor(getColor(android.R.color.white))
-            }
+        val activeTab = if (isActual) binding.btnTabActual else binding.btnTabDetail
+        val inactiveTab = if (isActual) binding.btnTabDetail else binding.btnTabActual
 
-            // 2. Ubah Style Tombol Kanan (Non-Aktif)
-            binding.btnTabDetail.setBackgroundResource(R.drawable.bg_tab_inactive)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabDetail.setTextColor(getColor(R.color.black))
-            }
+        activeTab.setBackgroundResource(R.drawable.bg_tab_underline_active)
+        activeTab.setTextColor(colorActive)
+        activeTab.setTypeface(null, android.graphics.Typeface.BOLD)
 
-            // 3. Tampilkan Layout yang sesuai
-            binding.layoutWaktuSholat.visibility = View.VISIBLE
-            binding.layoutDetailKiblat.visibility = View.GONE
+        inactiveTab.setBackgroundResource(R.drawable.bg_tab_underline_inactive)
+        inactiveTab.setTextColor(colorInactive)
+        inactiveTab.setTypeface(null, android.graphics.Typeface.NORMAL)
 
-        } else {
-            // --- KONDISI: DETAIL PERHITUNGAN AKTIF ---
-
-            // 1. Ubah Style Tombol Kiri (Non-Aktif)
-            binding.btnTabActual.setBackgroundResource(R.drawable.bg_tab_inactive)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabActual.setTextColor(getColor(R.color.black))
-            }
-
-            // 2. Ubah Style Tombol Kanan (Aktif)
-            binding.btnTabDetail.setBackgroundResource(R.drawable.bg_tab_active)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                binding.btnTabDetail.setTextColor(getColor(android.R.color.white))
-            }
-
-            // 3. Tampilkan Layout yang sesuai
-            binding.layoutWaktuSholat.visibility = View.GONE
-            binding.layoutDetailKiblat.visibility = View.VISIBLE
-        }
+        binding.layoutWaktuSholat.visibility = if (isActual) View.VISIBLE else View.GONE
+        binding.layoutDetailPerhitungan.visibility = if (isActual) View.GONE else View.VISIBLE
     }
 
     // 1. Menampilkan Tanggal Masehi & Hijriyah
@@ -150,113 +150,77 @@ class WaktuSholatActivity : AppCompatActivity() {
             ""
         }
 
-        // Set ke TextView (Format: 11 Rajab 1446H | 11 Januari 2025)
-        binding.tvDate.text = if (hijriString.isNotEmpty()) "$hijriString | $masehiString" else masehiString
+        // Set ke TextView: tanggal Hijriyah ditebalkan & lebih terang, dipisah bullet dari tanggal Masehi
+        // (Format: 11 Rajab 1446H  •  11 Januari 2025)
+        binding.tvDate.text = if (hijriString.isNotEmpty()) {
+            SpannableStringBuilder().apply {
+                append(hijriString)
+                setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                setSpan(ForegroundColorSpan(ContextCompat.getColor(this@WaktuSholatActivity, android.R.color.white)), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                append("  •  ")
+                append(masehiString)
+            }
+        } else {
+            masehiString
+        }
     }
 
-    // 2. Logika Mencari Jadwal Sholat Berikutnya (Next Prayer)
+    // 2. Bind 8 baris waktu (Tsulutsul Lail Akhir s/d Isya) & tandai periode yang sedang aktif.
+    // "Sholat mana yang aktif" sudah dihitung di PrayerTimesViewModel — di sini murni binding ke View.
     @SuppressLint("SetTextI18n")
-    private fun updateNextPrayerUI(timings: TimingPrayers) {
-        val prayerMap = mapOf(
-            "Subuh" to timings.subuh,
-            "Dzuhur" to timings.dzuhur,
-            "Ashar" to timings.ashar,
-            "Maghrib" to timings.maghrib,
-            "Isya" to timings.isya
+    private fun updateNextPrayerUI(state: PrayerScheduleUiState) {
+        val rows = listOf(
+            binding.rowTsulutsulLail, binding.rowImsak, binding.rowSubuh, binding.rowDhuha,
+            binding.rowDzuhur, binding.rowAshar, binding.rowMaghrib, binding.rowIsya
         )
 
-        val nextPrayer = getNextPrayerTime(prayerMap)
+        val colorActiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_row_active_bg)
+        val colorDarkBg = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorIconInactiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_icon_bg_inactive)
+        val colorIconMuted = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
+        val colorWhite = ContextCompat.getColor(this, android.R.color.white)
+        val colorTransparent = ContextCompat.getColor(this, R.color.transparent)
+        val colorNameInactive = android.graphics.Color.parseColor("#374151")
 
-        // Update UI
-        binding.tvNextPrayer.text = "${nextPrayer.first} ${nextPrayer.second} WIB"
+        state.items.forEachIndexed { index, entry ->
+            val row = rows[index]
+            row.tvPrayerName.text = entry.label
+            row.tvTime.text = entry.time
+            row.ivIcon.setImageResource(iconFor(entry.kind))
+
+            val isActive = index == state.activeIndex
+            row.rowRoot.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorActiveBg else colorTransparent)
+            row.iconContainer.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorDarkBg else colorIconInactiveBg)
+            row.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorWhite else colorIconMuted)
+            row.tvPrayerName.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            row.tvTime.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            row.tvPrayerName.setTextColor(if (isActive) colorDarkBg else colorNameInactive)
+        }
+
+        binding.tvNextPrayer.text = state.nextPrayerLabel
+        binding.tvNextPrayerTime.text = "${state.nextPrayerTime} WIB"
     }
 
-    private fun getNextPrayerTime(prayers: Map<String, String>): Pair<String, String> {
-        val sdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-        val currentTimeString = sdf.format(java.util.Date())
-
-        // Ubah waktu sekarang ke menit agar mudah dibandingkan (Jam * 60 + Menit)
-        val currentMinutes = timeToMinutes(currentTimeString)
-
-        var nearestPrayerName = "Subuh" // Default jika semua lewat (berarti besok Subuh)
-        var nearestPrayerTime = prayers["Subuh"] ?: "00:00"
-        var minDiff = Int.MAX_VALUE
-
-        // Loop semua jadwal untuk mencari yang belum lewat
-        for ((name, timeStr) in prayers) {
-            // Bersihkan format jam-> ambil 5 char pertama
-            val cleanTime = timeStr.take(5)
-            val prayerMinutes = timeToMinutes(cleanTime)
-
-            if (prayerMinutes > currentMinutes) {
-                val diff = prayerMinutes - currentMinutes
-                // Cari selisih terkecil (waktu terdekat yang akan datang)
-                if (diff < minDiff) {
-                    minDiff = diff
-                    nearestPrayerName = name
-                    nearestPrayerTime = cleanTime
-                }
-            }
-        }
-
-        // Jika minDiff masih MAX_VALUE, berarti sekarang sudah malam (setelah Isya)
-        if (minDiff == Int.MAX_VALUE) {
-            nearestPrayerName = "Subuh"
-            nearestPrayerTime = prayers["Subuh"]?.take(5) ?: "04:00"
-        }
-
-        return Pair(nearestPrayerName, nearestPrayerTime)
-    }
-
-    private fun timeToMinutes(time: String): Int {
-        return try {
-            val parts = time.split(":")
-            val hour = parts[0].toInt()
-            val minute = parts[1].toInt()
-            (hour * 60) + minute
-        } catch (e: Exception) {
-            0
-        }
+    private fun iconFor(kind: PrayerKind): Int = when (kind) {
+        PrayerKind.TSULUTSUL_LAIL -> R.drawable.ic_prayer_tsulutsul_lail
+        PrayerKind.IMSAK -> R.drawable.ic_prayer_imsak
+        PrayerKind.SUBUH -> R.drawable.ic_prayer_subuh
+        PrayerKind.DHUHA -> R.drawable.ic_prayer_dhuha
+        PrayerKind.DZUHUR -> R.drawable.ic_prayer_dzuhur
+        PrayerKind.ASHAR -> R.drawable.ic_prayer_ashar
+        PrayerKind.MAGHRIB -> R.drawable.ic_prayer_maghrib
+        PrayerKind.ISYA -> R.drawable.ic_prayer_isya
     }
 
     private fun observeViewModel() {
         // 1. Observe Jadwal Sholat
-        viewModel.prayerTimings.observe(this) { timings ->
-            timings?.let {
-
-                binding.rowImsak.tvPrayerName.text = "Imsak"
-                binding.rowImsak.tvTime.text = it.imsak
-
-                binding.rowSubuh.tvPrayerName.text = "Subuh"
-                binding.rowSubuh.tvTime.text = it.subuh
-
-                binding.rowDzuhur.tvPrayerName.text = "Dzuhur"
-                binding.rowDzuhur.tvTime.text = it.dzuhur
-
-                binding.rowAshar.tvPrayerName.text = "Ashar"
-                binding.rowAshar.tvTime.text = it.ashar
-
-                binding.rowMaghrib.tvPrayerName.text = "Maghrib"
-                binding.rowMaghrib.tvTime.text = it.maghrib
-
-                binding.rowIsya.tvPrayerName.text = "Isya"
-                binding.rowIsya.tvTime.text = it.isya
-                updateNextPrayerUI(it)
-            }
+        viewModel.prayerSchedule.observe(this) { state ->
+            state?.let { updateNextPrayerUI(it) }
         }
 
-        // 2. Observe Detail Rumus Kiblat
-        viewModel.qiblaDetailText.observe(this) { detailText ->
-            binding.tvCalculationResult.text = detailText
-        }
-
-        // 3. Observe Hasil Sudut (Kotak)
-        viewModel.qiblaDegreeUI.observe(this) { degreeText ->
-            binding.tvResultDegree.text = degreeText
-        }
-
-        viewModel.prayerCalcDetailText.observe(this) { detailText ->
-            binding.tvPrayerCalculationDetail.text = detailText
+        // 2. Observe breakdown perhitungan waktu sholat
+        viewModel.calculationBreakdown.observe(this) { sections ->
+            renderPrayerBreakdown(sections)
         }
 
         // 4. Observe Loading/Error
@@ -267,7 +231,51 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     }
 
+    // Accordion "Detail Perhitungan" - cuma tampil kalau metode aktif punya breakdown
+    // (lihat PrayerCalculationBreakdownRegistry). Kalau tidak, tampilkan pesan fallback.
+    private fun renderPrayerBreakdown(sections: List<PrayerBreakdownSection>?) {
+        binding.layoutPrayerBreakdownContainer.removeAllViews()
+
+        if (sections.isNullOrEmpty()) {
+            binding.layoutPrayerBreakdownContainer.visibility = View.GONE
+            binding.tvNoPrayerBreakdown.visibility = View.VISIBLE
+            return
+        }
+
+        binding.layoutPrayerBreakdownContainer.visibility = View.VISIBLE
+        binding.tvNoPrayerBreakdown.visibility = View.GONE
+
+        sections.forEach { section ->
+            val itemBinding = ItemPrayerBreakdownBinding.inflate(
+                layoutInflater, binding.layoutPrayerBreakdownContainer, false
+            )
+            itemBinding.tvPrayerLabel.text = section.prayerLabel
+            itemBinding.tvResultTime.text = "${section.resultTime} WIB"
+
+            section.rows.forEach { row ->
+                val rowView = layoutInflater.inflate(R.layout.item_breakdown_row, itemBinding.layoutBody, false)
+                rowView.findViewById<TextView>(R.id.tvRowLabel).text = row.label
+                rowView.findViewById<TextView>(R.id.tvRowValue).text = row.value
+                itemBinding.layoutBody.addView(rowView)
+            }
+
+            itemBinding.rowHeader.setOnClickListener {
+                val isExpanded = itemBinding.layoutBody.visibility == View.VISIBLE
+                itemBinding.layoutBody.visibility = if (isExpanded) View.GONE else View.VISIBLE
+                itemBinding.tvChevron.text = if (isExpanded) "⌄" else "⌃"
+            }
+
+            binding.layoutPrayerBreakdownContainer.addView(itemBinding.root)
+        }
+    }
+
     private fun checkLocationPermission() {
+            if (sessionManager.isManualLocationMode()) {
+                // Setting lokasi global (lihat KonfigurasiActivity) - lewati GPS/permission sama sekali.
+                useManualLocation(sessionManager.getManualLat(), sessionManager.getManualLng())
+                return
+            }
+
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -299,9 +307,7 @@ class WaktuSholatActivity : AppCompatActivity() {
             val lat = location?.latitude ?: -6.2088
             val long = location?.longitude ?: 106.8456
 
-            // Update UI Lokasi
-            binding.tvLocationName.text = "Lat: $lat, Long: $long"
-            binding.etCoordinates.setText("$lat, $long")
+            updateLocationDisplay(lat, long)
 
             // PENTING: Panggil ViewModel untuk memproses data
             viewModel.loadData(lat, long)
@@ -310,5 +316,39 @@ class WaktuSholatActivity : AppCompatActivity() {
 
     private fun useDefaultLocation() {
         Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun useManualLocation(lat: Double, lon: Double) {
+        updateLocationDisplay(lat, lon)
+        viewModel.loadData(lat, lon)
+    }
+
+    // Nama lokasi (mis. "Surabaya, Jawa Timur") ditampilkan di hero card - koordinat mentah
+    // dipindah ke tab Detail Perhitungan supaya halaman utama tidak terlalu teknis.
+    @SuppressLint("SetTextI18n")
+    private fun updateLocationDisplay(lat: Double, lon: Double) {
+        binding.tvDetailCoordinates.text = "Koordinat: Lat $lat, Long $lon"
+        binding.tvLocationName.text = "Mencari nama lokasi..."
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val placeName = resolvePlaceName(lat, lon)
+            withContext(Dispatchers.Main) {
+                binding.tvLocationName.text = placeName ?: "Lokasi Anda"
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun resolvePlaceName(lat: Double, lon: Double): String? {
+        return try {
+            val geocoder = Geocoder(this, java.util.Locale("id", "ID"))
+            val address = geocoder.getFromLocation(lat, lon, 1)?.firstOrNull() ?: return null
+            val kota = address.subAdminArea ?: address.locality
+            val provinsi = address.adminArea
+            listOfNotNull(kota, provinsi).joinToString(", ").ifBlank { null }
+        } catch (e: Exception) {
+            null
+        }
     }
 }

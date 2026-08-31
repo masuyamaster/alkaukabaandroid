@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Bold flat arrow pointing to the qibla direction -->
+    <path
+        android:fillColor="@color/waktu_sholat_dark_bg"
+        android:pathData="M100,18 L128,150 L100,128 L72,150 Z" />
+</vector>

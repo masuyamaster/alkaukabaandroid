@@ -1,7 +1,6 @@
 package site.elahady.alkaukaba.api
 
 import com.google.gson.annotations.SerializedName
-import retrofit2.Call
 import retrofit2.Response // Gunakan Response, BUKAN Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -26,10 +25,12 @@ data class CalendarResponse(val code: Int,val status: String,val data: List<Pray
 data class TimingPrayers(
     @SerializedName("Imsak") val imsak: String,
     @SerializedName("Fajr") val subuh: String,
+    @SerializedName("Sunrise") val sunrise: String,
     @SerializedName("Dhuhr") val dzuhur: String,
     @SerializedName("Asr") val ashar: String,
     @SerializedName("Maghrib") val maghrib: String,
-    @SerializedName("Isha") val isya: String
+    @SerializedName("Isha") val isya: String,
+    @SerializedName("Lastthird") val tsulutsulLailAkhir: String
 )
 
 data class Method(
@@ -52,7 +53,8 @@ interface AladhanApi {
         @Path("date") date: String,
         @Query("latitude") lat: Double,
         @Query("longitude") lng: Double,
-        @Query("method") method: Int = 20
+        @Query("method") method: Int = 20,
+        @Query("methodSettings") methodSettings: String? = null
     ): Response<PrayerResponse>
 
     @GET("v1/calendar")
@@ -61,7 +63,8 @@ interface AladhanApi {
         @Query("longitude") lng: Double,
         @Query("method") method: Int = 20,
         @Query("month") month: Int,
-        @Query("year") year: Int
+        @Query("year") year: Int,
+        @Query("methodSettings") methodSettings: String? = null
     ): Response<CalendarResponse>
 
     @GET("v1/qibla/{latitude}/{longitude}")
@@ -71,12 +74,13 @@ interface AladhanApi {
     ): QiblaResponse
 
     @GET("v1/timings")
-    fun getTimingPrayers(
+    suspend fun getTimingPrayers(
         @Query("latitude") lat: Double,
         @Query("longitude") long: Double,
         @Query("method") method: Int = 20,
-        @Query("date") date: String
-    ): Call<PrayerTimeResponse>
+        @Query("date") date: String,
+        @Query("methodSettings") methodSettings: String? = null
+    ): Response<PrayerTimeResponse>
 
 }
 

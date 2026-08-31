@@ -2,59 +2,62 @@ package site.elahady.alkaukaba.utils
 
 import kotlin.math.*
 
+/**
+ * Breakdown perhitungan manual Arah Kiblat (Al Hasib - Alkaukaba Team), berdasarkan
+ * rumus segitiga bola "tan⁻¹(cos φ x tan φ_Kabah : sin C - sin φ : tan C)".
+ *
+ * Ini BUKAN sumber sudut kompas yang ditampilkan di KiblatActivity - itu tetap dari
+ * Aladhan API lewat KiblatRepository/KiblatViewModel. Kelas ini murni buat breakdown
+ * "angka ini didapat dari mana" di dialog Detail Perhitungan, sama seperti
+ * EphemerisPrayerCalculator untuk Waktu Sholat.
+ */
 object QiblaCalculator {
-    // Lokasi Ka'bah (Tetap)
+    // Lokasi Ka'bah: 21°25' LU, 39°50' BT
     const val KAABA_LAT = 21.4225
     const val KAABA_LONG = 39.8262
 
-    data class QiblaResult(
-        val qiblaDegree: Double,
-        val deltaLong: Double,
-        val detailFormulaSteps: String // String panjang untuk ditampilkan di UI
+    data class QiblaBreakdownRow(val label: String, val value: String)
+
+    data class QiblaBreakdownResult(
+        val rows: List<QiblaBreakdownRow>,
+        val utsbDegree: Double
     )
 
-    fun calculateQibla(userLat: Double, userLong: Double): QiblaResult {
+    fun calculateBreakdown(userLat: Double, userLong: Double): QiblaBreakdownResult {
+        // Selisih Bujur (C) = Bujur Daerah - Bujur Ka'bah
+        val c = userLong - KAABA_LONG
+
         val userLatRad = Math.toRadians(userLat)
         val kaabaLatRad = Math.toRadians(KAABA_LAT)
+        val cRad = Math.toRadians(c)
 
-        // Selisih Bujur (Delta Longitude)
-        val deltaLong = userLong - KAABA_LONG
-        val deltaLongRad = Math.toRadians(deltaLong)
+        // Rumus: tan⁻¹(cos φ x tan φ_Kabah : sin C - sin φ : tan C)
+        val thetaBaratUtara = Math.toDegrees(
+            atan((cos(userLatRad) * tan(kaabaLatRad)) / sin(cRad) - sin(userLatRad) / tan(cRad))
+        )
+        val thetaUtaraBarat = 90 - thetaBaratUtara
+        val utsb = (270 + thetaBaratUtara + 360) % 360
 
-        // Rumus Trigonometri Bola untuk Arah Kiblat
-        // y = sin(dLong)
-        // x = cos(lat) * tan(kaabaLat) - sin(lat) * cos(dLong)
-        val y = sin(deltaLongRad)
-        val x = cos(userLatRad) * tan(kaabaLatRad) - sin(userLatRad) * cos(deltaLongRad)
+        val rows = listOf(
+            QiblaBreakdownRow("Lintang Ka'bah (φ)", "${toDms(KAABA_LAT)} LU"),
+            QiblaBreakdownRow("Bujur Ka'bah (λ)", "${toDms(KAABA_LONG)} BT"),
+            QiblaBreakdownRow("Lintang lokasi (φ)", "${toDms(abs(userLat))} ${if (userLat < 0) "LS" else "LU"}"),
+            QiblaBreakdownRow("Bujur lokasi (λ)", "${toDms(abs(userLong))} ${if (userLong < 0) "BB" else "BT"}"),
+            QiblaBreakdownRow("Selisih Bujur (C)", toDms(abs(c))),
+            QiblaBreakdownRow("Rumus", "tan⁻¹(cos φ × tan φ_Kabah ÷ sin C − sin φ ÷ tan C)"),
+            QiblaBreakdownRow("Hasil (Barat ke Utara)", "${toDms(abs(thetaBaratUtara))} (B-U)"),
+            QiblaBreakdownRow("Hasil (Utara ke Barat)", "${toDms(abs(thetaUtaraBarat))} (U-B)"),
+            QiblaBreakdownRow("Hasil akhir (UTSB, dari Utara)", "${toDms(utsb)}")
+        )
 
-        val qiblaRad = atan2(y, x)
-        val qiblaDegree = Math.toDegrees(qiblaRad)
+        return QiblaBreakdownResult(rows, utsb)
+    }
 
-        // Normalisasi sudut kiblat (270 derajat arah Barat + offset)
-        // Arah kiblat dari Utara searah jarum jam
-        val qiblaNorthBased = (270.0 + (90.0 - qiblaDegree)) % 360.0 // Penyesuaian sederhana utk konteks indo
-
-        // Logic String untuk meniru "Detail Perhitungan" di Screenshot
-        // Menampilkan rumus dan substitusi nilai
-        val stepByStep = """
-            Latitude : $userLat
-            Longitude : $userLong
-            
-            Selisih Bujur (Bujur Daerah - Bujur Kabah):
-            = $userLong - $KAABA_LONG
-            = ${String.format("%.3f", deltaLong)}
-            
-            Rumus Arah Kiblat:
-            tan⁻¹(cos Lat x tan 21°25' : sin C - sin Lat : tan C)
-            
-            Detail Substitusi:
-            = tan⁻¹(cos $userLat x tan 21.42 : sin ${String.format("%.2f", deltaLong)} - ...
-            
-            Hasil Perhitungan Sudut:
-            = ${String.format("%.2f", abs(qiblaDegree))}° dari Barat ke Utara
-            = ${String.format("%.2f", 270 + qiblaDegree)}° UTSB (Utara Timur Selatan Barat)
-        """.trimIndent()
-
-        return QiblaResult(qiblaDegree, deltaLong, stepByStep)
+    private fun toDms(decimalDegrees: Double): String {
+        val degrees = floor(decimalDegrees).toInt()
+        val minutesDecimal = (decimalDegrees - degrees) * 60
+        val minutes = floor(minutesDecimal).toInt()
+        val seconds = ((minutesDecimal - minutes) * 60).roundToInt()
+        return "$degrees°$minutes'$seconds\""
     }
 }

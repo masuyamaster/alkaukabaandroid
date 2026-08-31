@@ -1,6 +1,5 @@
 package site.elahady.alkaukaba
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +20,7 @@ import site.elahady.alkaukaba.databinding.ActivityLoginBinding
 import site.elahady.alkaukaba.model.GoogleLoginRequest
 import site.elahady.alkaukaba.model.LoginRequest
 import site.elahady.alkaukaba.model.RegisterRequest
+import site.elahady.alkaukaba.model.UserData
 import site.elahady.alkaukaba.utils.AuthClient
 import site.elahady.alkaukaba.utils.SessionManager
 
@@ -30,26 +30,26 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
 
     private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                val idToken = account?.idToken
+        // Tidak mengecek resultCode di sini: saat gagal, GMS sering mengembalikan
+        // RESULT_CANCELED walau penyebabnya bukan pembatalan user (mis. DEVELOPER_ERROR
+        // karena SHA-1/package mismatch). Kode error asli hanya bisa didapat lewat
+        // ApiException dari getSignedInAccountFromIntent, jadi selalu coba proses intent-nya.
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account?.idToken
 
-                if (idToken != null) {
-                    // Berhasil! Lanjut ke API kita
-                    performGoogleLogin(idToken)
-                } else {
-                    Log.e("GOOGLE_AUTH", "Token null, tapi login sukses.")
-                    Toast.makeText(this, "Gagal mendapatkan ID Token", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: ApiException) {
-                // INI YANG PALING PENTING: Menangkap kode error dari Google
-                Log.e("GOOGLE_AUTH", "Google Sign-In failed. Error Code: ${e.statusCode}")
-                Toast.makeText(this, "Error Code: ${e.statusCode}", Toast.LENGTH_LONG).show()
+            if (idToken != null) {
+                // Berhasil! Lanjut ke API kita
+                performGoogleLogin(idToken)
+            } else {
+                Log.e("GOOGLE_AUTH", "Token null, tapi login sukses.")
+                Toast.makeText(this, "Gagal mendapatkan ID Token", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            Log.e("GOOGLE_AUTH", "Result Code bukan RESULT_OK. User mungkin membatalkan popup.")
+        } catch (e: ApiException) {
+            // INI YANG PALING PENTING: Menangkap kode error dari Google
+            Log.e("GOOGLE_AUTH", "Google Sign-In failed. resultCode=${result.resultCode} statusCode=${e.statusCode} message=${e.message}")
+            Toast.makeText(this, "Error Code: ${e.statusCode}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -204,6 +204,7 @@ class LoginActivity : AppCompatActivity() {
 
                             val sessionManager = SessionManager(this@LoginActivity)
                             sessionManager.setLogin(true)
+                            persistUserData(sessionManager, apiResponse.data)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -246,6 +247,7 @@ class LoginActivity : AppCompatActivity() {
 
                             val sessionManager = SessionManager(this@LoginActivity)
                             sessionManager.setLogin(true)
+                            persistUserData(sessionManager, apiResponse.data)
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -262,5 +264,13 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun persistUserData(sessionManager: SessionManager, data: UserData?) {
+        if (data == null) return
+        sessionManager.setUserId(data.id)
+        sessionManager.setUserName(data.username)
+        sessionManager.setEmail(data.email)
+        data.token?.let { sessionManager.setAuthToken(it) }
     }
 }

@@ -5,50 +5,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingTop="20dp"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     tools:context=".ui.waktusholat.WaktuSholatActivity"
     android:background="#F5F7FA">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
-        <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="#333"/>
-        <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Waktu Sholat"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginStart="16dp"
-        android:textColor="#333"/>
-    </LinearLayout>
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default"
+        android:layout_marginStart="-10dp"
+        android:layout_marginEnd="-10dp"
+        android:layout_marginTop="4dp" />
 
     <LinearLayout
         android:id="@+id/tabContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_tab_container"
+        android:background="@color/card_white"
         android:orientation="horizontal"
-        android:layout_margin="16dp">
+        android:layout_marginTop="8dp">
 
         <TextView
             android:id="@+id/btnTabActual"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_tab_inactive"
+            android:background="@drawable/bg_tab_underline_active"
             android:gravity="center"
-            android:paddingVertical="10dp"
+            android:paddingVertical="14dp"
             android:text="Waktu Aktual"
-            android:textColor="#333333"
+            android:textColor="@color/waktu_sholat_dark_bg"
             android:textStyle="bold"
             android:textSize="14sp" />
 
@@ -57,17 +43,18 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_tab_inactive"
+            android:background="@drawable/bg_tab_underline_inactive"
             android:gravity="center"
-            android:paddingVertical="10dp"
+            android:paddingVertical="14dp"
             android:text="Detail Perhitungan"
-            android:textColor="#333333"
-            android:textStyle="bold"
+            android:textColor="@color/waktu_sholat_icon_muted"
+            android:textStyle="normal"
             android:textSize="14sp" />
 
     </LinearLayout>
 
     <ScrollView
+        android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="10dp">
@@ -84,44 +71,81 @@
                 android:padding="10dp"
                 android:visibility="visible">
 
-                <TextView
-                    android:id="@+id/tvDate"
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textColor="#666"/>
+                    android:background="@drawable/bg_card_rounded"
+                    android:backgroundTint="@color/waktu_sholat_dark_bg"
+                    android:padding="20dp">
 
-                <TextView
-                    android:id="@+id/tvNextPrayer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#333"/>
+                    <TextView
+                        android:id="@+id/tvDate"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/loading"
+                        android:textColor="@color/waktu_sholat_date_muted"
+                        android:textSize="13sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/tvLocationName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/loading"
-                    android:drawablePadding="8dp"
-                    android:textSize="12sp"
-                    app:drawableStartCompat="@drawable/ic_gis_location_poi"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#B71C1C"/>
+                    <TextView
+                        android:id="@+id/tvNextPrayer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/loading"
+                        android:textColor="@android:color/white"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvDate" />
+
+                    <TextView
+                        android:id="@+id/tvNextPrayerTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/loading"
+                        android:textColor="#D1D5DB"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:layout_constraintBottom_toBottomOf="@id/tvNextPrayer"
+                        app:layout_constraintStart_toEndOf="@id/tvNextPrayer" />
+
+                    <TextView
+                        android:id="@+id/tvLocationName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_pill_dark"
+                        android:drawablePadding="6dp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:text="@string/loading"
+                        android:textColor="@color/waktu_sholat_pill_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_gis_location_poi"
+                        app:drawableTint="@color/waktu_sholat_pill_text"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvNextPrayer" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="24dp"
-                    android:background="@android:color/white"
-                    android:padding="8dp">
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:backgroundTint="@color/card_white"
+                    android:padding="6dp">
 
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowTsulutsulLail"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowImsak"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowSubuh"/>
+                    <include layout="@layout/item_prayer_row" android:id="@+id/rowDhuha"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowDzuhur"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowAshar"/>
                     <include layout="@layout/item_prayer_row" android:id="@+id/rowMaghrib"/>
@@ -132,7 +156,7 @@
 
 
             <LinearLayout
-                android:id="@+id/layoutDetailKiblat"
+                android:id="@+id/layoutDetailPerhitungan"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -142,98 +166,45 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Koordinat Pengguna"
-                    android:textColor="@android:color/black"
-                    android:textStyle="bold"/>
-
-                <EditText
-                    android:id="@+id/etCoordinates"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_rounded"
-                    android:padding="12dp"
-                    android:enabled="false"
-                    android:text="-7.123, 112.680"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="8dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1. PERHITUNGAN ARAH KIBLAT"
-                    android:textStyle="bold"
-                    android:textColor="#E6B65D"
-                    android:layout_marginTop="24dp"/>
-
-                <TextView
-                    android:id="@+id/tvCalculationResult"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="monospace"
-                    android:text="Memuat Perhitungan..."
-                    android:textSize="12sp"
-                    android:textColor="#333"
-                    android:background="#FAFAFA"
-                    android:padding="10dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="10dp">
-                    <TextView
-                        android:text="Hasil Arah:"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:textColor="#333"/>
-                    <TextView
-                        android:id="@+id/tvResultDegree"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:text="294° UTSB"
-                        android:textColor="@android:color/white"
-                        android:textStyle="bold"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:background="@drawable/bg_card_rounded"
-                        android:backgroundTint="#E6B65D"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#DDDDDD"
-                    android:layout_marginVertical="20dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="2. DETAIL RUMUS WAKTU SHOLAT"
+                    android:text="DETAIL PERHITUNGAN WAKTU SHOLAT"
                     android:textStyle="bold"
                     android:textColor="#E6B65D"/>
 
                 <TextView
+                    android:id="@+id/tvPrayerBreakdownSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="(Metode Kemenag / Ephemeris Approximation)"
+                    android:text="Breakdown perhitungan (Ephemeris Approximation)"
                     android:textSize="10sp"
                     android:textColor="#888"/>
 
                 <TextView
-                    android:id="@+id/tvPrayerCalculationDetail"
+                    android:id="@+id/tvDetailCoordinates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/loading"
+                    android:textSize="11sp"
+                    android:textColor="#888"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutPrayerBreakdownContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="10dp"/>
+
+                <TextView
+                    android:id="@+id/tvNoPrayerBreakdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:fontFamily="monospace"
-                    android:text="Memuat rumus..."
+                    android:text="Metode perhitungan yang aktif saat ini tidak punya breakdown detail - nilainya diambil langsung dari Aladhan API, bukan hasil hitung lokal."
                     android:textSize="12sp"
-                    android:textColor="#333"
+                    android:textColor="#666"
                     android:background="#FAFAFA"
                     android:padding="10dp"
-                    android:lineSpacingExtra="4dp"/>
+                    android:visibility="gone"/>
 
                 <View
                     android:layout_width="match_parent"

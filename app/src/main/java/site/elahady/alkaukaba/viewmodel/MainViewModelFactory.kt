@@ -1,7 +1,7 @@
 package site.elahady.alkaukaba.viewmodel
 
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 

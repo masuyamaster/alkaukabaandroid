@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba.viewmodel.waktusholat
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
@@ -8,7 +8,7 @@ class PrayerViewModelFactory(private val repository: PrayerRepository) : ViewMod
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PrayerTimesViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return PrayerTimesViewModel() as T
+            return PrayerTimesViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

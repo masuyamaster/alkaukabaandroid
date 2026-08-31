@@ -1,6 +1,6 @@
-package Site.elahady.alkaukaba.utils
+package site.elahady.alkaukaba.utils
 
-import Site.elahady.alkaukaba.model.HilalResult
+import site.elahady.alkaukaba.model.HilalResult
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument

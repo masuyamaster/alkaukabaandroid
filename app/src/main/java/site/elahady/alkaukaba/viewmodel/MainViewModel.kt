@@ -1,6 +1,6 @@
 package site.elahady.alkaukaba.viewmodel
 
-import PrayerRepository
+import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.DayUIModel
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.Timings
@@ -113,23 +113,36 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         )
 
         val sortedPrayers = mapJadwal.toList().sortedBy { it.second }
-        var targetName = "Subuh"
-        var targetTime = mapJadwal["Subuh"]!!
-        var isPassed = false
 
-        for ((name, time) in sortedPrayers) {
-            if (now.after(time)) {
-                targetName = name
-                targetTime = time
-                isPassed = true
-            } else {
-                if (!isPassed) {
-                    targetName = name
-                    targetTime = time
-                    isPassed = false
-                    break
-                }
-            }
+        // Batas toleransi menampilkan "sholat terakhir" sebelum beralih ke sholat berikutnya
+        val toleranceMillis = TimeUnit.MINUTES.toMillis(20)
+
+        val lastPassed = sortedPrayers.lastOrNull { now.after(it.second) }
+        val upcomingToday = sortedPrayers.firstOrNull { now.before(it.second) }
+
+        val targetName: String
+        val targetTime: Date
+        val isPassed: Boolean
+
+        if (lastPassed != null && (now.time - lastPassed.second.time) <= toleranceMillis) {
+            // Masih dalam toleransi setelah waktu sholat terakhir lewat
+            targetName = lastPassed.first
+            targetTime = lastPassed.second
+            isPassed = true
+        } else if (upcomingToday != null) {
+            // Sudah lewat toleransi -> tampilkan sholat berikutnya hari ini
+            targetName = upcomingToday.first
+            targetTime = upcomingToday.second
+            isPassed = false
+        } else {
+            // Semua sholat hari ini sudah lewat toleransi -> tampilkan Subuh besok
+            val tomorrowFajr = Calendar.getInstance().apply {
+                time = mapJadwal["Subuh"]!!
+                add(Calendar.DAY_OF_MONTH, 1)
+            }.time
+            targetName = "Subuh"
+            targetTime = tomorrowFajr
+            isPassed = false
         }
 
         // Hitung selisih waktu

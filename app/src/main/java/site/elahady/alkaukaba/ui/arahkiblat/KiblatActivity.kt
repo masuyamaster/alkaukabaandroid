@@ -3,6 +3,9 @@ package site.elahady.alkaukaba.ui.arahkiblat
 import site.elahady.alkaukaba.databinding.ActivityKiblatBinding
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModel
 import site.elahady.alkaukaba.viewmodel.arahkiblat.KiblatViewModelFactory
+import site.elahady.alkaukaba.utils.QiblaCalculator
+import site.elahady.alkaukaba.utils.SessionManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -25,7 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
-import com.bumptech.glide.Glide
+import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import com.google.android.gms.location.*
 import java.util.*
 import site.elahady.alkaukaba.R
@@ -34,6 +37,7 @@ class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var viewModel: KiblatViewModel
+    private lateinit var sessionManager: SessionManager
 
     private lateinit var sensorManager: SensorManager
     private var rotationSensor: Sensor? = null
@@ -46,6 +50,8 @@ class KiblatActivity : AppCompatActivity() {
     private val smoothingFactor = 0.15f   // 0.1 – 0.2 ideal
     private val qiblaThresshold = 3f // derajat
     private var isCalibrationVisible = false
+    private var qiblaBreakdown: QiblaCalculator.QiblaBreakdownResult? = null
+
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +59,11 @@ class KiblatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
+        binding.includeToolbar.toolbarDefault.applySystemBarInsetsPadding(applyTop = true)
+        binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sessionManager = SessionManager(this)
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
@@ -72,9 +81,42 @@ class KiblatActivity : AppCompatActivity() {
             binding.txtQiblaValue.text = "${angle.toInt()}°"
         }
 
-        binding.toolbar.setNavigationOnClickListener{
+        binding.includeToolbar.tvToolbarTitle.text = getString(R.string.titleArahKiblat)
+        binding.includeToolbar.btnBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+
+        binding.infoCard.setOnClickListener { showQiblaBreakdownSheet() }
+        binding.btnQiblaDetail.setOnClickListener { showQiblaBreakdownSheet() }
+    }
+
+    private fun showQiblaBreakdownSheet() {
+        val breakdown = qiblaBreakdown
+        if (breakdown == null) {
+            Toast.makeText(this, "Lokasi belum siap, coba lagi sebentar", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_qibla_breakdown, null)
+        bottomSheetDialog.setContentView(view)
+
+        val subtitle = view.findViewById<android.widget.TextView>(R.id.tvQiblaBreakdownSubtitle)
+        subtitle.text = if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            "Perhitungan manual (Al Hasib - Alkaukaba Team) — jadi sumber utama sudut & kompas di layar ini (lihat Konfigurasi > Arah Kiblat)."
+        } else {
+            "Perhitungan manual (Al Hasib - Alkaukaba Team), untuk referensi. Sudut & kompas utama di layar ini tetap dari Aladhan API (lihat Konfigurasi > Arah Kiblat)."
+        }
+
+        val container = view.findViewById<android.widget.LinearLayout>(R.id.layoutQiblaBreakdownContainer)
+        breakdown.rows.forEach { row ->
+            val rowView = layoutInflater.inflate(R.layout.item_breakdown_row, container, false)
+            rowView.findViewById<android.widget.TextView>(R.id.tvRowLabel).text = row.label
+            rowView.findViewById<android.widget.TextView>(R.id.tvRowValue).text = row.value
+            container.addView(rowView)
+        }
+
+        bottomSheetDialog.show()
     }
     @SuppressLint("SetTextI18n")
     private fun observeViewModel() {
@@ -122,6 +164,12 @@ class KiblatActivity : AppCompatActivity() {
         }
 
     private fun checkLocationPermission() {
+        if (sessionManager.isManualLocationMode()) {
+            // Setting lokasi global (lihat KonfigurasiActivity) - lewati GPS/permission sama sekali.
+            onLocationReady(sessionManager.getManualLat(), sessionManager.getManualLng())
+            return
+        }
+
         if (hasLocationPermission()) {
             checkGpsEnabled()
         } else {
@@ -172,13 +220,30 @@ class KiblatActivity : AppCompatActivity() {
             }
         }
     }
+    @SuppressLint("SetTextI18n")
     private fun onLocationReady(lat: Double, lon: Double) {
 //        binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
-        getAddressFromLatLong(lat, lon)
-        // hitung Qibla Angle
-        viewModel.fetchQiblaAngle(lat, lon)
-        // update compass
-        loadQiblaCompass(lat, lon)
+        if (sessionManager.isManualLocationMode()) {
+            // Lokasi manual: tampilkan koordinatnya langsung, jangan reverse-geocode - titik manual
+            // (mis. markaz tanpa nama jalan) sering tidak resolve ke subLocality/locality (null,
+            // null, ...) lewat Geocoder.
+            binding.txtLocation.text = "Lokasi manual: %.4f, %.4f".format(lat, lon)
+        } else {
+            getAddressFromLatLong(lat, lon)
+        }
+        // breakdown perhitungan manual (Al Hasib) - ditampilkan lewat tombol info
+        val breakdown = QiblaCalculator.calculateBreakdown(lat, lon)
+        qiblaBreakdown = breakdown
+
+        // Sumber sudut kiblat yang jadi acuan utama (lihat KonfigurasiActivity > Arah Kiblat).
+        if (sessionManager.getQiblaSource() == SessionManager.QIBLA_SOURCE_MANUAL) {
+            // Set langsung dari rumus manual - JANGAN panggil fetchQiblaAngle di sini, observer-nya
+            // akan menimpa balik nilai ini kalau response Aladhan datang belakangan (race condition).
+            qiblaAngle = breakdown.utsbDegree.toFloat()
+            binding.txtQiblaValue.text = "${breakdown.utsbDegree.toInt()}°"
+        } else {
+            viewModel.fetchQiblaAngle(lat, lon)
+        }
     }
     @SuppressLint("SetTextI18n")
     private fun getAddressFromLatLong(lat: Double, lon: Double) {
@@ -201,18 +266,6 @@ class KiblatActivity : AppCompatActivity() {
             e.printStackTrace()
             binding.txtLocation.text = getString(R.string.infoLokasi)
         }
-    }
-
-    private fun loadQiblaCompass(lat: Double, lon: Double) {
-
-        val url =
-            "https://api.aladhan.com/v1/qibla/$lat/$lon/compass"
-
-        Glide.with(this)
-            .load(url)
-            .placeholder(R.drawable.ic_compass_placeholder)
-            .error(R.drawable.ic_compass_error)
-            .into(binding.imgCompass)
     }
 
     private fun lowPassFilter(input: Float, output: Float): Float {
@@ -276,28 +329,12 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun rotateCompassSmooth() {
-
-//        val target = -currentAzimuth
-//
-//        if (!hasInitialRotation) {
-//            lastRotation = target
-//            binding.imgCompass.rotation = lastRotation
-//            hasInitialRotation = true
-//            return
-//        }
-//
-//        val smoothTarget = getShortestRotation(lastRotation, target)
-//
-//        lastRotation = smoothTarget
-//        println("qibla angle $qiblaAngle azimuth $currentAzimuth lastrotation $lastRotation")
-        binding.imgCompass.rotation = -currentAzimuth
+        // Dial berputar mengikuti heading device supaya marker Utara tetap akurat.
+        binding.imgCompassDial.rotation = -currentAzimuth
+        // Jarum kiblat independen dari dial - selalu menunjuk arah kiblat relatif ke layar.
+        binding.imgCompassNeedle.rotation = qiblaAngle - currentAzimuth
 
         checkQiblaAlignment()
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        finish()
     }
 
     private fun unwrapAngle(newAngle: Float, prevAngle: Float): Float {
@@ -308,18 +345,12 @@ class KiblatActivity : AppCompatActivity() {
     }
 
     private fun checkQiblaAlignment() {
+        val accentColor = ContextCompat.getColor(this, R.color.accent_yellow)
 
         if (isAlignedToQibla()) {
-            binding.qiblaAngleContainer.background =
-                ContextCompat.getDrawable(this, R.drawable.bg_qibla_match)
-            binding.txtQiblaLabel.setTextColor(Color.WHITE)
-            binding.txtQiblaValue.setTextColor(Color.WHITE)
-
+            binding.txtQiblaValue.setTextColor(accentColor)
         } else {
-            binding.qiblaAngleContainer.background =
-                ContextCompat.getDrawable(this, R.drawable.bg_qibla_angle)
-            binding.txtQiblaLabel.setTextColor(Color.BLACK)
-            binding.txtQiblaValue.setTextColor(Color.BLACK)
+            binding.txtQiblaValue.setTextColor(Color.WHITE)
         }
     }
 
