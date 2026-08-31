@@ -31,6 +31,26 @@ outline hijau satu solid navy) disatukan jadi satu **Card** (`infoCard`,
 persis dengan Hero Card di `docs/features/waktu-sholat.md`, supaya kedua layar
 konsisten.
 
+**Update 2026-08-31 — top bar & background disamakan dengan layar lain**:
+`KiblatActivity` adalah satu-satunya layar yang root layout-nya
+`ConstraintLayout` (bukan `LinearLayout` seperti layar lain), dan ternyata satu-
+satunya yang belum benar memakai helper inset window (`applyTopSystemBarInsetAsMargin`/
+`applySystemBarInsetsPadding` di `utils/InsetsUtils.kt`) — toolbar-nya sendiri
+tidak reserve ruang untuk status bar/cutout kamera seperti layar lain.
+Diperbaiki jadi pakai `applySystemBarInsetsPadding(applyTop = true)` langsung
+ke `toolbarDefault` (padding, bukan margin, supaya tidak bergantung pada
+`ConstraintLayout.LayoutParams` casting). `InsetsUtils.kt` juga diperkuat:
+union `WindowInsetsCompat.Type.systemBars() or displayCutout()` (bukan cuma
+`systemBars()`) dan tambah `ViewCompat.requestApplyInsets()` supaya listener
+tidak pernah miss dispatch pertama — perubahan ini berlaku untuk semua layar
+yang pakai helper ini, bukan cuma Kiblat. Diverifikasi lewat log runtime:
+`toolbarDefault.paddingTop` akhirnya 160px, melebihi cutout yang dilaporkan
+`dumpsys display` (128px). Background `activity_kiblat.xml` juga diganti dari
+`@color/white` ke `#F5F7FA` (hardcode yang sama persis dengan
+`activity_waktu_sholat.xml`/`activity_awal_bulan.xml`) supaya konsisten dan
+ikon status bar (putih, default app-wide) tidak nyaris tak terlihat di atas
+putih polos.
+
 ## 2. Entry point & prasyarat
 
 - Dari `MainActivity`: tap tombol **`btKiblat`** → `startActivity(Intent(...,

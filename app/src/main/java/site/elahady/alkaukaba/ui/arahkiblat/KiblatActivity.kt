@@ -59,7 +59,8 @@ class KiblatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
-        binding.root.applySystemBarInsetsPadding(applyTop = true, applyBottom = true)
+        binding.includeToolbar.toolbarDefault.applySystemBarInsetsPadding(applyTop = true)
+        binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sessionManager = SessionManager(this)
