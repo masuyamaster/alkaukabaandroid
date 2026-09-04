@@ -8,7 +8,7 @@
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     tools:context=".ui.konfigurasi.KonfigurasiActivity"
-    android:background="#F5F7FA">
+    android:background="@color/bg_home_warm">
 
     <include
         android:id="@+id/includeToolbar"
@@ -23,7 +23,7 @@
         android:text="LOKASI"
         android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/navy_dongker"
+        android:textColor="@color/text_label_gold"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
         android:paddingTop="20dp"
@@ -47,7 +47,7 @@
             android:layout_height="22dp"
             android:layout_marginEnd="14dp"
             android:src="@drawable/ic_gis_location_poi"
-            app:tint="@color/navy_dongker"
+            app:tint="@color/text_label_gold"
             android:contentDescription="@null" />
 
         <LinearLayout
@@ -88,7 +88,7 @@
         android:text="ARAH KIBLAT"
         android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/navy_dongker"
+        android:textColor="@color/text_label_gold"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
         android:paddingBottom="8dp"/>
@@ -111,7 +111,7 @@
             android:layout_height="22dp"
             android:layout_marginEnd="14dp"
             android:src="@drawable/ic_menu_compass"
-            app:tint="@color/navy_dongker"
+            app:tint="@color/text_label_gold"
             android:contentDescription="@null" />
 
         <LinearLayout
@@ -152,7 +152,7 @@
         android:text="WAKTU SHOLAT"
         android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="@color/navy_dongker"
+        android:textColor="@color/text_label_gold"
         android:letterSpacing="0.05"
         android:paddingHorizontal="16dp"
         android:paddingBottom="8dp"/>
@@ -175,7 +175,7 @@
             android:layout_height="22dp"
             android:layout_marginEnd="14dp"
             android:src="@drawable/ic_menu_clock"
-            app:tint="@color/navy_dongker"
+            app:tint="@color/text_label_gold"
             android:contentDescription="@null" />
 
         <LinearLayout

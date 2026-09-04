@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F7FA"
+    android:background="@color/bg_home_warm"
     tools:context=".ui.profile.ProfileActivity">
 
     <include
@@ -39,9 +39,9 @@
                     android:layout_height="80dp"
                     android:padding="18dp"
                     android:background="@drawable/bg_circle_button"
-                    android:backgroundTint="@color/navy_dongker"
+                    android:backgroundTint="@color/gold_accent"
                     android:src="@drawable/ic_person"
-                    app:tint="@android:color/white"
+                    app:tint="@color/login_bg_deep"
                     android:contentDescription="@string/app_name" />
 
                 <TextView
@@ -73,7 +73,7 @@
                     android:text="Edit Profil"
                     android:textAllCaps="false"
                     android:textSize="13sp"
-                    android:textColor="@color/navy_dongker"
+                    android:textColor="@color/text_label_gold"
                     android:drawableStart="@drawable/ic_edit"
                     android:drawablePadding="8dp"
                     android:stateListAnimator="@null"
@@ -89,7 +89,7 @@
                 android:text="BANTUAN &amp; INFORMASI"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/navy_dongker"
+                android:textColor="@color/text_label_gold"
                 android:letterSpacing="0.05"
                 android:paddingHorizontal="4dp"
                 android:paddingBottom="8dp" />
@@ -117,7 +117,7 @@
                         android:layout_height="22dp"
                         android:layout_marginEnd="14dp"
                         android:src="@drawable/ic_menu_support"
-                        app:tint="@color/navy_dongker"
+                        app:tint="@color/text_label_gold"
                         android:contentDescription="@null" />
 
                     <TextView
@@ -158,7 +158,7 @@
                         android:layout_height="22dp"
                         android:layout_marginEnd="14dp"
                         android:src="@drawable/ic_menu_document"
-                        app:tint="@color/navy_dongker"
+                        app:tint="@color/text_label_gold"
                         android:contentDescription="@null" />
 
                     <TextView
@@ -186,7 +186,7 @@
                 android:text="KEAMANAN &amp; AKUN"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/navy_dongker"
+                android:textColor="@color/text_label_gold"
                 android:letterSpacing="0.05"
                 android:paddingHorizontal="4dp"
                 android:paddingBottom="8dp" />
@@ -209,7 +209,7 @@
                     android:layout_height="22dp"
                     android:layout_marginEnd="14dp"
                     android:src="@drawable/ic_menu_lock"
-                    app:tint="@color/navy_dongker"
+                    app:tint="@color/text_label_gold"
                     android:contentDescription="@null" />
 
                 <TextView
