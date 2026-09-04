@@ -20,6 +20,7 @@ data class UserData(
     val id: Int,
     val username: String,
     val email: String,
+    val avatar_url: String? = null,
     // Hanya terisi dari login/register/google_login/change_password (endpoint yang
     // menerbitkan token baru) - update_profile sengaja tidak menerbitkan token baru.
     val token: String? = null

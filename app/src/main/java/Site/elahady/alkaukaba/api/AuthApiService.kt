@@ -1,9 +1,12 @@
 package site.elahady.alkaukaba.api
 
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import site.elahady.alkaukaba.model.ApiResponse
 import site.elahady.alkaukaba.model.ChangePasswordRequest
 import site.elahady.alkaukaba.model.DeleteAccountRequest
@@ -30,4 +33,11 @@ interface AuthApiService {
 
     @POST("api.php?action=delete_account")
     suspend fun deleteAccount(@Header("Authorization") bearerToken: String, @Body request: DeleteAccountRequest): Response<ApiResponse>
+
+    @Multipart
+    @POST("api.php?action=upload_avatar")
+    suspend fun uploadAvatar(@Header("Authorization") bearerToken: String, @Part photo: MultipartBody.Part): Response<ApiResponse>
+
+    @POST("api.php?action=delete_avatar")
+    suspend fun deleteAvatar(@Header("Authorization") bearerToken: String): Response<ApiResponse>
 }

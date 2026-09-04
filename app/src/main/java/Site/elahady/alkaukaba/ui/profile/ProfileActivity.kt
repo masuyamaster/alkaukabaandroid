@@ -1,20 +1,32 @@
 package site.elahady.alkaukaba.ui.profile
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import site.elahady.alkaukaba.LoginActivity
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityProfileBinding
@@ -22,14 +34,35 @@ import site.elahady.alkaukaba.model.ChangePasswordRequest
 import site.elahady.alkaukaba.model.DeleteAccountRequest
 import site.elahady.alkaukaba.model.UpdateProfileRequest
 import site.elahady.alkaukaba.utils.AuthClient
+import site.elahady.alkaukaba.utils.ImageUtils
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import java.io.File
 
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProfileBinding
     private lateinit var sessionManager: SessionManager
+
+    private var pendingCameraUri: Uri? = null
+
+    // Avatar & scrim dari sheet Edit Profil, kalau sedang terbuka - dilacak supaya status
+    // upload/hasil bisa direfleksikan di sana juga tanpa menutup sheet-nya.
+    private var editSheetAvatarView: ImageView? = null
+    private var editSheetScrim: View? = null
+
+    private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchCamera() else Toast.makeText(this, "Izin kamera diperlukan untuk mengambil foto", Toast.LENGTH_SHORT).show()
+    }
+
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) pendingCameraUri?.let { handlePickedImage(it) }
+    }
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { handlePickedImage(it) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +81,8 @@ class ProfileActivity : AppCompatActivity() {
         renderAccountInfo()
 
         binding.btnEditProfile.setOnClickListener { showEditProfileSheet() }
+        binding.ivAvatar.setOnClickListener { showAvatarActionSheet() }
+        binding.ivAvatarBadge.setOnClickListener { showAvatarActionSheet() }
         binding.rowHelp.setOnClickListener { showHelpDialog() }
         binding.rowPrivacy.setOnClickListener { showPrivacyDialog() }
         binding.rowChangePassword.setOnClickListener { showChangePasswordSheet() }
@@ -58,6 +93,159 @@ class ProfileActivity : AppCompatActivity() {
     private fun renderAccountInfo() {
         binding.tvUserName.text = sessionManager.getUserName() ?: "Pengguna"
         binding.tvUserEmail.text = sessionManager.getEmail() ?: "-"
+        loadAvatarInto(binding.ivAvatar, sessionManager.getAvatarUrl())
+    }
+
+    /** Tampilkan foto profil (Glide, dibulatkan) kalau ada, atau kembalikan placeholder ikon
+     * gold+navy default kalau belum/tidak ada foto - imageTintList WAJIB dibersihkan sebelum
+     * load foto asli, kalau tidak foto ikut ke-tint navy seperti ikon placeholder-nya. */
+    private fun loadAvatarInto(imageView: ImageView, avatarUrl: String?) {
+        val paddingPx = (18 * resources.displayMetrics.density).toInt()
+        if (avatarUrl.isNullOrBlank()) {
+            Glide.with(this).clear(imageView)
+            imageView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+            imageView.setImageResource(R.drawable.ic_person)
+            imageView.background = ContextCompat.getDrawable(this, R.drawable.bg_circle_button)
+            imageView.backgroundTintList = ContextCompat.getColorStateList(this, R.color.gold_accent)
+            imageView.imageTintList = ContextCompat.getColorStateList(this, R.color.login_bg_deep)
+        } else {
+            imageView.background = null
+            imageView.imageTintList = null
+            imageView.setPadding(0, 0, 0, 0)
+            Glide.with(this)
+                .load(avatarUrl)
+                .circleCrop()
+                .placeholder(R.drawable.ic_person)
+                .into(imageView)
+        }
+    }
+
+    // --- Foto Profil ---
+
+    private fun showAvatarActionSheet() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_avatar_action, null)
+        bottomSheetDialog.setContentView(view)
+
+        val hasPhoto = !sessionManager.getAvatarUrl().isNullOrBlank()
+        view.findViewById<View>(R.id.rowRemovePhoto).visibility = if (hasPhoto) View.VISIBLE else View.GONE
+        view.findViewById<View>(R.id.dividerRemovePhoto).visibility = if (hasPhoto) View.VISIBLE else View.GONE
+
+        view.findViewById<View>(R.id.rowTakePhoto).setOnClickListener {
+            bottomSheetDialog.dismiss()
+            requestCameraAndCapture()
+        }
+        view.findViewById<View>(R.id.rowPickGallery).setOnClickListener {
+            bottomSheetDialog.dismiss()
+            pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+        view.findViewById<View>(R.id.rowRemovePhoto).setOnClickListener {
+            bottomSheetDialog.dismiss()
+            confirmRemoveAvatar()
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    private fun requestCameraAndCapture() {
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        if (granted) launchCamera() else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    private fun launchCamera() {
+        val imagesDir = File(cacheDir, "images").apply { mkdirs() }
+        val photoFile = File(imagesDir, "camera_${System.currentTimeMillis()}.jpg")
+        val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", photoFile)
+        pendingCameraUri = uri
+        takePictureLauncher.launch(uri)
+    }
+
+    private fun handlePickedImage(uri: Uri) {
+        lifecycleScope.launch {
+            val file = withContext(Dispatchers.IO) { ImageUtils.prepareAvatarFile(this@ProfileActivity, uri) }
+            if (file == null) {
+                Toast.makeText(this@ProfileActivity, "Gagal memproses foto", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            uploadAvatarFile(file)
+        }
+    }
+
+    private fun uploadAvatarFile(file: File) {
+        val bearer = requireBearerToken() ?: run { file.delete(); return }
+
+        setAvatarUploading(true)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val requestBody = RequestBody.create(MediaType.parse("image/jpeg"), file)
+                val part = MultipartBody.Part.createFormData("photo", file.name, requestBody)
+                val response = AuthClient.instance.uploadAvatar(bearer, part)
+                withContext(Dispatchers.Main) {
+                    setAvatarUploading(false)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        sessionManager.setAvatarUrl(body.data?.avatar_url)
+                        renderAccountInfo()
+                        editSheetAvatarView?.let { loadAvatarInto(it, sessionManager.getAvatarUrl()) }
+                        Toast.makeText(this@ProfileActivity, "Foto profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@ProfileActivity, body?.message ?: "Gagal mengunggah foto", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    setAvatarUploading(false)
+                    Toast.makeText(this@ProfileActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                file.delete()
+            }
+        }
+    }
+
+    private fun confirmRemoveAvatar() {
+        AlertDialog.Builder(this)
+            .setTitle("Hapus Foto Profil?")
+            .setMessage("Foto profil akan dihapus dan avatar kembali ke default.")
+            .setPositiveButton("Hapus") { dialog, _ ->
+                dialog.dismiss()
+                removeAvatar()
+            }
+            .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private fun removeAvatar() {
+        val bearer = requireBearerToken() ?: return
+
+        setAvatarUploading(true)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val response = AuthClient.instance.deleteAvatar(bearer)
+                withContext(Dispatchers.Main) {
+                    setAvatarUploading(false)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        sessionManager.setAvatarUrl(null)
+                        renderAccountInfo()
+                        editSheetAvatarView?.let { loadAvatarInto(it, null) }
+                        Toast.makeText(this@ProfileActivity, "Foto profil dihapus", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this@ProfileActivity, body?.message ?: "Gagal menghapus foto", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    setAvatarUploading(false)
+                    Toast.makeText(this@ProfileActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun setAvatarUploading(uploading: Boolean) {
+        binding.avatarUploadScrim.visibility = if (uploading) View.VISIBLE else View.GONE
+        editSheetScrim?.visibility = if (uploading) View.VISIBLE else View.GONE
     }
 
     /** Bearer token untuk update_profile/change_password/delete_account - null kalau belum ada
@@ -81,6 +269,17 @@ class ProfileActivity : AppCompatActivity() {
         val etUsername = view.findViewById<EditText>(R.id.etProfileUsername)
         val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveProfile)
         etUsername.setText(sessionManager.getUserName())
+
+        val ivAvatarSheet = view.findViewById<ImageView>(R.id.ivAvatarSheet)
+        loadAvatarInto(ivAvatarSheet, sessionManager.getAvatarUrl())
+        ivAvatarSheet.setOnClickListener { showAvatarActionSheet() }
+        view.findViewById<ImageView>(R.id.ivAvatarBadgeSheet).setOnClickListener { showAvatarActionSheet() }
+        editSheetAvatarView = ivAvatarSheet
+        editSheetScrim = view.findViewById(R.id.avatarUploadScrimSheet)
+        bottomSheetDialog.setOnDismissListener {
+            editSheetAvatarView = null
+            editSheetScrim = null
+        }
 
         btnSave.setOnClickListener {
             val newUsername = etUsername.text.toString().trim()

@@ -122,6 +122,12 @@ class SessionManager(context: Context) {
 
     fun getAuthToken(): String? = prefs.getString("AUTH_TOKEN", null)
 
+    fun setAvatarUrl(url: String?) {
+        prefs.edit().putString("AVATAR_URL", url).apply()
+    }
+
+    fun getAvatarUrl(): String? = prefs.getString("AVATAR_URL", null)
+
     fun clearUserData() {
         prefs.edit()
             .remove("IS_LOGGED_IN")
@@ -129,6 +135,7 @@ class SessionManager(context: Context) {
             .remove("EMAIL")
             .remove("USER_ID")
             .remove("AUTH_TOKEN")
+            .remove("AVATAR_URL")
             .apply()
     }
 }

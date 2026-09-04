@@ -33,16 +33,57 @@
                 android:paddingVertical="16dp"
                 android:layout_marginBottom="24dp">
 
-                <ImageView
-                    android:id="@+id/ivAvatar"
+                <FrameLayout
+                    android:id="@+id/avatarContainer"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    android:padding="18dp"
-                    android:background="@drawable/bg_circle_button"
-                    android:backgroundTint="@color/gold_accent"
-                    android:src="@drawable/ic_person"
-                    app:tint="@color/login_bg_deep"
-                    android:contentDescription="@string/app_name" />
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
+
+                    <ImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:padding="18dp"
+                        android:background="@drawable/bg_circle_button"
+                        android:backgroundTint="@color/gold_accent"
+                        android:src="@drawable/ic_person"
+                        android:scaleType="centerCrop"
+                        app:tint="@color/login_bg_deep"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/app_name" />
+
+                    <ImageView
+                        android:id="@+id/ivAvatarBadge"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="bottom|end"
+                        android:layout_marginEnd="-2dp"
+                        android:layout_marginBottom="-2dp"
+                        android:padding="7dp"
+                        android:background="@drawable/bg_avatar_badge"
+                        android:src="@drawable/ic_camera"
+                        app:tint="@color/gold_accent"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="Ubah foto profil" />
+
+                    <FrameLayout
+                        android:id="@+id/avatarUploadScrim"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:background="@drawable/bg_avatar_scrim"
+                        android:visibility="gone">
+
+                        <ProgressBar
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:indeterminateTint="@color/gold_accent" />
+                    </FrameLayout>
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tvUserName"

@@ -307,6 +307,7 @@ class LoginActivity : AppCompatActivity() {
         sessionManager.setUserId(data.id)
         sessionManager.setUserName(data.username)
         sessionManager.setEmail(data.email)
+        sessionManager.setAvatarUrl(data.avatar_url)
         data.token?.let { sessionManager.setAuthToken(it) }
     }
 }
