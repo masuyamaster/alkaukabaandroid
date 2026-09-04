@@ -2,11 +2,15 @@ package site.elahady.alkaukaba
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -61,6 +65,8 @@ class LoginActivity : AppCompatActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        // Latar layar login gelap (nuansa malam) -> ikon status bar harus terang.
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             // GANTI DENGAN WEB CLIENT ID DARI GOOGLE CLOUD CONSOLE
@@ -95,17 +101,9 @@ class LoginActivity : AppCompatActivity() {
         // TOGGLE ANIMATION (LOGIN <-> REGISTER)
         // ==========================================
 
-        // Saat 'REGISTER' di halaman login ditekan
-        binding.tvRegister.setOnClickListener {
-            binding.groupLogin.visibility = View.GONE
-            binding.groupRegister.visibility = View.VISIBLE
-        }
-
-        // Saat 'SIGN IN' di halaman register ditekan
-        binding.tvBackToLogin.setOnClickListener {
-            binding.groupRegister.visibility = View.GONE
-            binding.groupLogin.visibility = View.VISIBLE
-        }
+        // Segmented tab di atas form (Masuk / Daftar)
+        binding.tabMasuk.setOnClickListener { showLoginForm() }
+        binding.tabDaftar.setOnClickListener { showRegisterForm() }
 
         // ==========================================
         // LOGIC FORM REGISTER
@@ -141,6 +139,44 @@ class LoginActivity : AppCompatActivity() {
                 googleSignInLauncher.launch(signInIntent)
             }
         }
+
+        // --- TOGGLE LIHAT PASSWORD ---
+        binding.ivTogglePassword.setOnClickListener {
+            togglePasswordVisibility(binding.etPassword, binding.ivTogglePassword)
+        }
+        binding.ivToggleRegPassword.setOnClickListener {
+            togglePasswordVisibility(binding.etRegPassword, binding.ivToggleRegPassword)
+        }
+    }
+
+    private fun togglePasswordVisibility(editText: EditText, toggleIcon: ImageView) {
+        val isHidden = editText.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD != 0
+        if (isHidden) {
+            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            toggleIcon.alpha = 1.0f
+        } else {
+            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            toggleIcon.alpha = 0.55f
+        }
+        editText.setSelection(editText.text.length)
+    }
+
+    private fun showLoginForm() {
+        binding.groupRegister.visibility = View.GONE
+        binding.groupLogin.visibility = View.VISIBLE
+        binding.tabMasuk.setBackgroundResource(R.drawable.bg_tab_gold_active)
+        binding.tabMasuk.setTextColor(ContextCompat.getColor(this, R.color.login_bg_deep))
+        binding.tabDaftar.background = null
+        binding.tabDaftar.setTextColor(ContextCompat.getColor(this, R.color.color_secondary))
+    }
+
+    private fun showRegisterForm() {
+        binding.groupLogin.visibility = View.GONE
+        binding.groupRegister.visibility = View.VISIBLE
+        binding.tabDaftar.setBackgroundResource(R.drawable.bg_tab_gold_active)
+        binding.tabDaftar.setTextColor(ContextCompat.getColor(this, R.color.login_bg_deep))
+        binding.tabMasuk.background = null
+        binding.tabMasuk.setTextColor(ContextCompat.getColor(this, R.color.color_secondary))
     }
 
     private fun performRegister(username: String, email: String, pass: String) {
@@ -154,7 +190,7 @@ class LoginActivity : AppCompatActivity() {
                 val response = AuthClient.instance.register(request)
 
                 withContext(Dispatchers.Main) {
-                    binding.btnRegisterSubmit.text = "REGISTER"
+                    binding.btnRegisterSubmit.text = "DAFTAR"
                     binding.btnRegisterSubmit.isEnabled = true
 
                     if (response.isSuccessful && response.body() != null) {
@@ -175,7 +211,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    binding.btnRegisterSubmit.text = "REGISTER"
+                    binding.btnRegisterSubmit.text = "DAFTAR"
                     binding.btnRegisterSubmit.isEnabled = true
                     Toast.makeText(this@LoginActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -193,7 +229,7 @@ class LoginActivity : AppCompatActivity() {
                 val response = AuthClient.instance.login(request)
 
                 withContext(Dispatchers.Main) {
-                    binding.btnSignIn.text = "SIGN IN"
+                    binding.btnSignIn.text = "MASUK"
                     binding.btnSignIn.isEnabled = true
 
                     if (response.isSuccessful && response.body() != null) {
@@ -217,7 +253,7 @@ class LoginActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    binding.btnSignIn.text = "SIGN IN"
+                    binding.btnSignIn.text = "MASUK"
                     binding.btnSignIn.isEnabled = true
                     Toast.makeText(this@LoginActivity, "Error koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
                 }

@@ -33,6 +33,22 @@
 
     <color name="calendar_bg">#8897B3</color>
 
+    <color name="login_bg_deep">#10192A</color>
+    <color name="navy_gradient_top">#1D2A45</color>
+    <color name="gold_accent">#E8BA5C</color>
+    <color name="gold_accent_soft">#F0C878</color>
+    <color name="text_on_dark">#F6F2E9</color>
+
+    <!-- Home screen redesign (2026-09) -->
+    <color name="bg_home_warm">#FAF6EC</color>
+    <color name="date_pill_bg">#FBF0DA</color>
+    <color name="date_pill_text">#8A5A1E</color>
+    <color name="text_label_gold">#B8863A</color>
+
+    <!-- Kompas: arah matahari & bayangan (2026-09) -->
+    <color name="sun_direction">#F59E0B</color>
+    <color name="shadow_direction">#8897B3</color>
+
 
     <color name="color_primary">#34384A</color>
     <color name="color_secondary">#898FAA</color>

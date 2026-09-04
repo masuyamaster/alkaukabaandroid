@@ -4,15 +4,103 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_secondary"
+    android:background="@drawable/bg_login_gradient"
     tools:context=".LoginActivity">
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="4dp"
+        android:layout_marginStart="34dp"
+        android:layout_marginTop="34dp"
+        android:alpha="0.85"
+        android:background="@drawable/dot_star"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="3dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="36dp"
+        android:alpha="0.7"
+        android:background="@drawable/dot_star"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="4dp"
+        android:layout_marginStart="58dp"
+        android:layout_marginTop="100dp"
+        android:alpha="0.85"
+        android:background="@drawable/dot_star"
+        android:backgroundTint="@color/gold_accent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="3dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginEnd="54dp"
+        android:alpha="0.75"
+        android:background="@drawable/dot_star"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="3dp"
+        android:layout_height="3dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="190dp"
+        android:alpha="0.6"
+        android:background="@drawable/dot_star"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="46dp"
+        android:layout_marginEnd="70dp"
+        android:alpha="0.9"
+        android:src="@drawable/ic_sparkle"
+        app:tint="@color/gold_accent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="4dp"
+        android:layout_marginStart="40dp"
+        android:alpha="0.7"
+        android:background="@drawable/dot_star"
+        android:backgroundTint="@color/gold_accent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/vCardBg"
+        app:layout_constraintVertical_bias="0.3" />
+
+    <View
+        android:layout_width="3dp"
+        android:layout_height="3dp"
+        android:layout_marginEnd="50dp"
+        android:alpha="0.6"
+        android:background="@drawable/dot_star"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/vCardBg"
+        app:layout_constraintVertical_bias="0.55" />
 
     <ImageView
         android:id="@+id/ivLogo"
-        android:layout_width="150dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/icon_al_kaukaba_black"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_al_kaukaba_white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -22,13 +110,15 @@
         android:id="@+id/tvWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="32dp"
-        android:fontFamily="sans-serif-medium"
+        android:layout_marginTop="24dp"
+        android:fontFamily="serif"
+        android:gravity="center"
+        android:letterSpacing="0.14"
         android:text="WELCOME"
-        android:textColor="#34384A"
-        android:textSize="34sp"
+        android:textColor="@color/text_on_dark"
+        android:textSize="32sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivLogo" />
 
@@ -36,12 +126,15 @@
         android:id="@+id/tvSubtitle1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.12"
         android:text="Selamat Datang"
-        android:textColor="#34384A"
-        android:textSize="18sp"
+        android:textAllCaps="true"
+        android:textColor="@color/gold_accent"
+        android:textSize="13sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvWelcome" />
 
@@ -49,137 +142,357 @@
         android:id="@+id/tvSubtitle2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
         android:text="أهلا وسهلا ومرحبا"
-        android:textColor="#5A5E6D"
+        android:textColor="@color/color_secondary"
+        android:textDirection="rtl"
         android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSubtitle1" />
 
-    <EditText
-        android:id="@+id/etEmail"
+    <View
+        android:id="@+id/vCardBg"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="50dp"
-        android:backgroundTint="@android:color/white"
-        android:drawablePadding="12dp"
-        android:hint="Masukkan Email"
-        android:inputType="textEmailAddress"
-        android:paddingBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="16sp"
+        android:layout_height="350dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:background="@drawable/bg_card_glass"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvSubtitle2" />
 
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="50dp"
-        android:backgroundTint="@android:color/white"
-        android:drawablePadding="12dp"
-        android:hint="******************"
-        android:inputType="textPassword"
-        android:paddingBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="16sp"
+    <LinearLayout
+        android:id="@+id/tabSwitcher"
+        android:layout_width="220dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_pill_track_dark"
+        android:orientation="horizontal"
+        android:padding="3dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etEmail" />
+        app:layout_constraintTop_toTopOf="@id/vCardBg">
+
+        <TextView
+            android:id="@+id/tabMasuk"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_tab_gold_active"
+            android:gravity="center"
+            android:text="Masuk"
+            android:textColor="@color/login_bg_deep"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabDaftar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Daftar"
+            android:textColor="@color/color_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- ===================== LOGIN FIELDS ===================== -->
+
+    <LinearLayout
+        android:id="@+id/rowEmail"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabSwitcher">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_mail"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Masukkan Email"
+            android:inputType="textEmailAddress"
+            android:maxLines="1"
+            android:padding="0dp"
+            android:textColor="@color/text_on_dark"
+            android:textColorHint="#8890A8"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rowPassword"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rowEmail">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_login_lock"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Masukkan Password"
+            android:inputType="textPassword"
+            android:maxLines="1"
+            android:padding="0dp"
+            android:textColor="@color/text_on_dark"
+            android:textColorHint="#8890A8"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/ivTogglePassword"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_eye"
+            tools:ignore="ContentDescription" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvForgotPassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="50dp"
-        android:text=""
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="40dp"
+        android:text="Lupa password?"
+        android:textColor="@color/gold_accent"
+        android:textSize="12.5sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etPassword" />
+        app:layout_constraintTop_toBottomOf="@id/rowPassword" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSignIn"
-        android:layout_width="159dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="32dp"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
         android:layout_marginStart="40dp"
+        android:layout_marginTop="18dp"
         android:layout_marginEnd="40dp"
-        android:background="@drawable/ic_button_sign_in"
-        android:text="SIGN IN"
-        android:textColor="#000000"
-        android:textSize="18sp"
+        android:background="@drawable/bg_button_gold"
+        android:letterSpacing="0.06"
+        android:text="MASUK"
+        android:textColor="@color/color_primary"
+        android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvForgotPassword" />
 
-    <TextView
-        android:id="@+id/tvNoAccount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <!-- ===================== REGISTER FIELDS ===================== -->
+
+    <LinearLayout
+        android:id="@+id/rowRegUsername"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
         android:layout_marginTop="16dp"
-        android:text="Don't have an account?"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnSignIn" />
+        app:layout_constraintTop_toBottomOf="@id/tabSwitcher">
 
-    <TextView
-        android:id="@+id/tvRegister"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="REGISTER"
-        android:textColor="#E8BA5C"
-        android:textSize="16sp"
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_login_person"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/etRegUsername"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Masukkan Username"
+            android:inputType="textPersonName"
+            android:maxLines="1"
+            android:padding="0dp"
+            android:textColor="@color/text_on_dark"
+            android:textColorHint="#8890A8"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rowRegEmail"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rowRegUsername">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_mail"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/etRegEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Masukkan Email"
+            android:inputType="textEmailAddress"
+            android:maxLines="1"
+            android:padding="0dp"
+            android:textColor="@color/text_on_dark"
+            android:textColorHint="#8890A8"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rowRegPassword"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_input_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/rowRegEmail">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_login_lock"
+            tools:ignore="ContentDescription" />
+
+        <EditText
+            android:id="@+id/etRegPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="Masukkan Password"
+            android:inputType="textPassword"
+            android:maxLines="1"
+            android:padding="0dp"
+            android:textColor="@color/text_on_dark"
+            android:textColorHint="#8890A8"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/ivToggleRegPassword"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_eye"
+            tools:ignore="ContentDescription" />
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRegisterSubmit"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_button_gold"
+        android:letterSpacing="0.06"
+        android:text="DAFTAR"
+        android:textColor="@color/color_primary"
+        android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvNoAccount" />
+        app:layout_constraintTop_toBottomOf="@id/rowRegPassword" />
 
-    <View
-        android:id="@+id/lineLeft"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="16dp"
-        android:background="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="@id/tvOr"
-        app:layout_constraintEnd_toStartOf="@id/tvOr"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvOr" />
+    <!-- ===================== SHARED: OR / GOOGLE (below the panel) ===================== -->
 
     <TextView
         android:id="@+id/tvOr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="22dp"
         android:text="atau"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
+        android:textColor="@color/color_secondary"
+        android:textSize="12.5sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvRegister" />
+        app:layout_constraintTop_toBottomOf="@id/vCardBg" />
+
+    <View
+        android:id="@+id/lineLeft"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="16dp"
+        android:background="#29FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@id/tvOr"
+        app:layout_constraintEnd_toStartOf="@id/tvOr"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvOr" />
 
     <View
         android:id="@+id/lineRight"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="50dp"
-        android:background="@android:color/white"
+        android:layout_marginEnd="40dp"
+        android:background="#29FFFFFF"
         app:layout_constraintBottom_toBottomOf="@id/tvOr"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/tvOr"
@@ -189,11 +502,11 @@
         android:id="@+id/cvGoogle"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:layout_marginTop="24dp"
         android:layout_marginStart="40dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="40dp"
-        app:cardCornerRadius="25dp"
-        app:cardElevation="4dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvOr">
@@ -206,129 +519,34 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_google_icon" /> <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SIGN IN WITH GOOGLE"
-            android:textColor="#34384A"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+                android:src="@drawable/ic_google_icon"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lanjutkan dengan Google"
+                android:textColor="@color/color_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
-
-    <EditText
-        android:id="@+id/etRegUsername"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="50dp"
-        android:backgroundTint="@android:color/white"
-        android:drawablePadding="12dp"
-        android:hint="Masukkan Username"
-        android:inputType="textPersonName"
-        android:paddingBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle2" />
-
-    <EditText
-        android:id="@+id/etRegEmail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="50dp"
-        android:backgroundTint="@android:color/white"
-        android:drawablePadding="12dp"
-        android:hint="Masukkan Email"
-        android:inputType="textEmailAddress"
-        android:paddingBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etRegUsername" />
-
-    <EditText
-        android:id="@+id/etRegPassword"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="50dp"
-        android:backgroundTint="@android:color/white"
-        android:drawablePadding="12dp"
-        android:hint="Masukkan Password"
-        android:inputType="textPassword"
-        android:paddingBottom="16dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="@android:color/white"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etRegEmail" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnRegisterSubmit"
-        android:layout_width="159dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
-        android:background="@drawable/ic_button_sign_in"
-        android:text="REGISTER"
-        android:textColor="#000000"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etRegPassword" />
-
-    <TextView
-        android:id="@+id/tvHasAccount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Already have an account?"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnRegisterSubmit" />
-
-    <TextView
-        android:id="@+id/tvBackToLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="SIGN IN"
-        android:textColor="#E8BA5C"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvHasAccount" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/groupLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="etEmail,etPassword,tvForgotPassword,btnSignIn,tvNoAccount,tvRegister,lineLeft,tvOr,lineRight,cvGoogle" />
+        app:constraint_referenced_ids="rowEmail,rowPassword,tvForgotPassword,btnSignIn" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/groupRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="etRegUsername,etRegEmail,etRegPassword,btnRegisterSubmit,tvHasAccount,tvBackToLogin" />
+        app:constraint_referenced_ids="rowRegUsername,rowRegEmail,rowRegPassword,btnRegisterSubmit" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
