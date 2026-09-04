@@ -19,8 +19,12 @@ object ImageUtils {
     fun prepareAvatarFile(context: Context, source: Uri): File? {
         val resolver = context.contentResolver
 
+        // inJustDecodeBounds = true membuat decodeStream SELALU return null by design (cuma
+        // ngisi bounds.outWidth/outHeight, bukan alokasi Bitmap) - jangan pakai null itu buat
+        // deteksi gagal, cek bounds-nya langsung setelah decode.
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        resolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
+        val boundsStream = resolver.openInputStream(source) ?: return null
+        boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
         val sampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, TARGET_SIZE)
