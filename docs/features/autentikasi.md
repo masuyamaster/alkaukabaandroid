@@ -102,7 +102,7 @@ File yang terlibat:
 | `LoginActivity.kt` | Satu Activity untuk form login, form register, dan tombol Google Sign-In |
 | `utils/AuthClient.kt` | Instance Retrofit **terpisah** dari `RetrofitClient`/Aladhan, `baseUrl` ke backend `alkaukabaweb`, tanpa interceptor/auth header tambahan |
 | `api/AuthApiService.kt` | Interface Retrofit: `login()`, `register()`, `googleLogin()` — semua POST ke `api.php` dengan query `action=...` (bukan path REST, gaya endpoint PHP lama) |
-| `model/AuthModels.kt` | `LoginRequest`, `RegisterRequest` (body request), `ApiResponse` (`status`, `message`, `data: UserData?`), `UserData` (`id`, `username`, `email`) — response envelope seragam untuk login/register |
+| `model/AuthModels.kt` | `LoginRequest`, `RegisterRequest` (body request), `ApiResponse` (`status`, `message`, `data: UserData?`), `UserData` (`id`, `username`, `email`, dan sejak 2026-09-04 `avatar_url: String?` — lihat [features/profil.md](profil.md)) — response envelope seragam untuk login/register |
 | `model/GoogleLoginRequest.kt` | Body request khusus Google login, cuma berisi `id_token` |
 | `utils/SessionManager.kt` | Persistensi status login di `SharedPreferences` ("AppSession") — `setLogin()`/`isLoggedIn()`, plus `setUserName()`/`setEmail()` (lihat catatan gap di section 7) |
 | `ui/konfigurasi/KonfigurasiActivity.kt` | Sumber aksi logout (`performLogout()`) |
@@ -207,6 +207,11 @@ Verifikasi manual saat ini:
       `UserData` lewat `SessionManager`. Ini yang memungkinkan halaman
       Profil baru ([features/profil.md](profil.md)) menampilkan nama/email
       user sungguhan, bukan placeholder.
+      **Per 2026-09-04**: `persistUserData()` juga menyimpan `avatar_url`
+      (`SessionManager.setAvatarUrl()`) — jadi begitu user login/register/
+      google-login, foto profil yang sudah pernah diupload sebelumnya
+      langsung tampil tanpa perlu buka halaman Profil dulu. Lihat
+      [features/profil.md](profil.md) untuk detail fitur upload foto.
 - [ ] Tidak ada validasi format email di form (cuma cek `isEmpty()`) — baik
       di form login maupun register.
 - [ ] Tidak ada re-check status login di Activity lain selain `Splashscreen`
