@@ -20,6 +20,16 @@ Clean Architecture, repo ini single-module (`:app` saja), tanpa DI framework,
 tanpa split `data/domain/presentation`, dan navigasi antar-layar pakai `Intent`
 biasa (bukan Navigation Component/DeepLink).
 
+## Rilis ke Play Store (proses update sedang berjalan)
+
+Ada proses rilis update Play Store (v1.6 → 1.7) yang belum selesai per
+2026-09-04 — status lengkap, lokasi keystore, dan langkah lanjutan ada di
+[`docs/rilis-play-store.md`](docs/rilis-play-store.md). **Cek dokumen itu
+dulu** sebelum bantu proses build/signing/upload rilis apapun — jangan mulai
+dari nol nanya lokasi keystore dsb, itu semua sudah tercatat di sana
+(termasuk kalau statusnya sudah berubah dari "pending review" jadi
+approved/rejected, update juga catatannya).
+
 ## Menjalankan & build via CLI (tanpa Android Studio)
 
 Project ini dikerjakan sebagian dengan emulator yang dijalankan langsung dari VSCode, bukan dari Android Studio. Jangan sarankan langkah "buka/jalankan di Android Studio" — gunakan `gradlew` dari command line, dan jalankan/hubungkan emulator via `adb`.
