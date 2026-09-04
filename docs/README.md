@@ -72,6 +72,10 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 - [roadmap-clean-code.md](roadmap-clean-code.md) — bukan per-fitur, tapi
   catatan keputusan/rencana lintas-fitur soal kualitas kode (hygiene fixes,
   kapan domain layer/DI framework baru relevan, dsb).
+- [rilis-play-store.md](rilis-play-store.md) — catatan proses rilis update
+  Play Store yang sedang berjalan (status request upload key reset, lokasi
+  keystore, draft release notes) — bukan per-fitur, dan isinya berubah
+  seiring proses rilis (bukan dokumen final/statis).
 
 ## Status dokumentasi
 
