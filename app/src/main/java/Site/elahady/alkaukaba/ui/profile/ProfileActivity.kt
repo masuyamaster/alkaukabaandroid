@@ -19,17 +19,19 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import retrofit2.Response
 import site.elahady.alkaukaba.LoginActivity
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityProfileBinding
+import site.elahady.alkaukaba.model.ApiResponse
 import site.elahady.alkaukaba.model.ChangePasswordRequest
 import site.elahady.alkaukaba.model.DeleteAccountRequest
 import site.elahady.alkaukaba.model.UpdateProfileRequest
@@ -96,28 +98,9 @@ class ProfileActivity : AppCompatActivity() {
         loadAvatarInto(binding.ivAvatar, sessionManager.getAvatarUrl())
     }
 
-    /** Tampilkan foto profil (Glide, dibulatkan) kalau ada, atau kembalikan placeholder ikon
-     * gold+navy default kalau belum/tidak ada foto - imageTintList WAJIB dibersihkan sebelum
-     * load foto asli, kalau tidak foto ikut ke-tint navy seperti ikon placeholder-nya. */
     private fun loadAvatarInto(imageView: ImageView, avatarUrl: String?) {
-        val paddingPx = (18 * resources.displayMetrics.density).toInt()
-        if (avatarUrl.isNullOrBlank()) {
-            Glide.with(this).clear(imageView)
-            imageView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
-            imageView.setImageResource(R.drawable.ic_person)
-            imageView.background = ContextCompat.getDrawable(this, R.drawable.bg_circle_button)
-            imageView.backgroundTintList = ContextCompat.getColorStateList(this, R.color.gold_accent)
-            imageView.imageTintList = ContextCompat.getColorStateList(this, R.color.login_bg_deep)
-        } else {
-            imageView.background = null
-            imageView.imageTintList = null
-            imageView.setPadding(0, 0, 0, 0)
-            Glide.with(this)
-                .load(avatarUrl)
-                .circleCrop()
-                .placeholder(R.drawable.ic_person)
-                .into(imageView)
-        }
+        val paddingDp = if (imageView.id == R.id.ivAvatar) 36 else 18
+        ImageUtils.loadAvatarInto(this, imageView, avatarUrl, paddingDp)
     }
 
     // --- Foto Profil ---
@@ -189,7 +172,7 @@ class ProfileActivity : AppCompatActivity() {
                         editSheetAvatarView?.let { loadAvatarInto(it, sessionManager.getAvatarUrl()) }
                         Toast.makeText(this@ProfileActivity, "Foto profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@ProfileActivity, body?.message ?: "Gagal mengunggah foto", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ProfileActivity, errorMessageOf(response, "Gagal mengunggah foto"), Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
@@ -231,7 +214,7 @@ class ProfileActivity : AppCompatActivity() {
                         editSheetAvatarView?.let { loadAvatarInto(it, null) }
                         Toast.makeText(this@ProfileActivity, "Foto profil dihapus", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@ProfileActivity, body?.message ?: "Gagal menghapus foto", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ProfileActivity, errorMessageOf(response, "Gagal menghapus foto"), Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
@@ -241,6 +224,26 @@ class ProfileActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /** Retrofit cuma nge-parse response.body() saat HTTP sukses (2xx) - untuk response gagal
+     * (400/401/413/500/dst) body() SELALU null, jadi pesan error asli dari server harus dibaca
+     * dari errorBody() manual, kalau tidak selamanya cuma nampil fallback generik. */
+    private fun errorMessageOf(response: Response<ApiResponse>, fallback: String): String {
+        response.body()?.message?.let { return it }
+        val raw = try {
+            response.errorBody()?.string()
+        } catch (e: Exception) {
+            null
+        }
+        if (!raw.isNullOrBlank()) {
+            try {
+                Gson().fromJson(raw, ApiResponse::class.java)?.message?.let { return it }
+            } catch (e: Exception) {
+                // errorBody bukan JSON ApiResponse (mis. halaman error HTML dari nginx/PHP) - abaikan.
+            }
+        }
+        return "$fallback (HTTP ${response.code()})"
     }
 
     private fun setAvatarUploading(uploading: Boolean) {

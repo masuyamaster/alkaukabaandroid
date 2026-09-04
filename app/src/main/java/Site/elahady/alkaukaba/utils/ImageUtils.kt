@@ -5,7 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.exifinterface.media.ExifInterface
+import com.bumptech.glide.Glide
+import site.elahady.alkaukaba.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -14,6 +18,32 @@ object ImageUtils {
 
     private const val TARGET_SIZE = 800
     private const val JPEG_QUALITY = 85
+
+    /** Tampilkan foto profil (Glide, dibulatkan) kalau ada, atau kembalikan placeholder ikon
+     * gold+navy default kalau belum/tidak ada foto - dipakai di semua tempat avatar user
+     * ditampilkan (ProfileActivity, sheet Edit Profil, header MainActivity) supaya konsisten.
+     * imageTintList WAJIB dibersihkan sebelum load foto asli, kalau tidak foto ikut ke-tint
+     * navy seperti ikon placeholder-nya. */
+    fun loadAvatarInto(context: Context, imageView: ImageView, avatarUrl: String?, placeholderPaddingDp: Int) {
+        val paddingPx = (placeholderPaddingDp * context.resources.displayMetrics.density).toInt()
+        if (avatarUrl.isNullOrBlank()) {
+            Glide.with(context).clear(imageView)
+            imageView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+            imageView.setImageResource(R.drawable.ic_person)
+            imageView.background = ContextCompat.getDrawable(context, R.drawable.bg_circle_button)
+            imageView.backgroundTintList = ContextCompat.getColorStateList(context, R.color.gold_accent)
+            imageView.imageTintList = ContextCompat.getColorStateList(context, R.color.login_bg_deep)
+        } else {
+            imageView.background = null
+            imageView.imageTintList = null
+            imageView.setPadding(0, 0, 0, 0)
+            Glide.with(context)
+                .load(avatarUrl)
+                .circleCrop()
+                .placeholder(R.drawable.ic_person)
+                .into(imageView)
+        }
+    }
 
     /** @return file JPEG siap upload di cache dir, atau null kalau gambar sumber tidak bisa dibaca. */
     fun prepareAvatarFile(context: Context, source: Uri): File? {

@@ -13,6 +13,7 @@ import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.HijriDateUtil
+import site.elahady.alkaukaba.utils.ImageUtils
 import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
@@ -316,6 +317,17 @@ class MainActivity : AppCompatActivity() {
     private fun setupCalendarNavigation() {
         binding.btnPrevMonth.setOnClickListener { viewModel.changeMonth(-1) }
         binding.btnNextMonth.setOnClickListener { viewModel.changeMonth(1) }
+    }
+
+    /** Ikon profil di header ikut foto profil user - direfresh di onResume juga karena
+     * MainActivity tidak di-recreate saat balik dari ProfileActivity via back. */
+    private fun renderProfileAvatar() {
+        ImageUtils.loadAvatarInto(this, binding.btnProfile, SessionManager(this).getAvatarUrl(), 8)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        renderProfileAvatar()
     }
 
 }
