@@ -8,7 +8,7 @@
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     tools:context=".ui.waktusholat.WaktuSholatActivity"
-    android:background="#F5F7FA">
+    android:background="@color/bg_home_warm">
 
     <include
         android:id="@+id/includeToolbar"
@@ -34,7 +34,7 @@
             android:gravity="center"
             android:paddingVertical="14dp"
             android:text="Waktu Aktual"
-            android:textColor="@color/waktu_sholat_dark_bg"
+            android:textColor="@color/text_label_gold"
             android:textStyle="bold"
             android:textSize="14sp" />
 
@@ -74,9 +74,38 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_rounded"
-                    android:backgroundTint="@color/waktu_sholat_dark_bg"
+                    android:background="@drawable/bg_card_gradient_navy"
                     android:padding="20dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:alpha="0.85"
+                        android:src="@drawable/ic_sparkle"
+                        app:tint="@color/gold_accent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:ignore="ContentDescription" />
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="3dp"
+                        android:layout_marginStart="90dp"
+                        android:layout_marginTop="4dp"
+                        android:alpha="0.6"
+                        android:background="@drawable/dot_star"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:layout_width="3dp"
+                        android:layout_height="3dp"
+                        android:layout_marginEnd="36dp"
+                        android:alpha="0.55"
+                        android:background="@drawable/dot_star"
+                        android:backgroundTint="@color/gold_accent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
 
                     <TextView
                         android:id="@+id/tvDate"
@@ -168,7 +197,7 @@
                     android:layout_height="wrap_content"
                     android:text="DETAIL PERHITUNGAN WAKTU SHOLAT"
                     android:textStyle="bold"
-                    android:textColor="#E6B65D"/>
+                    android:textColor="@color/text_label_gold"/>
 
                 <TextView
                     android:id="@+id/tvPrayerBreakdownSubtitle"

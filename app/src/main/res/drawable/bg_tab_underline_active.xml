@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:gravity="bottom">
         <shape android:shape="rectangle">
-            <solid android:color="@color/waktu_sholat_dark_bg" />
+            <solid android:color="@color/gold_accent" />
             <size android:height="3dp" />
         </shape>
     </item>

@@ -109,7 +109,7 @@ class WaktuSholatActivity : AppCompatActivity() {
     }
 
     private fun updateTabState(isActual: Boolean) {
-        val colorActive = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorActive = ContextCompat.getColor(this, R.color.text_label_gold)
         val colorInactive = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
 
         val activeTab = if (isActual) binding.btnTabActual else binding.btnTabDetail
@@ -175,7 +175,8 @@ class WaktuSholatActivity : AppCompatActivity() {
         )
 
         val colorActiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_row_active_bg)
-        val colorDarkBg = ContextCompat.getColor(this, R.color.waktu_sholat_dark_bg)
+        val colorActiveIconBg = ContextCompat.getColor(this, R.color.gold_accent)
+        val colorActiveText = ContextCompat.getColor(this, R.color.text_label_gold)
         val colorIconInactiveBg = ContextCompat.getColor(this, R.color.waktu_sholat_icon_bg_inactive)
         val colorIconMuted = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
         val colorWhite = ContextCompat.getColor(this, android.R.color.white)
@@ -190,11 +191,11 @@ class WaktuSholatActivity : AppCompatActivity() {
 
             val isActive = index == state.activeIndex
             row.rowRoot.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorActiveBg else colorTransparent)
-            row.iconContainer.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorDarkBg else colorIconInactiveBg)
+            row.iconContainer.backgroundTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorActiveIconBg else colorIconInactiveBg)
             row.ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(if (isActive) colorWhite else colorIconMuted)
             row.tvPrayerName.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
             row.tvTime.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-            row.tvPrayerName.setTextColor(if (isActive) colorDarkBg else colorNameInactive)
+            row.tvPrayerName.setTextColor(if (isActive) colorActiveText else colorNameInactive)
         }
 
         binding.tvNextPrayer.text = state.nextPrayerLabel

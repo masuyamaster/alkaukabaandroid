@@ -5,60 +5,86 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F7FA"
+    android:background="@color/bg_home_warm"
     tools:context=".ui.gerhana.GerhanaActivity">
 
     <include
         android:id="@+id/includeToolbar"
         layout="@layout/view_toolbar_default" />
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/waktu_sholat_icon_bg_inactive"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="8dp"
-        android:paddingVertical="8dp"
-        android:gravity="center_vertical">
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_card_gradient_navy">
 
         <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:src="@drawable/ic_gis_location_poi"
-            app:tint="@color/navy_dongker"
-            android:contentDescription="@null" />
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:alpha="0.85"
+            android:src="@drawable/ic_sparkle"
+            app:tint="@color/gold_accent"
+            tools:ignore="ContentDescription" />
 
-        <TextView
-            android:id="@+id/tvLocationName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:text="Mendeteksi lokasi..."
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:maxLines="1"
-            android:ellipsize="end" />
+        <View
+            android:layout_width="3dp"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="60dp"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.6"
+            android:background="@drawable/dot_star"
+            android:backgroundTint="@color/gold_accent" />
 
-        <TextView
-            android:id="@+id/btnRefreshLoc"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⟳ Ubah Lokasi"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="@color/icon_blue"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="10dp"
-            android:minWidth="48dp"
-            android:minHeight="48dp"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="8dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_gis_location_poi"
+                app:tint="@color/gold_accent"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/tvLocationName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Mendeteksi lokasi..."
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_dark"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/btnRefreshLoc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⟳ Ubah Lokasi"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/gold_accent"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="10dp"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/tabContainer"
@@ -76,7 +102,7 @@
             android:gravity="center"
             android:paddingVertical="14dp"
             android:text="Gerhana Bulan"
-            android:textColor="@color/navy_dongker"
+            android:textColor="@color/text_label_gold"
             android:textStyle="bold"
             android:textSize="14sp" />
 
@@ -105,7 +131,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_gravity="center"
-            android:indeterminateTint="@color/accent_yellow"
+            android:indeterminateTint="@color/gold_accent"
             android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView

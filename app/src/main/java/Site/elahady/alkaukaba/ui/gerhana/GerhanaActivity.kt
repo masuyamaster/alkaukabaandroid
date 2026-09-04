@@ -75,7 +75,7 @@ class GerhanaActivity : AppCompatActivity() {
     }
 
     private fun updateTabState(isLunar: Boolean) {
-        val colorActive = ContextCompat.getColor(this, R.color.navy_dongker)
+        val colorActive = ContextCompat.getColor(this, R.color.text_label_gold)
         val colorInactive = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
 
         val activeTab = if (isLunar) binding.btnTabBulan else binding.btnTabMatahari
