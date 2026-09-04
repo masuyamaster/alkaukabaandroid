@@ -5,7 +5,7 @@
     <string name="title_activity_kiblat">KiblatActivity</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
-    <string name="titleArahKiblat">Kompas Kiblat</string>
+    <string name="titleArahKiblat">Arah Kiblat</string>
     <string name="sudutKiblat">Sudut Kiblat :</string>
     <string name="kalibrasiHint">Akurasi kompas rendah. Gerakkan perangkat membentuk angka 8.</string>
     <string name="infoLokasi">Lokasi tidak diketahui</string>

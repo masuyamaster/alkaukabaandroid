@@ -29,9 +29,19 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import com.google.android.gms.location.*
 import java.util.*
 import site.elahady.alkaukaba.R
+import android.os.Handler
+import io.github.cosinekitty.astronomy.Aberration
+import io.github.cosinekitty.astronomy.Body
+import io.github.cosinekitty.astronomy.EquatorEpoch
+import io.github.cosinekitty.astronomy.Observer
+import io.github.cosinekitty.astronomy.Refraction
+import io.github.cosinekitty.astronomy.Time
+import io.github.cosinekitty.astronomy.equator
+import io.github.cosinekitty.astronomy.horizon
 
 class KiblatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityKiblatBinding
@@ -44,6 +54,19 @@ class KiblatActivity : AppCompatActivity() {
 
     private var currentAzimuth = 0f
     private var qiblaAngle = 0f
+
+    private var sunAzimuth = 0f
+    private var shadowAzimuth = 0f
+    private var lastLat: Double? = null
+    private var lastLon: Double? = null
+    private val sunUpdateHandler = Handler(Looper.getMainLooper())
+    private val sunUpdateIntervalMs = 30_000L
+    private val sunUpdateRunnable = object : Runnable {
+        override fun run() {
+            lastLat?.let { lat -> lastLon?.let { lon -> updateSunAndShadow(lat, lon) } }
+            sunUpdateHandler.postDelayed(this, sunUpdateIntervalMs)
+        }
+    }
 
     private var smoothedAzimuth = 0f
 
@@ -59,7 +82,7 @@ class KiblatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
-        binding.includeToolbar.toolbarDefault.applySystemBarInsetsPadding(applyTop = true)
+        binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -79,6 +102,7 @@ class KiblatActivity : AppCompatActivity() {
 
             qiblaAngle = angle.toFloat()   // <-- penting
             binding.txtQiblaValue.text = "${angle.toInt()}°"
+            binding.tvLegendKiblatValue.text = "${angle.toInt()}°"
         }
 
         binding.includeToolbar.tvToolbarTitle.text = getString(R.string.titleArahKiblat)
@@ -122,6 +146,7 @@ class KiblatActivity : AppCompatActivity() {
     private fun observeViewModel() {
         viewModel.qiblaAngle.observe(this) { angle ->
             binding.txtQiblaValue.text = "${angle.toInt()}°"
+            binding.tvLegendKiblatValue.text = "${angle.toInt()}°"
         }
 
         viewModel.error.observe(this) {
@@ -221,8 +246,31 @@ class KiblatActivity : AppCompatActivity() {
         }
     }
     @SuppressLint("SetTextI18n")
+    private fun updateSunAndShadow(lat: Double, lon: Double) {
+        try {
+            val observer = Observer(lat, lon, 0.0)
+            val time = Time.fromMillisecondsSince1970(System.currentTimeMillis())
+            val sunEq = equator(Body.Sun, time, observer, EquatorEpoch.OfDate, Aberration.Corrected)
+            val sunHor = horizon(time, observer, sunEq.ra, sunEq.dec, Refraction.Normal)
+
+            sunAzimuth = sunHor.azimuth.toFloat()
+            shadowAzimuth = (sunAzimuth + 180f) % 360f
+
+            binding.tvLegendSunValue.text = "${sunAzimuth.toInt()}°"
+            binding.tvLegendShadowValue.text = "${shadowAzimuth.toInt()}°"
+
+            rotateCompassSmooth()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
     private fun onLocationReady(lat: Double, lon: Double) {
 //        binding.txtQiblaValue.text = "Lat: %.6f , Lon: %.6f".format(lat, lon)
+        lastLat = lat
+        lastLon = lon
+        updateSunAndShadow(lat, lon)
         if (sessionManager.isManualLocationMode()) {
             // Lokasi manual: tampilkan koordinatnya langsung, jangan reverse-geocode - titik manual
             // (mis. markaz tanpa nama jalan) sering tidak resolve ke subLocality/locality (null,
@@ -241,6 +289,7 @@ class KiblatActivity : AppCompatActivity() {
             // akan menimpa balik nilai ini kalau response Aladhan datang belakangan (race condition).
             qiblaAngle = breakdown.utsbDegree.toFloat()
             binding.txtQiblaValue.text = "${breakdown.utsbDegree.toInt()}°"
+            binding.tvLegendKiblatValue.text = "${breakdown.utsbDegree.toInt()}°"
         } else {
             viewModel.fetchQiblaAngle(lat, lon)
         }
@@ -331,8 +380,13 @@ class KiblatActivity : AppCompatActivity() {
     private fun rotateCompassSmooth() {
         // Dial berputar mengikuti heading device supaya marker Utara tetap akurat.
         binding.imgCompassDial.rotation = -currentAzimuth
+        // Label mata angin (U/T/S/B) ikut berputar bersama dial.
+        binding.cardinalLabels.rotation = -currentAzimuth
         // Jarum kiblat independen dari dial - selalu menunjuk arah kiblat relatif ke layar.
         binding.imgCompassNeedle.rotation = qiblaAngle - currentAzimuth
+        // Jarum matahari & bayangan - sama-sama relatif ke layar seperti jarum kiblat.
+        binding.imgSunNeedle.rotation = sunAzimuth - currentAzimuth
+        binding.imgShadowNeedle.rotation = shadowAzimuth - currentAzimuth
 
         checkQiblaAlignment()
     }
@@ -368,11 +422,13 @@ class KiblatActivity : AppCompatActivity() {
                 SensorManager.SENSOR_DELAY_GAME
             )
         }
+        sunUpdateHandler.postDelayed(sunUpdateRunnable, sunUpdateIntervalMs)
     }
 
     override fun onPause() {
         super.onPause()
         sensorManager.unregisterListener(sensorListener)
+        sunUpdateHandler.removeCallbacks(sunUpdateRunnable)
     }
 
 }

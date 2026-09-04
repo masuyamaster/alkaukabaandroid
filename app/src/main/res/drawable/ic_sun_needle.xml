@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Thin arrow pointing to the real-time sun azimuth -->
+    <path
+        android:fillColor="@color/sun_direction"
+        android:pathData="M97,100 L97,32 L103,32 L103,100 Z" />
+    <path
+        android:fillColor="@color/sun_direction"
+        android:pathData="M100,14 L113,36 L87,36 Z" />
+</vector>

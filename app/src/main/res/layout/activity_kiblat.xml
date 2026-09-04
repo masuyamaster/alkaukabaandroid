@@ -1,160 +1,380 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
-    android:paddingBottom="12dp"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
     tools:context=".ui.arahkiblat.KiblatActivity">
 
     <include
         android:id="@+id/includeToolbar"
-        layout="@layout/view_toolbar_default"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        layout="@layout/view_toolbar_default" />
 
-    <FrameLayout
-        android:id="@+id/contentContainer"
-        android:layout_width="0dp"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintTop_toBottomOf="@id/includeToolbar"
-        app:layout_constraintBottom_toTopOf="@id/infoCard"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageView
-            android:id="@+id/imgCompassDial"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:padding="24dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_compass_dial_modern"
-            android:contentDescription="Qibla Compass" />
-
-        <ImageView
-            android:id="@+id/imgCompassNeedle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:padding="56dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_qibla_needle"
-            android:contentDescription="@null" />
-
-        <LinearLayout
-            android:id="@+id/calibrationHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|center_horizontal"
-            android:layout_marginTop="16dp"
-            android:padding="12dp"
-            android:background="@drawable/bg_calibration_hint"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/kalibrasiHint"
-                android:textSize="12sp"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
-
-    </FrameLayout>
-
-    <!-- ================= INFO CARD (biru dongker, konsisten dengan Hero Card Waktu Sholat) ================= -->
-    <LinearLayout
-        android:id="@+id/infoCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:orientation="vertical"
-        android:background="@drawable/bg_card_rounded"
-        android:backgroundTint="@color/waktu_sholat_dark_bg"
-        android:padding="20dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_weight="1"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
 
-            <TextView
-                android:id="@+id/txtQiblaLabel"
-                android:layout_width="0dp"
+            <!-- ================= KOMPAS ================= -->
+            <FrameLayout
+                android:id="@+id/contentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="360dp">
+
+                <ImageView
+                    android:id="@+id/imgCompassDial"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_compass_dial_modern"
+                    android:contentDescription="Kompas Kiblat" />
+
+                <FrameLayout
+                    android:id="@+id/cardinalLabels"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|center_horizontal"
+                        android:layout_marginTop="4dp"
+                        android:text="U"
+                        android:textColor="@color/text_label_gold"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="34dp"
+                        android:text="T"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="4dp"
+                        android:text="S"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginStart="34dp"
+                        android:text="B"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </FrameLayout>
+
+                <ImageView
+                    android:id="@+id/imgSunNeedle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="56dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_sun_needle"
+                    android:contentDescription="@null" />
+
+                <ImageView
+                    android:id="@+id/imgShadowNeedle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="56dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_shadow_needle"
+                    android:contentDescription="@null" />
+
+                <ImageView
+                    android:id="@+id/imgCompassNeedle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="56dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_qibla_needle"
+                    android:contentDescription="@null" />
+
+                <LinearLayout
+                    android:id="@+id/calibrationHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|center_horizontal"
+                    android:layout_marginTop="16dp"
+                    android:padding="12dp"
+                    android:background="@drawable/bg_calibration_hint"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/kalibrasiHint"
+                        android:textSize="12sp"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <!-- ================= INFO CARD (biru dongker, konsisten dengan Hero Card Waktu Sholat) ================= -->
+            <FrameLayout
+                android:id="@+id/infoCard"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/sudutKiblat"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/waktu_sholat_pill_text"/>
-
-            <TextView
-                android:id="@+id/btnQiblaDetail"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:gravity="center"
-                android:text="ⓘ"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/waktu_sholat_pill_text"
+                android:layout_marginHorizontal="16dp"
+                android:background="@drawable/bg_card_rounded"
+                android:backgroundTint="@color/waktu_sholat_dark_bg"
+                android:padding="20dp"
                 android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless"/>
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="top|end"
+                    android:alpha="0.85"
+                    android:src="@drawable/ic_sparkle"
+                    app:tint="@color/gold_accent"
+                    tools:ignore="ContentDescription" />
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="top|start"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginStart="70dp"
+                    android:alpha="0.6"
+                    android:background="@drawable/dot_star" />
+
+                <View
+                    android:layout_width="3dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="46dp"
+                    android:layout_marginBottom="8dp"
+                    android:alpha="0.55"
+                    android:background="@drawable/dot_star"
+                    android:backgroundTint="@color/gold_accent" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/txtQiblaLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/sudutKiblat"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/waktu_sholat_pill_text"/>
+
+                        <TextView
+                            android:id="@+id/btnQiblaDetail"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:gravity="center"
+                            android:text="ⓘ"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/waktu_sholat_pill_text"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/txtQiblaValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="294°"
+                        android:textSize="30sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="#332D3748"/>
+
+                    <LinearLayout
+                        android:id="@+id/locationContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_location_kiblat"
+                            app:tint="@color/waktu_sholat_pill_text" />
+
+                        <TextView
+                            android:id="@+id/txtLocation"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="Kecamatan Sukomanunggal, Indonesia"
+                            android:textColor="@color/waktu_sholat_pill_text"
+                            android:textSize="13sp"
+                            android:maxLines="1"
+                            android:ellipsize="end"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="12dp"
+                        android:background="#332D3748"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:letterSpacing="0.04"
+                        android:text="Keterangan Garis Kompas"
+                        android:textColor="@color/waktu_sholat_pill_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/bg_circle_button"
+                            android:backgroundTint="@android:color/white" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="Arah Kiblat"
+                            android:textColor="@color/waktu_sholat_pill_text"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvLegendKiblatValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/bg_circle_button"
+                            android:backgroundTint="@color/sun_direction" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="Arah Matahari (Real-time)"
+                            android:textColor="@color/waktu_sholat_pill_text"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvLegendSunValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/bg_circle_button"
+                            android:backgroundTint="@color/shadow_direction" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="Arah Bayangan (Real-time)"
+                            android:textColor="@color/waktu_sholat_pill_text"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvLegendShadowValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-"
+                            android:textColor="@android:color/white"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </FrameLayout>
 
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/txtQiblaValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="294°"
-            android:textSize="30sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginBottom="14dp"
-            android:background="#332D3748"/>
-
-        <LinearLayout
-            android:id="@+id/locationContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_location_kiblat"
-                app:tint="@color/waktu_sholat_pill_text" />
-
-            <TextView
-                android:id="@+id/txtLocation"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:text="Kecamatan Sukomanunggal, Indonesia"
-                android:textColor="@color/waktu_sholat_pill_text"
-                android:textSize="13sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+</LinearLayout>
