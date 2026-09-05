@@ -115,6 +115,20 @@ rotasi dipakai, sisi kiri/kanan generik tidak lagi relevan (rotasi mencakup
 kasus itu). Efeknya ilustrasi "loncat" dari lurus ke miring begitu lokasi
 selesai di-resolve — belum ada state transisi/animasi untuk itu.
 
+Per 2026-09-05 (lanjutan) — kartu home ikut diperbaiki: `MainActivity` juga
+sudah minta lokasi sejak awal (buat data sholat/kalender), jadi
+`fetchDataByCoordinate(lat, lon)` (dipanggil dari `getUserLocation()`/
+`useManualLocation()` begitu lokasi resolve) sekarang juga panggil
+`updateMoonPhaseCardTilt(lat, lon)` — logika identik dengan
+`FaseBulanActivity.onLocationReady()` (hitung Az/Alt Bulan & Matahari via
+`equator`+`horizon`, lalu `MoonTilt.brightLimbAngleDegrees()` +
+`setPhaseWithTrueTilt()`), tapi dijalankan sinkron di main thread (bukan
+`Dispatchers.Default`) karena di sini tidak ada `searchRiseSet` — cuma dua
+pasang `equator`+`horizon`, sama ringannya dengan perhitungan magnitude/jarak
+yang juga sinkron. `setupMoonPhaseCard()` (dipanggil duluan di `onCreate`,
+sebelum lokasi resolve) tetap pakai `setPhase()` biasa sebagai tampilan awal
+sebelum lokasi siap — sama seperti perilaku `FaseBulanActivity`.
+
 Bug terkait yang ikut diperbaiki di perubahan yang sama:
 `MoonPhaseView.renderToBitmap()` (dipakai modal zoom, lihat baris
 `ZoomableImageView.kt` di tabel atas) sebelumnya gambar langsung ke `Canvas`
@@ -172,12 +186,12 @@ di kartu home (56dp) & layar detail (160dp), field Detail Astronomis terisi
 ## 7. Known issues & TODOs
 
 - [x] ~~Orientasi kiri/kanan limb terang pakai konvensi sederhana...~~ —
-      Diperbaiki 2026-09-05: begitu lokasi observer tersedia,
-      `onLocationReady()` pakai `MoonTilt.brightLimbAngleDegrees()` +
-      `MoonPhaseView.setPhaseWithTrueTilt()` untuk kemiringan sungguhan
-      (lihat §4). Sisa keterbatasan: sebelum lokasi resolve (atau kalau izin
-      ditolak), ilustrasi tetap fallback ke `setPhase()` generik
-      (kiri/kanan tanpa rotasi) — bukan lagi masalah akurasi tapi
+      Diperbaiki 2026-09-05, di kartu home (`MainActivity`) & layar detail
+      (`FaseBulanActivity`): begitu lokasi observer tersedia, keduanya pakai
+      `MoonTilt.brightLimbAngleDegrees()` + `MoonPhaseView.setPhaseWithTrueTilt()`
+      untuk kemiringan sungguhan (lihat §4). Sisa keterbatasan: sebelum lokasi
+      resolve (atau kalau izin ditolak), ilustrasi tetap fallback ke
+      `setPhase()` generik (kiri/kanan tanpa rotasi) — bukan lagi masalah akurasi tapi
       transisi/state saat lokasi belum siap.
 - [ ] Belum ada test otomatis untuk `MoonPhaseLabel`/logika `MoonPhaseView`.
 - [ ] Tekstur `moon_texture.jpg` selalu piringan purnama tanpa libration —

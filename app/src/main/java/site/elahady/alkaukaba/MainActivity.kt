@@ -16,8 +16,15 @@ import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.ImageUtils
 import site.elahady.alkaukaba.utils.MoonPhaseLabel
+import site.elahady.alkaukaba.utils.MoonTilt
+import io.github.cosinekitty.astronomy.Aberration
 import io.github.cosinekitty.astronomy.Body
+import io.github.cosinekitty.astronomy.EquatorEpoch
+import io.github.cosinekitty.astronomy.Observer
+import io.github.cosinekitty.astronomy.Refraction
 import io.github.cosinekitty.astronomy.Time
+import io.github.cosinekitty.astronomy.equator
+import io.github.cosinekitty.astronomy.horizon
 import io.github.cosinekitty.astronomy.illumination
 import io.github.cosinekitty.astronomy.moonPhase
 import site.elahady.alkaukaba.viewmodel.MainViewModel
@@ -219,6 +226,31 @@ class MainActivity : AppCompatActivity() {
         viewModel.fetchPrayerData(lat, lon)
         viewModel.fetchUpcomingIslamicHolidays(lat, lon)
         viewModel.initCalendar(lat, lon)
+        updateMoonPhaseCardTilt(lat, lon)
+    }
+
+    /**
+     * Begitu lokasi tersedia, perbarui kartu Fase Bulan dari [setupMoonPhaseCard]
+     * (kiri/kanan generik tanpa rotasi) ke kemiringan limb terang sungguhan
+     * seperti tampak di langit pengamat - pola sama dengan
+     * `FaseBulanActivity.onLocationReady()`. Perhitungan single-point
+     * (bukan pencarian akar iteratif seperti rise/set), jadi aman sinkron di
+     * main thread tanpa coroutine.
+     */
+    private fun updateMoonPhaseCardTilt(lat: Double, lon: Double) {
+        val observer = Observer(lat, lon, 0.0)
+        val now = Time.fromMillisecondsSince1970(System.currentTimeMillis())
+        val moonEq = equator(Body.Moon, now, observer, EquatorEpoch.OfDate, Aberration.Corrected)
+        val moonHor = horizon(now, observer, moonEq.ra, moonEq.dec, Refraction.Normal)
+        val sunEq = equator(Body.Sun, now, observer, EquatorEpoch.OfDate, Aberration.Corrected)
+        val sunHor = horizon(now, observer, sunEq.ra, sunEq.dec, Refraction.Normal)
+        val tiltDegrees = MoonTilt.brightLimbAngleDegrees(
+            moonAzimuthDeg = moonHor.azimuth,
+            moonAltitudeDeg = moonHor.altitude,
+            sunAzimuthDeg = sunHor.azimuth,
+            sunAltitudeDeg = sunHor.altitude
+        )
+        binding.moonPhaseView.setPhaseWithTrueTilt(illumination(Body.Moon, now).phaseFraction, tiltDegrees)
     }
 
     private fun setupNavigation() {
