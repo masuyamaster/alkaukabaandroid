@@ -31,12 +31,17 @@ class MoonPhaseView @JvmOverloads constructor(
 
     private var illuminatedFraction = 0.5
     private var brightOnRight = true
+    private var useRealisticTexture = true
 
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#10192A")
         style = Paint.Style.FILL
     }
     private val texturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val flatBrightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.FILL
+    }
     private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E8BA5C")
         style = Paint.Style.STROKE
@@ -46,11 +51,23 @@ class MoonPhaseView @JvmOverloads constructor(
 
     // Foto bulan purnama asli (NASA, domain publik - lihat res/drawable-nodpi/moon_texture.jpg),
     // dipotong ke bentuk sabit/cembung yang sama dengan ilustrasi vektor sebelumnya, jadi bagian
-    // terang terlihat seperti foto asli alih-alih warna flat.
-    private val moonBitmap = BitmapFactory.decodeResource(resources, R.drawable.moon_texture)
+    // terang terlihat seperti foto asli alih-alih warna flat. Didekode malas (lazy) supaya
+    // pemakai yang men-disable tekstur (lihat setRealisticTexture) tidak ikut decode bitmap ini.
+    private val moonBitmap by lazy { BitmapFactory.decodeResource(resources, R.drawable.moon_texture) }
 
     fun setShadowColor(color: Int) {
         shadowPaint.color = color
+        invalidate()
+    }
+
+    /**
+     * Aktifkan/nonaktifkan tekstur foto bulan asli untuk bagian terang; kalau
+     * dinonaktifkan, bagian terang diisi warna putih flat. Layar hilal Awal
+     * Bulan menonaktifkan ini (lihat AwalBulanActivity) - kartu Fase Bulan
+     * dan home tetap pakai tekstur (default true).
+     */
+    fun setRealisticTexture(enabled: Boolean) {
+        useRealisticTexture = enabled
         invalidate()
     }
 
@@ -104,10 +121,15 @@ class MoonPhaseView @JvmOverloads constructor(
         // ditampilkan terpisah sebagai teks, ilustrasi ini cuma bantu bentuk).
         val k = if (illuminatedFraction <= 0.0) 0.0 else illuminatedFraction.coerceAtLeast(0.05)
         if (k > 0.0) {
-            updateTextureShader(cx, cy, r)
+            val litPaint = if (useRealisticTexture) {
+                updateTextureShader(cx, cy, r)
+                texturePaint
+            } else {
+                flatBrightPaint
+            }
             when {
-                k >= 0.999 -> canvas.drawCircle(cx, cy, r, texturePaint)
-                else -> canvas.drawPath(buildLitPath(cx, cy, r, k), texturePaint)
+                k >= 0.999 -> canvas.drawCircle(cx, cy, r, litPaint)
+                else -> canvas.drawPath(buildLitPath(cx, cy, r, k), litPaint)
             }
         }
 
