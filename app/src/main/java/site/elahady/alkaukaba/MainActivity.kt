@@ -7,6 +7,7 @@ import site.elahady.alkaukaba.api.RetrofitClient
 import site.elahady.alkaukaba.ui.arahkiblat.KiblatActivity
 import site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity
 import site.elahady.alkaukaba.ui.calendar.CalendarActivity
+import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
@@ -14,6 +15,11 @@ import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.ImageUtils
+import site.elahady.alkaukaba.utils.MoonPhaseLabel
+import io.github.cosinekitty.astronomy.Body
+import io.github.cosinekitty.astronomy.Time
+import io.github.cosinekitty.astronomy.illumination
+import io.github.cosinekitty.astronomy.moonPhase
 import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
@@ -86,6 +92,7 @@ class MainActivity : AppCompatActivity() {
         setupHolidayPreview()
         setupMonthlyCalendar()
         setupCalendarNavigation()
+        setupMoonPhaseCard()
 
         // Setup Swipe Refresh
         binding.swipeRefresh.setOnRefreshListener {
@@ -241,6 +248,18 @@ class MainActivity : AppCompatActivity() {
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
+    }
+
+    private fun setupMoonPhaseCard() {
+        val now = Time.fromMillisecondsSince1970(System.currentTimeMillis())
+        val synodicAngle = moonPhase(now)
+        val illum = illumination(Body.Moon, now)
+        binding.moonPhaseView.setPhase(synodicAngle, illum.phaseFraction)
+        binding.tvMoonPhaseName.text = MoonPhaseLabel.forAngle(synodicAngle)
+        binding.tvMoonIllumination.text = "%.0f%% tersinari".format(illum.phaseFraction * 100)
+        binding.btnMoonPhase.setOnClickListener {
+            startActivity(Intent(this, FaseBulanActivity::class.java))
+        }
     }
 
     private fun openCalendarPage() {
