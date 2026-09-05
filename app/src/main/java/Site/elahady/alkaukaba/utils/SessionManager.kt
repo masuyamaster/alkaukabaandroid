@@ -23,6 +23,11 @@ class SessionManager(context: Context) {
         private const val KEY_QIBLA_SOURCE = "QIBLA_SOURCE"
         const val QIBLA_SOURCE_ALADHAN = "ALADHAN"
         const val QIBLA_SOURCE_MANUAL = "MANUAL_FORMULA"
+
+        private const val KEY_ADZAN_SOUND_MODE = "ADZAN_SOUND_MODE"
+        const val ADZAN_SOUND_MODE_ADZAN = "ADZAN"
+        const val ADZAN_SOUND_MODE_BEEP = "BEEP"
+        const val ADZAN_SOUND_MODE_SILENT = "SILENT"
     }
 
     /**
@@ -79,6 +84,13 @@ class SessionManager(context: Context) {
         if (getPrayerMethodId() != PrayerCalculationMethods.CUSTOM_ID) return null
         return "${getCustomFajrAngle()},0,${getCustomIshaAngle()}"
     }
+
+    fun setAdzanSoundMode(mode: String) {
+        prefs.edit().putString(KEY_ADZAN_SOUND_MODE, mode).apply()
+    }
+
+    fun getAdzanSoundMode(): String =
+        prefs.getString(KEY_ADZAN_SOUND_MODE, ADZAN_SOUND_MODE_ADZAN) ?: ADZAN_SOUND_MODE_ADZAN
 
     fun setLogin(isLoggedIn: Boolean) {
         val editor = prefs.edit()

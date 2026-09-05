@@ -92,4 +92,7 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
 
+    // Notifikasi adzan (alarm harian + refresh jadwal di background)
+    implementation "androidx.work:work-runtime-ktx:2.8.1"
+
 }

@@ -90,3 +90,4 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Autentikasi (login/register) | [features/autentikasi.md](features/autentikasi.md) | Terdokumentasi |
 | Konfigurasi (Lokasi, Sumber Kiblat, Metode Sholat) | [features/konfigurasi.md](features/konfigurasi.md) | Terdokumentasi |
 | Profil (akun, bantuan, keamanan) | [features/profil.md](features/profil.md) | Terdokumentasi |
+| Notifikasi Adzan + Personalisasi Suara | [features/notifikasi-adzan.md](features/notifikasi-adzan.md) | Terdokumentasi (implementasi belum di-commit) |

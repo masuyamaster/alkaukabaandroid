@@ -6,8 +6,13 @@ import site.elahady.alkaukaba.utils.PrayerCalculationMethods
 import site.elahady.alkaukaba.utils.SessionManager
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.EditText
 import android.widget.RadioButton
@@ -44,6 +49,14 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(this, "Izin notifikasi diperlukan supaya notifikasi adzan muncul", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -62,10 +75,12 @@ class KonfigurasiActivity : AppCompatActivity() {
         binding.rowLocation.setOnClickListener { showLocationSheet() }
         binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
+        binding.rowNotifikasiAdzan.setOnClickListener { showAdzanSoundSheet() }
 
         updateCurrentLocationLabel()
         updateCurrentQiblaSourceLabel()
         updateCurrentMethodLabel()
+        updateCurrentAdzanSoundLabel()
     }
 
     // --- Lokasi ---
@@ -259,5 +274,75 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
 
         bottomSheetDialog.show()
+    }
+
+    // --- Notifikasi Adzan ---
+
+    private fun updateCurrentAdzanSoundLabel() {
+        binding.tvCurrentAdzanSound.text = when (sessionManager.getAdzanSoundMode()) {
+            SessionManager.ADZAN_SOUND_MODE_BEEP -> "Beep Pelan"
+            SessionManager.ADZAN_SOUND_MODE_SILENT -> "Senyap"
+            else -> "Adzan Penuh"
+        }
+    }
+
+    private fun showAdzanSoundSheet() {
+        ensureNotificationPrerequisites()
+
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_notifikasi_adzan, null)
+        bottomSheetDialog.setContentView(view)
+
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupAdzanSound)
+        val radioFull = view.findViewById<RadioButton>(R.id.radioAdzanFull)
+        val radioBeep = view.findViewById<RadioButton>(R.id.radioAdzanBeep)
+        val radioSilent = view.findViewById<RadioButton>(R.id.radioAdzanSilent)
+        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveAdzanSound)
+
+        when (sessionManager.getAdzanSoundMode()) {
+            SessionManager.ADZAN_SOUND_MODE_BEEP -> radioBeep.isChecked = true
+            SessionManager.ADZAN_SOUND_MODE_SILENT -> radioSilent.isChecked = true
+            else -> radioFull.isChecked = true
+        }
+
+        btnSave.setOnClickListener {
+            val mode = when (radioGroup.checkedRadioButtonId) {
+                R.id.radioAdzanBeep -> SessionManager.ADZAN_SOUND_MODE_BEEP
+                R.id.radioAdzanSilent -> SessionManager.ADZAN_SOUND_MODE_SILENT
+                else -> SessionManager.ADZAN_SOUND_MODE_ADZAN
+            }
+            sessionManager.setAdzanSoundMode(mode)
+            updateCurrentAdzanSoundLabel()
+            Toast.makeText(this, "Suara notifikasi adzan disimpan", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    /** Minta izin POST_NOTIFICATIONS (Android 13+) dan arahkan ke Settings kalau izin
+     *  "Alarm & pengingat" (exact alarm, Android 12+) belum diberikan - tanpa keduanya,
+     *  notifikasi adzan bisa tidak muncul atau meleset waktunya. */
+    private fun ensureNotificationPrerequisites() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(AlarmManager::class.java)
+            if (alarmManager?.canScheduleExactAlarms() == false) {
+                Toast.makeText(
+                    this,
+                    "Aktifkan izin \"Alarm & pengingat\" agar notifikasi adzan tepat waktu",
+                    Toast.LENGTH_LONG
+                ).show()
+                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.parse("package:$packageName")
+                })
+            }
+        }
     }
 }
