@@ -43,12 +43,6 @@ class MoonPhaseView @JvmOverloads constructor(
         color = Color.WHITE
         style = Paint.Style.FILL
     }
-    private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#E8BA5C")
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
-        alpha = 140
-    }
 
     // Foto bulan purnama asli (Gregory H. Revera, CC BY-SA 3.0 - lihat docs/features/fase-bulan.md
     // untuk atribusi lengkap), sudah di-crop presisi supaya piringannya pas memenuhi bujur sangkar
@@ -152,7 +146,7 @@ class MoonPhaseView @JvmOverloads constructor(
     private fun drawMoonDisc(canvas: Canvas, w: Float, h: Float) {
         val cx = w / 2f
         val cy = h / 2f
-        val r = min(w, h) / 2f - outlinePaint.strokeWidth
+        val r = min(w, h) / 2f
         if (r <= 0f) return
 
         canvas.drawCircle(cx, cy, r, shadowPaint)
@@ -173,8 +167,6 @@ class MoonPhaseView @JvmOverloads constructor(
                 else -> canvas.drawPath(buildLitPath(cx, cy, r, k), litPaint)
             }
         }
-
-        canvas.drawCircle(cx, cy, r, outlinePaint)
     }
 
     /**
