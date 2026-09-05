@@ -106,6 +106,39 @@ Download. Untuk memverifikasi akurasi astronomisnya, bandingkan
 ijtima'/ghurub yang dihasilkan dengan referensi resmi (mis. jadwal Kemenag
 atau publikasi PCNU/Al-Kaukaba Lamongan) untuk bulan yang sama.
 
+## 6a. Visualisasi Wujud Hilal (bantuan rukyah)
+
+Per 2026-09-05: ditambahkan kartu "Wujud Hilal saat Ghurub" di
+`activity_awal_bulan.xml`, antara kartu ringkasan dan 3 kartu metrik. Reuse
+`MoonPhaseView` (widget yang sama dengan kartu "Fase Bulan" di home) lewat
+`setWaxingCrescent(illumFraction)` (hilal awal bulan selalu waxing crescent
+karena selalu tak lama setelah ijtima') + `setBrightLimbAngle(tiltDegrees)`
+untuk memutar ilustrasi sesuai kemiringan limb terang sungguhan di langit.
+
+`tiltDegrees` dihitung oleh `utils/MoonTilt.brightLimbAngleDegrees()` dari
+azimuth/altitude Matahari & Bulan saat ghurub (`sunHor`/`moonHor`, sudah
+dihitung `EphemerisCalculator` untuk section "Data Matahari/Bulan saat
+Ghurub" — sekarang juga diekspos lewat `HilalResult.azimuthHilal` /
+`azimuthMatahari` / `tinggiMatahari` / `illumFraction`). Metodenya: proyeksi
+vektor arah Matahari ke bidang tangen langit di posisi Bulan (basis "atas" =
+komponen zenith tegak lurus arah pandang ke Bulan, "kanan" tegak lurus
+keduanya) — tervalidasi terhadap kasus "hilal senyum" khatulistiwa (azimuth
+Matahari≈Bulan, Matahari jauh di bawah ufuk relatif Bulan → limb terang lurus
+ke bawah, horns menghadap atas).
+
+Ilustrasi punya lantai tampilan minimum 5% (`MoonPhaseView`,
+`coerceAtLeast(0.05)`) karena hilal nyata di ambang kriteria Neo-MABIMS bisa
+<0.1% tersinari — kalau digambar apa adanya, lebar sabitnya sub-piksel dan
+tidak kelihatan sama sekali. Persentase asli tetap ditampilkan sebagai teks
+terpisah; kartu juga diberi disclaimer "Ilustrasi kemiringan, bukan skala
+sebenarnya".
+
+Sekalian, `MoonPhaseView` diganti dari pendekatan `Path.op`
+(union/difference boolean) ke konstruksi dua-arc langsung, karena `Path.op`
+terbukti tidak stabil ketika elips terminator hampir sekoinsiden dengan
+lingkaran luar (persis kasus hilal sangat tipis) — sempat membuat sabit tidak
+tergambar sama sekali di percobaan pertama.
+
 ## 7. Known limitations
 
 - [ ] Label "bulan Hijriyah yang dicek" pakai kalender tabular (Kuwaiti
@@ -117,3 +150,8 @@ atau publikasi PCNU/Al-Kaukaba Lamongan) untuk bulan yang sama.
       lebih tinggi.
 - [ ] Belum ada test otomatis untuk `EphemerisCalculator`/`HijriDateUtil`
       (lihat section 6).
+- [ ] Orientasi kemiringan hilal (`MoonTilt`) diturunkan & divalidasi lewat
+      penalaran vektor + satu kasus fisik yang dikenal (hilal senyum
+      khatulistiwa), bukan dibandingkan langsung ke foto rukyah sungguhan —
+      kalau suatu saat ada laporan orientasi kelihatan terbalik/miring salah
+      di lapangan, mulai cek dari sini (`utils/MoonTilt.kt`).
