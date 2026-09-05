@@ -2,6 +2,7 @@ package site.elahady.alkaukaba.ui.fasebulan
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,11 +11,16 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -42,8 +48,11 @@ import io.github.cosinekitty.astronomy.searchRiseSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityFaseBulanBinding
+import site.elahady.alkaukaba.ui.widget.ZoomableImageView
 import site.elahady.alkaukaba.utils.MoonPhaseLabel
+import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -77,9 +86,49 @@ class FaseBulanActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sessionManager = SessionManager(this)
 
+        binding.moonPhaseView.setOnClickListener { showMoonZoomDialog() }
+
         showCurrentPhase()
         loadUpcomingQuarters()
         checkLocationPermission()
+    }
+
+    /**
+     * Modal fullscreen dengan ilustrasi fase saat ini yang bisa di-pinch-zoom.
+     * Dialog biasa (bukan BottomSheetDialog seperti dialog lain di app ini)
+     * karena gesture drag-to-dismiss bottom sheet akan bentrok dengan
+     * gesture pan saat gambar sedang di-zoom.
+     */
+    private fun showMoonZoomDialog() {
+        val dialog = Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        val view = layoutInflater.inflate(R.layout.dialog_moon_zoom, null)
+        dialog.setContentView(view)
+
+        val bitmap = binding.moonPhaseView.renderToBitmap(1024)
+        view.findViewById<ZoomableImageView>(R.id.imgMoonZoom).setImageBitmap(bitmap)
+        view.findViewById<ImageButton>(R.id.btnCloseMoonZoom).setOnClickListener { dialog.dismiss() }
+
+        dialog.window?.let { w ->
+            w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            w.addFlags(
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+            )
+            WindowCompat.setDecorFitsSystemWindows(w, false)
+            w.statusBarColor = Color.TRANSPARENT
+            w.navigationBarColor = Color.TRANSPARENT
+        }
+        dialog.show()
+        // Disembunyikan setelah show() & lewat post{} supaya dijalankan setelah view benar-benar
+        // attached - memanggilnya lebih awal sering tidak berefek karena request insets diabaikan
+        // sebelum window punya fokus/attachment penuh.
+        view.post {
+            WindowInsetsControllerCompat(dialog.window ?: return@post, view).let { controller ->
+                controller.hide(WindowInsetsCompat.Type.statusBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
     }
 
     private fun showCurrentPhase() {
@@ -178,9 +227,24 @@ class FaseBulanActivity : AppCompatActivity() {
             val moonrise = searchRiseSet(Body.Moon, observer, Direction.Rise, now, 1.2)
             val moonset = searchRiseSet(Body.Moon, observer, Direction.Set, now, 1.2)
 
+            // Kemiringan sungguhan limb terang seperti tampak di langit pengamat (lihat MoonTilt) -
+            // ilustrasi generik (setPhase) cuma pilih kiri/kanan tanpa rotasi, jadi selalu tampak
+            // "lurus" walau posisi Bulan & Matahari sungguhan miring di langit. Sekarang lokasi
+            // sudah tersedia, terapkan tilt sungguhan sama seperti di ilustrasi hilal Awal Bulan.
+            val sunEq = equator(Body.Sun, now, observer, EquatorEpoch.OfDate, Aberration.Corrected)
+            val sunHor = horizon(now, observer, sunEq.ra, sunEq.dec, Refraction.Normal)
+            val tiltDegrees = MoonTilt.brightLimbAngleDegrees(
+                moonAzimuthDeg = hor.azimuth,
+                moonAltitudeDeg = hor.altitude,
+                sunAzimuthDeg = sunHor.azimuth,
+                sunAltitudeDeg = sunHor.altitude
+            )
+            val illum = illumination(Body.Moon, now)
+
             withContext(Dispatchers.Main) {
                 if (isFinishing) return@withContext
                 val timeFormat = SimpleDateFormat("HH:mm", Locale("in", "ID"))
+                binding.moonPhaseView.setPhaseWithTrueTilt(illum.phaseFraction, tiltDegrees)
                 binding.tvMoonRaDec.text = "${formatRaHours(eq.ra)} / ${formatDegreesDms(eq.dec)}"
                 binding.tvMoonAzAlt.text = "${formatDegreesDms(hor.azimuth)} / ${formatDegreesDms(hor.altitude)}"
                 val riseText = moonrise?.let { timeFormat.format(Date(it.toMillisecondsSince1970())) } ?: "-"

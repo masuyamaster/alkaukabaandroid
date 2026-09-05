@@ -76,6 +76,7 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 | `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
 | `MainActivity.kt` | `setupMoonPhaseCard()` mengisi kartu home + wiring klik ke `FaseBulanActivity`. |
 | `activity_main.xml` | Kartu `cardMoonPhase`/`btnMoonPhase` (gaya `bg_card_gradient_navy`, konsisten dengan kartu Gerhana). |
+| `ui/widget/ZoomableImageView.kt` + `res/layout/dialog_moon_zoom.xml` | Modal zoom (per 2026-09-05): tap ilustrasi 160dp di layar detail → `FaseBulanActivity.showMoonZoomDialog()` render `moonPhaseView.renderToBitmap(1024)` ke `Dialog` fullscreen custom (`android.R.style.Theme_Black_NoTitleBar_Fullscreen`, bukan `BottomSheetDialog` seperti dialog lain di app ini — drag-to-dismiss bottom sheet akan bentrok dengan gesture pan saat zoom). `ZoomableImageView` (extends `AppCompatImageView`, `scaleType=MATRIX`) implementasi pinch-zoom/pan/double-tap manual pakai `ScaleGestureDetector`+`GestureDetector`+`Matrix` — bukan library (`PhotoView` dkk) karena repo belum punya dependency image-zoom apa pun & kebutuhannya sederhana (satu bitmap persegi). Known gap: ada strip tipis warna cream di ujung atas modal (area status bar) yang belum berhasil dihilangkan meski sudah dicoba beberapa pendekatan (`WindowCompat.setDecorFitsSystemWindows`, `FLAG_LAYOUT_NO_LIMITS`, `WindowInsetsControllerCompat.hide()`, `window.setLayout(MATCH_PARENT,...)`) — dugaan sementara terkait `targetSdk 36` yang meng-enforce edge-to-edge dengan cara yang belum cocok dengan tema fullscreen dialog lama ini; murni kosmetik, tidak mengganggu fungsi zoom. |
 
 Alur data (fase & info geosentris saat ini, tanpa lokasi):
 `Time.fromMillisecondsSince1970(now)` → `moonPhase(time)` (sudut sinodik
@@ -97,6 +98,31 @@ Direction.Rise/Set, now, 1.2)` (jam terbit/terbenam terdekat ke depan). RA
 diformat jam sideris (`HHhMMmSS.Ss`), Dec/Az/Alt diformat derajat-menit-detik
 (`DD°MM'SS.S"`) lewat helper lokal `formatRaHours`/`formatDegreesDms` di
 `FaseBulanActivity`.
+
+Per 2026-09-05 — kemiringan sungguhan ilustrasi: `showCurrentPhase()` (tanpa
+lokasi) pakai `MoonPhaseView.setPhase()`, yang cuma pilih limb terang
+kiri/kanan generik tanpa rotasi — ilustrasi awal karenanya selalu tampak
+"lurus" (garis terminator vertikal), padahal kemiringan sungguhan di langit
+tergantung posisi Bulan & Matahari relatif observer (dibanding, mis., app
+astronomi lain yang render kemiringan asli). Begitu lokasi tersedia,
+`onLocationReady()` menghitung ulang posisi Matahari (`equator`+`horizon`
+untuk `Body.Sun`, pola sama seperti Bulan) lalu memanggil
+`MoonTilt.brightLimbAngleDegrees()` (util yang sama dipakai ilustrasi hilal
+di `AwalBulanActivity`) dan `MoonPhaseView.setPhaseWithTrueTilt()` — method
+baru yang set fraksi tersinari dengan shape kanonik "bright-on-right" (sama
+seperti `setWaxingCrescent`) lalu rotasi ke sudut sungguhan, karena begitu
+rotasi dipakai, sisi kiri/kanan generik tidak lagi relevan (rotasi mencakup
+kasus itu). Efeknya ilustrasi "loncat" dari lurus ke miring begitu lokasi
+selesai di-resolve — belum ada state transisi/animasi untuk itu.
+
+Bug terkait yang ikut diperbaiki di perubahan yang sama:
+`MoonPhaseView.renderToBitmap()` (dipakai modal zoom, lihat baris
+`ZoomableImageView.kt` di tabel atas) sebelumnya gambar langsung ke `Canvas`
+baru tanpa lewat `View.draw()`,
+jadi rotasi `View.rotation` (dari `setBrightLimbAngle`/`setPhaseWithTrueTilt`)
+tidak ikut ke bitmap — hasil render selalu lurus walau tampilan aslinya sudah
+miring. Sekarang `renderToBitmap()` menerapkan `canvas.rotate(rotation, ...)`
+manual sebelum `drawMoonDisc()`.
 
 Alur data (4 fase mendatang): `searchMoonQuarter(now)` → `nextMoonQuarter()`
 dipanggil 3x berantai → 4 `MoonQuarterInfo` (quarter 0=baru, 1=kuartal
@@ -145,13 +171,20 @@ di kartu home (56dp) & layar detail (160dp), field Detail Astronomis terisi
 
 ## 7. Known issues & TODOs
 
-- [ ] Orientasi kiri/kanan limb terang pakai konvensi sederhana (waxing =
-      terang di kanan) untuk kejelasan visual, bukan orientasi astronomis
-      sungguhan (yang sebenarnya bergantung posisi geografis observer &
-      parallactic angle) — cukup untuk ilustrasi info, bukan untuk keperluan
-      rukyat presisi.
+- [x] ~~Orientasi kiri/kanan limb terang pakai konvensi sederhana...~~ —
+      Diperbaiki 2026-09-05: begitu lokasi observer tersedia,
+      `onLocationReady()` pakai `MoonTilt.brightLimbAngleDegrees()` +
+      `MoonPhaseView.setPhaseWithTrueTilt()` untuk kemiringan sungguhan
+      (lihat §4). Sisa keterbatasan: sebelum lokasi resolve (atau kalau izin
+      ditolak), ilustrasi tetap fallback ke `setPhase()` generik
+      (kiri/kanan tanpa rotasi) — bukan lagi masalah akurasi tapi
+      transisi/state saat lokasi belum siap.
 - [ ] Belum ada test otomatis untuk `MoonPhaseLabel`/logika `MoonPhaseView`.
 - [ ] Tekstur `moon_texture.jpg` selalu piringan purnama tanpa libration —
       dipotong ke bentuk sabit/cembung yang benar, tapi corak kawah yang
       kelihatan di tepi limb tidak berubah sesuai libration sungguhan
       tanggal tsb (efek minor, tidak kasat mata pada ukuran tampil 56-160dp).
+- [ ] Modal zoom (`ZoomableImageView`) menyisakan strip cream tipis di ujung
+      atas (area status bar) yang belum berhasil dihilangkan — lihat catatan
+      di baris `ZoomableImageView.kt`, tabel §4. Kosmetik, tidak mengganggu
+      fungsi pinch-zoom/pan/double-tap.

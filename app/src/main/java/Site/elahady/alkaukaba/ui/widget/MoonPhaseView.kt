@@ -1,6 +1,7 @@
 package site.elahady.alkaukaba.ui.widget
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
 import android.graphics.Canvas
@@ -109,11 +110,49 @@ class MoonPhaseView @JvmOverloads constructor(
         rotation = (angleDegrees - 90.0).toFloat()
     }
 
+    /**
+     * Set fase (fraksi tersinari) SEKALIGUS kemiringan sungguhan limb terang
+     * seperti tampak di langit pengamat (lihat [site.elahady.alkaukaba.utils.MoonTilt]),
+     * dipakai saat lokasi observer tersedia. Beda dari [setPhase] yang cuma
+     * pilih sisi kiri/kanan generik tanpa rotasi (dipakai saat lokasi belum
+     * ada) — di sini shape kanonik selalu "bright-on-right" (sama seperti
+     * [setWaxingCrescent]) karena orientasi sungguhan sepenuhnya ditentukan
+     * lewat rotasi [setBrightLimbAngle], bukan lewat flag kiri/kanan lagi.
+     */
+    fun setPhaseWithTrueTilt(illuminatedFraction: Double, tiltAngleDegrees: Double) {
+        this.illuminatedFraction = illuminatedFraction.coerceIn(0.0, 1.0)
+        this.brightOnRight = true
+        setBrightLimbAngle(tiltAngleDegrees)
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val cx = width / 2f
-        val cy = height / 2f
-        val r = min(width, height) / 2f - outlinePaint.strokeWidth
+        drawMoonDisc(canvas, width.toFloat(), height.toFloat())
+    }
+
+    /**
+     * Render ilustrasi fase saat ini ke [Bitmap] persegi berdiri sendiri (bukan
+     * ke View ini), dipakai layar detail Fase Bulan untuk modal zoom — ukuran
+     * bitmap bebas beda dari ukuran View sebenarnya di layar. Rotasi [rotation]
+     * (dari [setBrightLimbAngle]/[setPhaseWithTrueTilt]) di-terapkan manual ke
+     * canvas karena di sini kita gambar langsung, bukan lewat [View.draw] yang
+     * biasanya otomatis menerapkan rotasi View.
+     */
+    fun renderToBitmap(sizePx: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.save()
+        canvas.rotate(rotation, sizePx / 2f, sizePx / 2f)
+        drawMoonDisc(canvas, sizePx.toFloat(), sizePx.toFloat())
+        canvas.restore()
+        return bitmap
+    }
+
+    private fun drawMoonDisc(canvas: Canvas, w: Float, h: Float) {
+        val cx = w / 2f
+        val cy = h / 2f
+        val r = min(w, h) / 2f - outlinePaint.strokeWidth
         if (r <= 0f) return
 
         canvas.drawCircle(cx, cy, r, shadowPaint)
