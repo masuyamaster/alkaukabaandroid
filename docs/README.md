@@ -76,6 +76,11 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
   Play Store yang sedang berjalan (status request upload key reset, lokasi
   keystore, draft release notes) — bukan per-fitur, dan isinya berubah
   seiring proses rilis (bukan dokumen final/statis).
+- [referensi-ilmu-falak.md](referensi-ilmu-falak.md) — referensi keilmuan
+  Ilmu Falak (fase Bulan, manazil, parameter visibilitas hilal, sejarah
+  hisab Nusantara, Wujudul Hilal vs Imkanur Rukyat Neo-MABIMS, KHGT) yang
+  jadi latar belakang konseptual fitur Bulan Hijriyah & Fase Bulan — bukan
+  dokumen arsitektur/rumus teknis.
 
 ## Status dokumentasi
 

@@ -312,7 +312,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Bulan Baru"
+                            android:text="Ijtimak / Konjungsi"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -341,7 +341,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Kuartal Pertama"
+                            android:text="Tarbi' Awwal"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -370,7 +370,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Purnama"
+                            android:text="Badr / Purnama"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -399,7 +399,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Kuartal Akhir"
+                            android:text="Tarbi' Akhir"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
