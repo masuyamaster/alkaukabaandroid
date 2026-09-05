@@ -4,11 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapShader
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.graphics.Shader
 import android.util.AttributeSet
@@ -18,11 +21,13 @@ import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * Ilustrasi 2D fase bulan saat ini: piringan gelap dengan area terang yang
- * dibentuk dari setengah lingkaran (sisi limb terang) dipotong/ditambah oleh
- * elips terminator, sesuai fraksi iluminasi dan arah waxing/waning. Area
- * terang dirender pakai tekstur foto bulan asli (bukan warna flat) supaya
- * terlihat realistis, di-clip ke bentuk yang sama.
+ * Ilustrasi 2D fase bulan saat ini: piringan digambar penuh dengan tekstur
+ * (seolah sepenuhnya tersinari), lalu sisi malamnya "dihapus" (bukan ditimpa
+ * warna solid) memakai [BlurMaskFilter] + [PorterDuff.Mode.CLEAR] supaya sisi
+ * itu benar-benar transparan (menyatu dengan background di belakang View,
+ * apa pun warnanya) dan batas terminator-nya melembut secara alami alih-alih
+ * garis tajam — limb luar (tepi lingkaran) tetap tajam karena semua
+ * penghapusan di-clip ketat ke lingkaran itu duluan.
  */
 class MoonPhaseView @JvmOverloads constructor(
     context: Context,
@@ -34,20 +39,34 @@ class MoonPhaseView @JvmOverloads constructor(
         // Perbesar tekstur ~4% dari pas-pasan supaya margin gelap tipis di tepi
         // moon_texture.jpg (sisa proses crop) terdorong keluar area lingkaran.
         private const val TEXTURE_OVERSCAN = 1.04f
+
+        // Lebar pelembutan terminator, sebagai fraksi radius piringan.
+        private const val TERMINATOR_FEATHER_RATIO = 0.10f
+    }
+
+    init {
+        // BlurMaskFilter (dipakai nightErasePaint) tidak didukung penuh di
+        // hardware-accelerated canvas pada banyak versi Android - paksa software
+        // layer supaya pelembutan terminator konsisten tampil di semua device.
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
     }
 
     private var illuminatedFraction = 0.5
     private var brightOnRight = true
     private var useRealisticTexture = true
 
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#10192A")
-        style = Paint.Style.FILL
-    }
     private val texturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val flatBrightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         style = Paint.Style.FILL
+    }
+
+    // Paint "penghapus" sisi malam: warna tidak relevan (CLEAR cuma pakai alpha
+    // mask-nya), maskFilter di-set ulang tiap draw karena radius blur mengikuti
+    // ukuran piringan saat itu (beda antara kartu home 56dp & layar detail 160dp).
+    private val nightErasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
 
     // Foto bulan purnama asli (Gregory H. Revera, CC BY-SA 3.0 - lihat docs/features/fase-bulan.md
@@ -57,11 +76,6 @@ class MoonPhaseView @JvmOverloads constructor(
     // bagian terang terlihat seperti foto asli alih-alih warna flat. Didekode malas (lazy) supaya
     // pemakai yang men-disable tekstur (lihat setRealisticTexture) tidak ikut decode bitmap ini.
     private val moonBitmap by lazy { BitmapFactory.decodeResource(resources, R.drawable.moon_texture) }
-
-    fun setShadowColor(color: Int) {
-        shadowPaint.color = color
-        invalidate()
-    }
 
     /**
      * Aktifkan/nonaktifkan tekstur foto bulan asli untuk bagian terang; kalau
@@ -155,23 +169,45 @@ class MoonPhaseView @JvmOverloads constructor(
         val r = min(w, h) / 2f
         if (r <= 0f) return
 
-        canvas.drawCircle(cx, cy, r, shadowPaint)
-
         // Hilal muda bisa <0.1% tersinari — beri lantai tampilan minimum
         // supaya bentuk sabitnya tetap terlihat (angka persen asli tetap
         // ditampilkan terpisah sebagai teks, ilustrasi ini cuma bantu bentuk).
         val k = if (illuminatedFraction <= 0.0) 0.0 else illuminatedFraction.coerceAtLeast(0.05)
-        if (k > 0.0) {
-            val litPaint = if (useRealisticTexture) {
-                updateTextureShader(cx, cy, r)
-                texturePaint
-            } else {
-                flatBrightPaint
-            }
-            when {
-                k >= 0.999 -> canvas.drawCircle(cx, cy, r, litPaint)
-                else -> canvas.drawPath(buildLitPath(cx, cy, r, k), litPaint)
-            }
+        // Bulan baru (k=0): tidak digambar sama sekali - seluruhnya transparan,
+        // menyatu dengan background, bukan piringan gelap solid.
+        if (k <= 0.0) return
+
+        val litPaint = if (useRealisticTexture) {
+            updateTextureShader(cx, cy, r)
+            texturePaint
+        } else {
+            flatBrightPaint
+        }
+
+        // Gambar seluruh piringan seolah sepenuhnya tersinari dulu (drawCircle
+        // sendiri sudah otomatis berhenti tajam di radius r, tanpa perlu clip).
+        canvas.drawCircle(cx, cy, r, litPaint)
+
+        // ...lalu "hapus" sisi malam (bukan timpa warna solid) supaya benar-benar
+        // transparan & batas terminator melembut alami. Sengaja TIDAK di-clip ke
+        // lingkaran r - clip malah bikin cincin tipis tidak-terhapus-tuntas di
+        // limb (interaksi clip vs anti-alias blur yang sulit diprediksi persis).
+        // Tanpa clip aman: area di luar r memang belum pernah digambar apa pun
+        // (transparan dari awal), jadi menghapusnya di situ tidak berefek apa pun.
+        if (k < 0.999) {
+            val feather = r * TERMINATOR_FEATHER_RATIO
+            nightErasePaint.maskFilter = BlurMaskFilter(feather, BlurMaskFilter.Blur.NORMAL)
+            // Batas luar shape ini (arc yang berimpit dengan limb) tetap didorong
+            // keluar melewati lebar blur, supaya mask sempat jenuh (alpha penuh)
+            // SEBELUM mencapai limb sungguhan (radius r) - kalau batasnya persis di
+            // r, transisi blur baru separuh jalan tepat di limb, sisa piksel
+            // texture tidak terhapus tuntas di situ. Lebar terminator (rx) tetap
+            // dihitung dari r asli supaya posisi/proporsi sabitnya akurat - yang
+            // didorong keluar cuma sisi luarnya, bukan seluruh shape.
+            canvas.drawPath(
+                buildNightErasePath(cx, cy, r, k, brightOnRight, expand = feather * 2.2f),
+                nightErasePaint
+            )
         }
     }
 
@@ -208,10 +244,10 @@ class MoonPhaseView @JvmOverloads constructor(
      * kembali ke atas (sisi elips terminator, radius rx) selalu valid berapa
      * pun tipis/gemuknya bulan, tanpa operasi boolean.
      */
-    private fun buildLitPath(cx: Float, cy: Float, r: Float, k: Double): Path {
+    private fun buildLitPath(cx: Float, cy: Float, r: Float, k: Double, brightOnRight: Boolean): Path {
         // Setengah bulan persis: elips terminator melebar nol (garis lurus).
         if (abs(k - 0.5) < 0.003) {
-            return buildHalfDisc(cx, cy, r)
+            return buildHalfDisc(cx, cy, r, brightOnRight)
         }
 
         val outerRect = RectF(cx - r, cy - r, cx + r, cy + r)
@@ -230,7 +266,41 @@ class MoonPhaseView @JvmOverloads constructor(
         }
     }
 
-    private fun buildHalfDisc(cx: Float, cy: Float, r: Float): Path {
+    /**
+     * Shape sisi malam (komplemen [buildLitPath]: fraksi 1-k, sisi terang
+     * dibalik) untuk dipakai [nightErasePaint] - beda dari `buildLitPath(cx,
+     * cy, r, 1.0-k, !brightOnRight)` biasa, di sini radius outer arc DAN
+     * rentang vertikal sengaja pakai `r + expand` (bukan `r`) supaya batas
+     * shape yang berimpit dengan limb didorong keluar, sementara lebar
+     * terminator (rx) tetap dihitung dari `r` asli supaya posisinya akurat.
+     * Lihat pemanggilnya di [drawMoonDisc] untuk kenapa dorongan ini perlu.
+     */
+    private fun buildNightErasePath(cx: Float, cy: Float, r: Float, k: Double, brightOnRight: Boolean, expand: Float): Path {
+        val nightK = 1.0 - k
+        val nightBrightOnRight = !brightOnRight
+        val r2 = r + expand
+        val outerRect = RectF(cx - r2, cy - r2, cx + r2, cy + r2)
+
+        if (abs(nightK - 0.5) < 0.003) {
+            return Path().apply {
+                if (nightBrightOnRight) addArc(outerRect, -90f, 180f) else addArc(outerRect, -90f, -180f)
+                lineTo(cx, cy - r2)
+                close()
+            }
+        }
+
+        val rx = (r * abs(1.0 - 2.0 * nightK)).toFloat()
+        val innerRect = RectF(cx - rx, cy - r2, cx + rx, cy + r2)
+        val innerBulgesRight = if (nightK < 0.5) nightBrightOnRight else !nightBrightOnRight
+
+        return Path().apply {
+            arcTo(outerRect, -90f, if (nightBrightOnRight) 180f else -180f)
+            arcTo(innerRect, 90f, if (innerBulgesRight) -180f else 180f)
+            close()
+        }
+    }
+
+    private fun buildHalfDisc(cx: Float, cy: Float, r: Float, brightOnRight: Boolean): Path {
         val rect = RectF(cx - r, cy - r, cx + r, cy + r)
         return Path().apply {
             if (brightOnRight) addArc(rect, -90f, 180f) else addArc(rect, -90f, -180f)

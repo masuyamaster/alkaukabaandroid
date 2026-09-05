@@ -29,6 +29,10 @@
                 android:layout_margin="16dp"
                 android:background="@drawable/bg_card_gradient_navy">
 
+                <site.elahady.alkaukaba.ui.widget.StarfieldView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
                 <ImageView
                     android:layout_width="12dp"
                     android:layout_height="12dp"
