@@ -49,9 +49,11 @@ class MoonPhaseView @JvmOverloads constructor(
         alpha = 140
     }
 
-    // Foto bulan purnama asli (NASA, domain publik - lihat res/drawable-nodpi/moon_texture.jpg),
-    // dipotong ke bentuk sabit/cembung yang sama dengan ilustrasi vektor sebelumnya, jadi bagian
-    // terang terlihat seperti foto asli alih-alih warna flat. Didekode malas (lazy) supaya
+    // Foto bulan purnama asli (Gregory H. Revera, CC BY-SA 3.0 - lihat docs/features/fase-bulan.md
+    // untuk atribusi lengkap), sudah di-crop presisi supaya piringannya pas memenuhi bujur sangkar
+    // gambar (foto sumber aslinya tidak simetris, sempat menyisakan celah di tepi lingkaran yang
+    // digambar). Dipotong ke bentuk sabit/cembung yang sama dengan ilustrasi vektor sebelumnya, jadi
+    // bagian terang terlihat seperti foto asli alih-alih warna flat. Didekode malas (lazy) supaya
     // pemakai yang men-disable tekstur (lihat setRealisticTexture) tidak ikut decode bitmap ini.
     private val moonBitmap by lazy { BitmapFactory.decodeResource(resources, R.drawable.moon_texture) }
 

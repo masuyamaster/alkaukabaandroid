@@ -61,7 +61,7 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 | File | Peran |
 |---|---|
 | `ui/widget/MoonPhaseView.kt` | Custom `View`: gambar piringan gelap penuh, lalu area terang dibentuk dari setengah lingkaran (limb terang, kiri/kanan tergantung waxing/waning) dipotong/ditambah elips terminator (dua-arc `Path`, lebar elips = `r * |1 - 2k|`, `k` = fraksi tersinari), lalu di-fill pakai `BitmapShader` dari `res/drawable-nodpi/moon_texture.jpg` (bukan warna flat) supaya terlihat foto asli. Bagian gelap tetap warna flat navy (`shadowPaint`) — sisi tak tersinari memang tidak terlihat apa pun di kenyataan. Tekstur foto ini bisa dimatikan per-instance lewat `setRealisticTexture(false)` (fallback ke `flatBrightPaint` putih flat) — dipakai `AwalBulanActivity` untuk ilustrasi hilal (Per 2026-09-05: user minta hilal tetap putih flat, bukan foto realistis; kartu Fase Bulan & home tidak berubah, tetap tekstur foto). |
-| `res/drawable-nodpi/moon_texture.jpg` | Foto purnama Bulan asli, sumber NASA via Wikimedia Commons (`File:Full moon.jpeg`, hasil kerja NASA — domain publik di AS, tidak perlu atribusi lisensi). `drawable-nodpi` supaya didekode di resolusi piksel aslinya di semua densitas device, bukan di-scale otomatis. |
+| `res/drawable-nodpi/moon_texture.jpg` | Foto purnama Bulan asli, di-crop dari `File:FullMoon2010.jpg` di Wikimedia Commons — © Gregory H. Revera, lisensi CC BY-SA 3.0 (**atribusi wajib** kalau file/versi turunannya didistribusikan lagi di luar app ini; ditampilkan sebagai UI di dalam app tidak butuh watermark, tapi kredit ini harus tetap ada di sini & tidak boleh dihapus). `drawable-nodpi` supaya didekode di resolusi piksel aslinya di semua densitas device, bukan di-scale otomatis. Per 2026-09-05: sumber awal (`File:Full moon.jpeg`, NASA, domain publik) diganti karena piringan bulannya tidak simetris dalam frame (margin kiri/atas ada, kanan/bawah nol — disc-nya kepotong tepi foto), bikin celah kelihatan antara tepi foto & lingkaran gold yang digambar `MoonPhaseView`. `FullMoon2010.jpg` di-crop presisi (deteksi bounding box piksel non-hitam via kode Java sekali pakai, radius = setengah sisi terpanjang bbox, crop persegi center pas di situ) supaya piringannya nyaris pas isi seluruh frame simetris (margin ~4-5px di semua sisi pada file 900×900) — align rapi dengan lingkaran yang digambar, tanpa celah. |
 | `utils/MoonPhaseLabel.kt` | 8 bucket nama fase (masing-masing 45°) dari sudut sinodik 0-360°. |
 | `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
 | `MainActivity.kt` | `setupMoonPhaseCard()` mengisi kartu home + wiring klik ke `FaseBulanActivity`. |
@@ -113,8 +113,8 @@ tersinari. Sudah diperbaiki ke `moonPhase()`.
 - Tidak ada tambahan library baru. `BitmapShader`/`Matrix` (tekstur foto
   bulan) dan `Path.arcTo` (bentuk sabit/cembung) adalah API
   `android.graphics` bawaan platform — bukan dependency eksternal.
-- Satu aset raster baru: `res/drawable-nodpi/moon_texture.jpg` (~220KB, foto
-  NASA domain publik — lihat §4). Ini raster pertama di luar
+- Satu aset raster baru: `res/drawable-nodpi/moon_texture.jpg` (~245KB, foto
+  CC BY-SA 3.0 — wajib atribusi, lihat §4). Ini raster pertama di luar
   logo/mipmap-xxxhdpi; sebelumnya semua drawable di repo ini vector.
 - Lokasi (§2) pakai `com.google.android.gms.location` (`FusedLocationProviderClient`),
   sudah jadi dependency existing lewat fitur Arah Kiblat — tidak ada
