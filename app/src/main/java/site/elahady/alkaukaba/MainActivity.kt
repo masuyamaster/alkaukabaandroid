@@ -10,6 +10,7 @@ import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
+import site.elahady.alkaukaba.utils.CardGradientColor
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
@@ -43,6 +44,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -291,6 +293,15 @@ class MainActivity : AppCompatActivity() {
         binding.tvMoonIllumination.text = "%.0f%% tersinari".format(illum.phaseFraction * 100)
         binding.btnMoonPhase.setOnClickListener {
             startActivity(Intent(this, FaseBulanActivity::class.java))
+        }
+
+        // Kartu ini pakai gradient (bg_card_gradient_navy), bukan warna flat -
+        // hitung warna sungguhan di posisi Bulan begitu layout selesai (perlu
+        // width/height/posisi asli, belum tersedia sebelum layout pass).
+        binding.btnMoonPhase.doOnLayout {
+            binding.moonPhaseView.setNightBaseColor(
+                CardGradientColor.approximateAt(binding.btnMoonPhase, binding.moonPhaseView)
+            )
         }
     }
 
