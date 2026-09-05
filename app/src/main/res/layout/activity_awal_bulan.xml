@@ -130,7 +130,7 @@
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
+                        android:layout_marginBottom="16dp"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="0dp"
                         app:cardBackgroundColor="@color/navy_gradient_top">
@@ -192,84 +192,71 @@
                                 android:textStyle="bold"
                                 android:background="@drawable/bg_pill_green"/>
 
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginTop="16dp"
+                                android:background="#26FFFFFF"/>
 
-                    <!-- SECTION 2.5: Wujud Hilal saat Ghurub (bantuan visual rukyah) -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="@color/navy_gradient_top">
-
-                        <ImageView
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:layout_gravity="top|end"
-                            android:layout_margin="10dp"
-                            android:alpha="0.85"
-                            android:src="@drawable/ic_sparkle"
-                            app:tint="@color/gold_accent"
-                            tools:ignore="ContentDescription" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:padding="16dp">
-
-                            <site.elahady.alkaukaba.ui.widget.MoonPhaseView
-                                android:id="@+id/moonPhaseView"
-                                android:layout_width="84dp"
-                                android:layout_height="84dp" />
-
+                            <!-- Wujud Hilal saat Ghurub (bantuan visual rukyah) -->
                             <LinearLayout
-                                android:layout_width="0dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginStart="16dp"
-                                android:orientation="vertical">
+                                android:layout_marginTop="16dp"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Wujud Hilal saat Ghurub"
-                                    android:textColor="@color/text_label_gold"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold"
-                                    android:letterSpacing="0.04" />
+                                <site.elahady.alkaukaba.ui.widget.MoonPhaseView
+                                    android:id="@+id/moonPhaseView"
+                                    android:layout_width="84dp"
+                                    android:layout_height="84dp" />
 
-                                <TextView
-                                    android:id="@+id/tvHilalIllumination"
-                                    android:layout_width="wrap_content"
+                                <LinearLayout
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:text="@string/loading"
-                                    android:textColor="@color/text_on_dark"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="16dp"
+                                    android:orientation="vertical">
 
-                                <TextView
-                                    android:id="@+id/tvHilalAzimuth"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="2dp"
-                                    android:text="@string/loading"
-                                    android:textColor="#CCFFFFFF"
-                                    android:textSize="12sp" />
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Wujud Hilal saat Ghurub"
+                                        android:textColor="@color/text_label_gold"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold"
+                                        android:letterSpacing="0.04" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:text="Ilustrasi kemiringan, bukan skala sebenarnya"
-                                    android:textColor="#99FFFFFF"
-                                    android:textSize="10sp"
-                                    android:textStyle="italic" />
+                                    <TextView
+                                        android:id="@+id/tvHilalIllumination"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="@string/loading"
+                                        android:textColor="@color/text_on_dark"
+                                        android:textSize="16sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvHilalAzimuth"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:text="@string/loading"
+                                        android:textColor="#CCFFFFFF"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:text="Ilustrasi kemiringan, bukan skala sebenarnya"
+                                        android:textColor="#99FFFFFF"
+                                        android:textSize="10sp"
+                                        android:textStyle="italic" />
+                                </LinearLayout>
                             </LinearLayout>
+
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
