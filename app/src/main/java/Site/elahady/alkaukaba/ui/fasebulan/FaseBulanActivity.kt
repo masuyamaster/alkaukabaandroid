@@ -104,7 +104,11 @@ class FaseBulanActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_moon_zoom, null)
         dialog.setContentView(view)
 
-        val bitmap = binding.moonPhaseView.renderToBitmap(1024)
+        // Background modal ini hitam solid (bukan gradient navy seperti kartu),
+        // jadi sisi malam Bulan di-render hitam juga di sini saja supaya tetap
+        // menyatu (opak, tapi warna sama dengan background) - lihat
+        // MoonPhaseView.renderToBitmap() & docs/features/fase-bulan.md.
+        val bitmap = binding.moonPhaseView.renderToBitmap(1024, nightColorOverride = Color.BLACK)
         view.findViewById<ZoomableImageView>(R.id.imgMoonZoom).setImageBitmap(bitmap)
         view.findViewById<ImageButton>(R.id.btnCloseMoonZoom).setOnClickListener { dialog.dismiss() }
 

@@ -187,14 +187,23 @@ class MoonPhaseView @JvmOverloads constructor(
      * (dari [setBrightLimbAngle]/[setPhaseWithTrueTilt]) di-terapkan manual ke
      * canvas karena di sini kita gambar langsung, bukan lewat [View.draw] yang
      * biasanya otomatis menerapkan rotasi View.
+     *
+     * @param nightColorOverride Warna sisi malam khusus untuk render ini saja
+     *   (dikembalikan ke warna asli [nightBasePaint] setelah selesai) - dipakai
+     *   modal zoom yang background-nya hitam solid, bukan gradient navy
+     *   seperti kartu Fase Bulan, supaya sisi malam tetap menyatu dengan
+     *   background-nya (opak, tapi warnanya sama - lihat KDoc kelas ini).
      */
-    fun renderToBitmap(sizePx: Int): Bitmap {
+    fun renderToBitmap(sizePx: Int, nightColorOverride: Int? = null): Bitmap {
         val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
+        val originalColor = nightBasePaint.color
+        if (nightColorOverride != null) nightBasePaint.color = nightColorOverride
         canvas.save()
         canvas.rotate(rotation, sizePx / 2f, sizePx / 2f)
         drawMoonDisc(canvas, sizePx.toFloat(), sizePx.toFloat())
         canvas.restore()
+        if (nightColorOverride != null) nightBasePaint.color = originalColor
         return bitmap
     }
 

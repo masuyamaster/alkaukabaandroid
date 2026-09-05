@@ -169,6 +169,31 @@ bukan realisme foto — blur/soft edge di sini justru mengaburkan bentuk yang
 krusial untuk diidentifikasi. Kartu Fase Bulan (home/detail) dan modal zoom
 tetap pakai versi lembut (default `true`).
 
+**Penting — dua requirement "sisi malam" ini scope-nya beda, jangan
+dicampur** (klarifikasi user setelah iterasi opak di atas sempat dikira
+"membatalkan" requirement natural-blend):
+1. **Opak/blok apa pun di belakangnya** (`nightBasePaint` + `saveLayer`
+   di atas) — berlaku di kartu home, layar detail, DAN modal zoom. Tidak
+   relevan untuk `AwalBulanActivity` (hilal) karena di situ
+   `setSoftNightSide(false)` sudah bikin piringan solid dari awal, bukan
+   soal transparansi.
+2. **Warna sisi malam menyatu (natural) dengan background lokasinya** —
+   JUGA cuma berlaku di 3 tempat yang sama (home/detail/modal zoom), TIDAK
+   berlaku di `AwalBulanActivity`. Kartu home & detail pakai
+   `bg_card_gradient_navy` (`navy_gradient_top` #1D2A45 → `login_bg_deep`
+   #10192A) — `nightBasePaint` default `#10192A` (persis salah satu ujung
+   gradient itu) sudah cukup dekat, tidak diubah. Modal zoom background-nya
+   hitam solid (`#000000`), jauh dari `#10192A` (kelihatan sebagai piringan
+   navy yang jelas beda dari hitam, bukan menyatu) — diperbaiki lewat
+   parameter baru `MoonPhaseView.renderToBitmap(sizePx, nightColorOverride)`:
+   `FaseBulanActivity.showMoonZoomDialog()` panggil dengan
+   `nightColorOverride = Color.BLACK` supaya sisi malam di render modal ini
+   ikut hitam solid (opak dari requirement 1 + menyatu dari requirement 2,
+   dua-duanya terpenuhi sekaligus karena warnanya sama persis dengan
+   background). Override ini cuma untuk satu kali render (swap-restore
+   `nightBasePaint.color` di dalam `renderToBitmap`), tidak mengubah warna
+   default View untuk pemakaian lain (kartu home/detail tetap `#10192A`).
+
 Alur data (fase & info geosentris saat ini, tanpa lokasi):
 `Time.fromMillisecondsSince1970(now)` → `moonPhase(time)` (sudut sinodik
 0-360°, untuk `MoonPhaseView` + label), `illumination(Body.Moon,
