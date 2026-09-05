@@ -32,6 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="Otomatis (GPS)\nAmbil lokasi terkini setiap kali fitur butuh lokasi"
                 android:textSize="14sp"
+                android:textColor="@android:color/black"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -41,6 +42,7 @@
                 android:layout_height="wrap_content"
                 android:text="Manual\nPakai koordinat tetap, cocok untuk markaz tertentu"
                 android:textSize="14sp"
+                android:textColor="@android:color/black"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
         </RadioGroup>
@@ -80,6 +82,8 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_input_outline"
                         android:inputType="numberDecimal|numberSigned"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint"
                         android:hint="-6.9822"/>
                 </LinearLayout>
 
@@ -104,6 +108,8 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_input_outline"
                         android:inputType="numberDecimal|numberSigned"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint"
                         android:hint="112.6304"/>
                 </LinearLayout>
             </LinearLayout>

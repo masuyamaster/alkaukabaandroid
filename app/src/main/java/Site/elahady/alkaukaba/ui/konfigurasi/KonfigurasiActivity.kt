@@ -235,6 +235,7 @@ class KonfigurasiActivity : AppCompatActivity() {
                 id = method.id
                 text = "${method.displayName}\n${method.subtitle}"
                 textSize = 14f
+                setTextColor(android.graphics.Color.BLACK)
                 setPadding(0, 16, 0, 16)
                 isChecked = method.id == currentMethodId
             }

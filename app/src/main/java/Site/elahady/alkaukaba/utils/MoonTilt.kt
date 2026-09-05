@@ -18,6 +18,22 @@ import kotlin.math.sqrt
  * "hilal senyum" khatulistiwa: saat azimuth Matahari & Bulan sama dan Matahari
  * jauh di bawah ufuk relatif Bulan, limb terang mengarah lurus ke bawah
  * (menuju ufuk) — sesuai fenomena hilal tipis yang dikenal di lintang rendah.
+ *
+ * Rumus tertutup (hasil reduksi aljabar dari operasi vektor di atas — dua
+ * suku ini yang sebenarnya dihitung, vektor 3D cuma alat bantu penurunan):
+ * dengan Am/hm = azimuth/altitude Bulan, As/hs = azimuth/altitude Matahari,
+ * dan dA = As - Am:
+ *
+ *   theta = atan2(
+ *       cos(hs) * sin(dA),
+ *       sin(hs) * cos(hm) - cos(hs) * sin(hm) * cos(dA)
+ *   )
+ *
+ * Bentuk ini persis rumus initial bearing/forward azimuth trigonometri bola
+ * (dipakai juga untuk parallactic angle di astronomi & great-circle course
+ * di navigasi), dengan altitude berperan seperti latitude dan azimuth
+ * seperti longitude — theta adalah "arah kompas" dari Bulan menuju Matahari
+ * di langit, diukur dari zenith (bukan dari utara sejati).
  */
 object MoonTilt {
 

@@ -115,6 +115,12 @@ rotasi dipakai, sisi kiri/kanan generik tidak lagi relevan (rotasi mencakup
 kasus itu). Efeknya ilustrasi "loncat" dari lurus ke miring begitu lokasi
 selesai di-resolve — belum ada state transisi/animasi untuk itu.
 
+Rumus matematis di balik `MoonTilt.brightLimbAngleDegrees()` (turunan
+vektor 3D-nya direduksi ke rumus tertutup 2 suku, setara rumus initial
+bearing/parallactic angle trigonometri bola) didokumentasikan sebagai KDoc
+di `utils/MoonTilt.kt` langsung — bukan di sini, supaya rumus tetap
+bersebelahan dengan kode yang mengimplementasikannya.
+
 Per 2026-09-05 (lanjutan) — kartu home ikut diperbaiki: `MainActivity` juga
 sudah minta lokasi sejak awal (buat data sholat/kalender), jadi
 `fetchDataByCoordinate(lat, lon)` (dipanggil dari `getUserLocation()`/
