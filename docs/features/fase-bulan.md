@@ -2,10 +2,12 @@
 
 ## 1. Ringkasan
 
-**Fitur**: Fase Bulan — kartu di home screen yang menampilkan ilustrasi 2D
-fase bulan saat ini (real-time, berdasarkan waktu sistem device) beserta nama
-fase dan persentase permukaan yang tersinari. Tap kartu membuka layar detail
-dengan ilustrasi lebih besar dan jadwal 4 fase bulan mendatang (bulan
+**Fitur**: Fase Bulan — kartu di home screen yang menampilkan ilustrasi
+fase bulan saat ini (real-time, berdasarkan waktu sistem device, dirender
+pakai tekstur foto bulan asli — lihat §4) beserta nama fase dan persentase
+permukaan yang tersinari. Tap kartu membuka layar detail dengan ilustrasi
+lebih besar, kartu "Detail Astronomis" (magnitude, jarak, radius, RA/Dec,
+Az/Alt, jam terbit/terbenam), dan jadwal 4 fase bulan mendatang (bulan
 baru/kuartal pertama/purnama/kuartal akhir).
 
 Sengaja ditaruh sebagai section/kartu terpisah di home, **bukan** ikon ke-5 di
@@ -22,22 +24,35 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 - Kartu "Fase Bulan Malam Ini" di `activity_main.xml` (`cardMoonPhase` /
   `btnMoonPhase`), antara baris 4-menu dan section "Kalender".
 - Tap kartu → `FaseBulanActivity` (layout `activity_fase_bulan.xml`).
-- Prasyarat: tidak ada — tidak butuh lokasi/GPS/permission apa pun, murni
-  perhitungan waktu (tanggal & jam device) tanpa panggilan network.
+- Prasyarat inti (ilustrasi, nama fase, %, magnitude, jarak, radius, RA/Dec,
+  fase mendatang): tidak ada — murni perhitungan waktu (tanggal & jam device)
+  tanpa panggilan network.
+- Prasyarat tambahan khusus kartu "Detail Astronomis" di layar detail: izin
+  lokasi (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`), dibutuhkan untuk
+  Az/Alt dan jam terbit/terbenam Bulan (toposentris, beda per lokasi
+  pengamat) — lihat §4. Kalau izin ditolak atau lokasi belum siap, dua field
+  ini tampil "-"; field lain tidak terpengaruh.
 
 ## 3. Titik masuk logika & navigasi
 
 - `MainActivity.setupMoonPhaseCard()` — dipanggil dari `onCreate`, hitung fase
   saat ini dan isi kartu home, pasang `OnClickListener` ke `FaseBulanActivity`.
 - `FaseBulanActivity.showCurrentPhase()` — versi lebih besar dari logika yang
-  sama di kartu home.
+  sama di kartu home, ditambah magnitude/jarak/radius (geosentris, tidak
+  butuh lokasi).
+- `FaseBulanActivity.checkLocationPermission()` → `onLocationReady()` — alur
+  izin & fetch lokasi (pola sama dengan `KiblatActivity`: cek
+  `SessionManager.isManualLocationMode()` dulu, baru fallback ke
+  `FusedLocationProviderClient`), lalu hitung RA/Dec topocentric, Az/Alt, dan
+  jam terbit/terbenam Bulan buat kartu "Detail Astronomis".
 - `FaseBulanActivity.loadUpcomingQuarters()` — cari 4 fase mendatang lewat
   `searchMoonQuarter`/`nextMoonQuarter`, dijalankan di `Dispatchers.Default`
   (iteratif/pencarian akar, dipindah dari main thread) lalu bind ke UI di
   `Dispatchers.Main`.
 - `MoonPhaseView` (`ui/widget/MoonPhaseView.kt`) — custom `View` yang reusable,
-  dipakai baik di kartu home (56dp) maupun layar detail (160dp) lewat method
-  publik `setPhase(phaseAngleDegrees, illuminatedFraction)`.
+  dipakai di kartu home (56dp), layar detail (160dp), dan ilustrasi hilal di
+  `AwalBulanActivity`, lewat method publik
+  `setPhase(phaseAngleDegrees, illuminatedFraction)`.
 - `MoonPhaseLabel.forAngle()` (`utils/MoonPhaseLabel.kt`) — mapping sudut fase
   sinodik ke 8 nama fase Bahasa Indonesia.
 
@@ -45,17 +60,33 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 
 | File | Peran |
 |---|---|
-| `ui/widget/MoonPhaseView.kt` | Custom `View`: gambar piringan gelap penuh, lalu area terang dibentuk dari setengah lingkaran (limb terang, kiri/kanan tergantung waxing/waning) dipotong (`Path.Op.DIFFERENCE`, fase sabit) atau ditambah (`Path.Op.UNION`, fase cembung) dengan elips terminator, lebar elips = `r * |1 - 2k|` (`k` = fraksi tersinari). |
+| `ui/widget/MoonPhaseView.kt` | Custom `View`: gambar piringan gelap penuh, lalu area terang dibentuk dari setengah lingkaran (limb terang, kiri/kanan tergantung waxing/waning) dipotong/ditambah elips terminator (dua-arc `Path`, lebar elips = `r * |1 - 2k|`, `k` = fraksi tersinari), lalu di-fill pakai `BitmapShader` dari `res/drawable-nodpi/moon_texture.jpg` (bukan warna flat) supaya terlihat foto asli. Bagian gelap tetap warna flat navy (`shadowPaint`) — sisi tak tersinari memang tidak terlihat apa pun di kenyataan. |
+| `res/drawable-nodpi/moon_texture.jpg` | Foto purnama Bulan asli, sumber NASA via Wikimedia Commons (`File:Full moon.jpeg`, hasil kerja NASA — domain publik di AS, tidak perlu atribusi lisensi). `drawable-nodpi` supaya didekode di resolusi piksel aslinya di semua densitas device, bukan di-scale otomatis. |
 | `utils/MoonPhaseLabel.kt` | 8 bucket nama fase (masing-masing 45°) dari sudut sinodik 0-360°. |
-| `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), lalu kartu putih daftar 4 fase mendatang. |
+| `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
 | `MainActivity.kt` | `setupMoonPhaseCard()` mengisi kartu home + wiring klik ke `FaseBulanActivity`. |
 | `activity_main.xml` | Kartu `cardMoonPhase`/`btnMoonPhase` (gaya `bg_card_gradient_navy`, konsisten dengan kartu Gerhana). |
 
-Alur data (fase saat ini): `Time.fromMillisecondsSince1970(now)` →
-`moonPhase(time)` (sudut sinodik 0-360°, untuk `MoonPhaseView` + label) dan
-`illumination(Body.Moon, time).phaseFraction` (fraksi tersinari 0-1, untuk
-`MoonPhaseView` + teks persentase) → langsung bind ke UI (sinkron, tidak perlu
-coroutine — perhitungan single-point sangat cepat).
+Alur data (fase & info geosentris saat ini, tanpa lokasi):
+`Time.fromMillisecondsSince1970(now)` → `moonPhase(time)` (sudut sinodik
+0-360°, untuk `MoonPhaseView` + label), `illumination(Body.Moon,
+time)` (`phaseFraction` untuk ilustrasi + teks persentase, `mag` untuk
+magnitude), dan `geoVector(Body.Moon, time, Aberration.Corrected).length() *
+KM_PER_AU` (jarak geosentris km) → langsung bind ke UI (sinkron, tidak perlu
+coroutine — perhitungan single-point sangat cepat). Radius Bulan
+(`moonMeanRadiusKm = 1737.4`) konstanta fisik (IAU mean radius), tidak
+dihitung ulang.
+
+Alur data (Detail Astronomis yang butuh lokasi, dijalankan di
+`Dispatchers.Default` lalu bind di `Dispatchers.Main`): dapat `lat/lon` (GPS
+atau lokasi manual dari `SessionManager`) → `Observer(lat, lon, 0.0)` →
+`equator(Body.Moon, now, observer, EquatorEpoch.OfDate, Aberration.Corrected)`
+(RA/Dec topocentric) → `horizon(now, observer, eq.ra, eq.dec,
+Refraction.Normal)` (Az/Alt) → `searchRiseSet(Body.Moon, observer,
+Direction.Rise/Set, now, 1.2)` (jam terbit/terbenam terdekat ke depan). RA
+diformat jam sideris (`HHhMMmSS.Ss`), Dec/Az/Alt diformat derajat-menit-detik
+(`DD°MM'SS.S"`) lewat helper lokal `formatRaHours`/`formatDegreesDms` di
+`FaseBulanActivity`.
 
 Alur data (4 fase mendatang): `searchMoonQuarter(now)` → `nextMoonQuarter()`
 dipanggil 3x berantai → 4 `MoonQuarterInfo` (quarter 0=baru, 1=kuartal
@@ -79,17 +110,28 @@ tersinari. Sudah diperbaiki ke `moonPhase()`.
 
 ## 5. Dependencies & tech stack khusus
 
-- Tidak ada tambahan library baru. `Path.op()` (boolean path operations)
-  adalah API `android.graphics.Path` bawaan platform (tersedia sejak API 19,
-  minSdk repo ini 21) — bukan dependency eksternal.
+- Tidak ada tambahan library baru. `BitmapShader`/`Matrix` (tekstur foto
+  bulan) dan `Path.arcTo` (bentuk sabit/cembung) adalah API
+  `android.graphics` bawaan platform — bukan dependency eksternal.
+- Satu aset raster baru: `res/drawable-nodpi/moon_texture.jpg` (~220KB, foto
+  NASA domain publik — lihat §4). Ini raster pertama di luar
+  logo/mipmap-xxxhdpi; sebelumnya semua drawable di repo ini vector.
+- Lokasi (§2) pakai `com.google.android.gms.location` (`FusedLocationProviderClient`),
+  sudah jadi dependency existing lewat fitur Arah Kiblat — tidak ada
+  penambahan library baru untuk itu juga.
 
 ## 6. Testing
 
 Tidak ada test otomatis. Verifikasi manual dilakukan build debug APK →
 install ke emulator `Pixel6_API34` (bukan device fisik, sesuai preferensi
-testing project ini) → cek kartu home render ilustrasi + label + persentase
-konsisten, tap kartu → cek layar detail + jadwal 4 fase mendatang terisi
-tanggal yang masuk akal, tap tombol back → kembali ke `MainActivity`.
+testing project ini) → cek kartu home render ilustrasi (tekstur foto,
+bukan flat color) + label + persentase konsisten, tap kartu → cek layar
+detail + kartu "Detail Astronomis" terisi angka yang masuk akal (Az/Alt &
+terbit/terbenam butuh izin lokasi granted) + jadwal 4 fase mendatang terisi
+tanggal yang masuk akal, tap tombol back → kembali ke `MainActivity`. Sudah
+diverifikasi 2026-09-05: ilustrasi sabit render tekstur kawah dengan benar
+di kartu home (56dp) & layar detail (160dp), field Detail Astronomis terisi
+(Magnitude -9.65, Jarak 369,094 km, dst.), tidak ada exception di logcat.
 
 ## 7. Known issues & TODOs
 
@@ -99,3 +141,7 @@ tanggal yang masuk akal, tap tombol back → kembali ke `MainActivity`.
       parallactic angle) — cukup untuk ilustrasi info, bukan untuk keperluan
       rukyat presisi.
 - [ ] Belum ada test otomatis untuk `MoonPhaseLabel`/logika `MoonPhaseView`.
+- [ ] Tekstur `moon_texture.jpg` selalu piringan purnama tanpa libration —
+      dipotong ke bentuk sabit/cembung yang benar, tapi corak kawah yang
+      kelihatan di tepi limb tidak berubah sesuai libration sungguhan
+      tanggal tsb (efek minor, tidak kasat mata pada ukuran tampil 56-160dp).

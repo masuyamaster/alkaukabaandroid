@@ -1,20 +1,27 @@
 package site.elahady.alkaukaba.ui.widget
 
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
+import site.elahady.alkaukaba.R
 import kotlin.math.abs
 import kotlin.math.min
 
 /**
  * Ilustrasi 2D fase bulan saat ini: piringan gelap dengan area terang yang
  * dibentuk dari setengah lingkaran (sisi limb terang) dipotong/ditambah oleh
- * elips terminator, sesuai fraksi iluminasi dan arah waxing/waning.
+ * elips terminator, sesuai fraksi iluminasi dan arah waxing/waning. Area
+ * terang dirender pakai tekstur foto bulan asli (bukan warna flat) supaya
+ * terlihat realistis, di-clip ke bentuk yang sama.
  */
 class MoonPhaseView @JvmOverloads constructor(
     context: Context,
@@ -29,10 +36,7 @@ class MoonPhaseView @JvmOverloads constructor(
         color = Color.parseColor("#10192A")
         style = Paint.Style.FILL
     }
-    private val brightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#F6F2E9")
-        style = Paint.Style.FILL
-    }
+    private val texturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E8BA5C")
         style = Paint.Style.STROKE
@@ -40,13 +44,13 @@ class MoonPhaseView @JvmOverloads constructor(
         alpha = 140
     }
 
+    // Foto bulan purnama asli (NASA, domain publik - lihat res/drawable-nodpi/moon_texture.jpg),
+    // dipotong ke bentuk sabit/cembung yang sama dengan ilustrasi vektor sebelumnya, jadi bagian
+    // terang terlihat seperti foto asli alih-alih warna flat.
+    private val moonBitmap = BitmapFactory.decodeResource(resources, R.drawable.moon_texture)
+
     fun setShadowColor(color: Int) {
         shadowPaint.color = color
-        invalidate()
-    }
-
-    fun setBrightColor(color: Int) {
-        brightPaint.color = color
         invalidate()
     }
 
@@ -99,13 +103,32 @@ class MoonPhaseView @JvmOverloads constructor(
         // supaya bentuk sabitnya tetap terlihat (angka persen asli tetap
         // ditampilkan terpisah sebagai teks, ilustrasi ini cuma bantu bentuk).
         val k = if (illuminatedFraction <= 0.0) 0.0 else illuminatedFraction.coerceAtLeast(0.05)
-        when {
-            k <= 0.0 -> Unit
-            k >= 0.999 -> canvas.drawCircle(cx, cy, r, brightPaint)
-            else -> canvas.drawPath(buildLitPath(cx, cy, r, k), brightPaint)
+        if (k > 0.0) {
+            updateTextureShader(cx, cy, r)
+            when {
+                k >= 0.999 -> canvas.drawCircle(cx, cy, r, texturePaint)
+                else -> canvas.drawPath(buildLitPath(cx, cy, r, k), texturePaint)
+            }
         }
 
         canvas.drawCircle(cx, cy, r, outlinePaint)
+    }
+
+    /**
+     * Skala+posisikan tekstur foto bulan (persegi) supaya pas menutupi bounding
+     * box lingkaran piringan (cx,cy,r). Matrix dihitung ulang tiap draw karena
+     * murah (bukan decode bitmap), sekaligus otomatis menangani perubahan ukuran view.
+     */
+    private fun updateTextureShader(cx: Float, cy: Float, r: Float) {
+        val shader = texturePaint.shader as? BitmapShader
+            ?: BitmapShader(moonBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+                .also { texturePaint.shader = it }
+        val scale = (2f * r) / moonBitmap.width.toFloat()
+        val matrix = Matrix().apply {
+            setScale(scale, scale)
+            postTranslate(cx - r, cy - r)
+        }
+        shader.setLocalMatrix(matrix)
     }
 
     /**
