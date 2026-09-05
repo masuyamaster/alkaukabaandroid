@@ -30,6 +30,12 @@ class MoonPhaseView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    companion object {
+        // Perbesar tekstur ~4% dari pas-pasan supaya margin gelap tipis di tepi
+        // moon_texture.jpg (sisa proses crop) terdorong keluar area lingkaran.
+        private const val TEXTURE_OVERSCAN = 1.04f
+    }
+
     private var illuminatedFraction = 0.5
     private var brightOnRight = true
     private var useRealisticTexture = true
@@ -173,15 +179,22 @@ class MoonPhaseView @JvmOverloads constructor(
      * Skala+posisikan tekstur foto bulan (persegi) supaya pas menutupi bounding
      * box lingkaran piringan (cx,cy,r). Matrix dihitung ulang tiap draw karena
      * murah (bukan decode bitmap), sekaligus otomatis menangani perubahan ukuran view.
+     *
+     * Di-overscan sedikit ([TEXTURE_OVERSCAN]) karena file tekstur sengaja
+     * menyisakan margin tipis piksel gelap di sekeliling piringan saat di-crop
+     * (lihat docs/features/fase-bulan.md §4) - tanpa overscan, margin itu ikut
+     * ter-render sebagai cincin gelap tepat di tepi lingkaran begitu outline
+     * gold dihapus (sebelumnya tersamar oleh outline tsb).
      */
     private fun updateTextureShader(cx: Float, cy: Float, r: Float) {
         val shader = texturePaint.shader as? BitmapShader
             ?: BitmapShader(moonBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
                 .also { texturePaint.shader = it }
-        val scale = (2f * r) / moonBitmap.width.toFloat()
+        val scale = (2f * r) / moonBitmap.width.toFloat() * TEXTURE_OVERSCAN
+        val offset = r * (TEXTURE_OVERSCAN - 1f)
         val matrix = Matrix().apply {
             setScale(scale, scale)
-            postTranslate(cx - r, cy - r)
+            postTranslate(cx - r - offset, cy - r - offset)
         }
         shader.setLocalMatrix(matrix)
     }
