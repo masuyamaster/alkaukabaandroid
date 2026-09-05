@@ -54,14 +54,17 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
   `AwalBulanActivity`, lewat method publik
   `setPhase(phaseAngleDegrees, illuminatedFraction)`.
 - `MoonPhaseLabel.forAngle()` (`utils/MoonPhaseLabel.kt`) — mapping sudut fase
-  sinodik ke 8 nama fase. Per 2026-09-05: label diganti dari istilah umum
-  Bahasa Indonesia (mis. "Bulan Baru", "Sabit Akhir") ke istilah falakiyah
-  dari tabel "Al-Azhillah Al-Qamariyah" (lihat
-  [referensi-ilmu-falak.md §2](../referensi-ilmu-falak.md)): Ijtimak /
-  Konjungsi, Hilal / Sabit Muda, Tarbi' Awwal, Cembung Awal, Badr / Purnama,
-  Cembung Akhir, Tarbi' Akhir, Sabit Tua. Label statis di kartu "Fase
-  Mendatang" (`activity_fase_bulan.xml`, 4 baris New Moon/First
-  Quarter/Full Moon/Last Quarter) disamakan juga supaya konsisten.
+  sinodik ke 8 nama fase. Per 2026-09-05, dua iterasi sebelum settle ke bentuk
+  final: sempat diganti ke istilah falakiyah dari tabel "Al-Azhillah
+  Al-Qamariyah" (Ijtimak, Hilal/Sabit Muda, Tarbi' Awwal, dst), lalu sempat ke
+  terjemahan Indonesia (Bulan Baru, Sabit Awal, Kuartal Pertama, dst) — versi
+  final memakai istilah **Fase Astronomis** apa adanya dalam Bahasa Inggris:
+  New Moon, Waxing Crescent, First Quarter, Waxing Gibbous, Full Moon, Waning
+  Gibbous, Last Quarter, Waning Crescent — persis kolom "Fase Astronomis" di
+  [referensi-ilmu-falak.md §2](../referensi-ilmu-falak.md) (istilah falakiyah
+  di kolom sebelahnya tetap didokumentasikan di sana sebagai referensi, tapi
+  tidak dipakai di UI). Label statis di kartu "Fase Mendatang"
+  (`activity_fase_bulan.xml`, 4 baris) mengikuti keputusan yang sama.
 
 ## 4. Struktur & alur data
 

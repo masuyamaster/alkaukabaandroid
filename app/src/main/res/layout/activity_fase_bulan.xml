@@ -312,7 +312,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Ijtimak / Konjungsi"
+                            android:text="New Moon"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -341,7 +341,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Tarbi' Awwal"
+                            android:text="First Quarter"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -370,7 +370,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Badr / Purnama"
+                            android:text="Full Moon"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -399,7 +399,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Tarbi' Akhir"
+                            android:text="Last Quarter"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
