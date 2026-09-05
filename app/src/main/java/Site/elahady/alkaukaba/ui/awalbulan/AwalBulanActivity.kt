@@ -3,6 +3,7 @@ package site.elahady.alkaukaba.ui.awalbulan
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
 import site.elahady.alkaukaba.databinding.ItemHilalBreakdownRowBinding
+import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
 import site.elahady.alkaukaba.viewmodel.hilal.HilalViewModel
@@ -88,6 +89,18 @@ class AwalBulanActivity : AppCompatActivity() {
             binding.tvTinggiHilalValue.text = "%.2f°".format(Locale.US, result.tinggiHilal)
             binding.tvElongasiValue.text = "%.2f°".format(Locale.US, result.elongasi)
             binding.tvMukutsValue.text = "%.1f menit".format(Locale.US, result.mukutsMenit)
+
+            val tiltDegrees = MoonTilt.brightLimbAngleDegrees(
+                moonAzimuthDeg = result.azimuthHilal,
+                moonAltitudeDeg = result.tinggiHilal,
+                sunAzimuthDeg = result.azimuthMatahari,
+                sunAltitudeDeg = result.tinggiMatahari
+            )
+            binding.moonPhaseView.setWaxingCrescent(result.illumFraction)
+            binding.moonPhaseView.setBrightLimbAngle(tiltDegrees)
+            binding.tvHilalIllumination.text = "%.2f%% tersinari".format(Locale.US, result.illumFraction * 100.0)
+            binding.tvHilalAzimuth.text = "Azimuth %.1f° — cari dekat titik terbenam Matahari (Az %.1f°)"
+                .format(Locale.US, result.azimuthHilal, result.azimuthMatahari)
 
             renderBreakdown(result.breakdownSections)
         }

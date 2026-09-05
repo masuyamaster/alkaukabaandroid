@@ -62,6 +62,30 @@ class MoonPhaseView @JvmOverloads constructor(
         invalidate()
     }
 
+    /**
+     * Set fase untuk bulan sabit awal (waxing crescent) saja, dipakai saat
+     * sudut fase sinodik tidak tersedia tapi sudah pasti waxing — mis. hilal
+     * awal bulan, yang selalu terjadi tak lama setelah ijtima' (bulan baru).
+     * Pakai bersama [setBrightLimbAngle] untuk orientasi sungguhan di langit.
+     */
+    fun setWaxingCrescent(illuminatedFraction: Double) {
+        this.illuminatedFraction = illuminatedFraction.coerceIn(0.0, 1.0)
+        this.brightOnRight = true
+        invalidate()
+    }
+
+    /**
+     * Putar ilustrasi supaya limb terang menghadap sudut sebenarnya di langit
+     * pengamat (derajat, dari atas/zenith, searah jarum jam — lihat
+     * [site.elahady.alkaukaba.utils.MoonTilt]). Dipakai untuk visualisasi
+     * hilal saat rukyah; kartu fase bulan generik tidak perlu memanggil ini.
+     * Hanya valid untuk bulan sabit awal (waxing crescent, limb terang di
+     * kanan pada gambar kanonik) seperti hilal awal bulan.
+     */
+    fun setBrightLimbAngle(angleDegrees: Double) {
+        rotation = (angleDegrees - 90.0).toFloat()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val cx = width / 2f
@@ -71,9 +95,12 @@ class MoonPhaseView @JvmOverloads constructor(
 
         canvas.drawCircle(cx, cy, r, shadowPaint)
 
-        val k = illuminatedFraction
+        // Hilal muda bisa <0.1% tersinari — beri lantai tampilan minimum
+        // supaya bentuk sabitnya tetap terlihat (angka persen asli tetap
+        // ditampilkan terpisah sebagai teks, ilustrasi ini cuma bantu bentuk).
+        val k = if (illuminatedFraction <= 0.0) 0.0 else illuminatedFraction.coerceAtLeast(0.05)
         when {
-            k <= 0.001 -> Unit
+            k <= 0.0 -> Unit
             k >= 0.999 -> canvas.drawCircle(cx, cy, r, brightPaint)
             else -> canvas.drawPath(buildLitPath(cx, cy, r, k), brightPaint)
         }
@@ -81,53 +108,43 @@ class MoonPhaseView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, r, outlinePaint)
     }
 
+    /**
+     * Dibangun langsung dari dua arc (bukan Path.op boolean union/difference)
+     * karena Path.op tidak stabil pada bentuk hampir-degenerate — persis kasus
+     * hilal tipis (k mendekati 0, elips terminator hampir sama lebar dengan
+     * lingkaran luar) yang sempat gagal dirender lewat pendekatan Path.op
+     * sebelumnya. Dua arc dari titik atas ke bawah (sisi luar, radius r) lalu
+     * kembali ke atas (sisi elips terminator, radius rx) selalu valid berapa
+     * pun tipis/gemuknya bulan, tanpa operasi boolean.
+     */
     private fun buildLitPath(cx: Float, cy: Float, r: Float, k: Double): Path {
-        val circleRect = RectF(cx - r, cy - r, cx + r, cy + r)
-        val brightHalf = Path().apply {
-            if (brightOnRight) {
-                addArc(circleRect, -90f, 180f)
-            } else {
-                addArc(circleRect, -90f, -180f)
-            }
+        // Setengah bulan persis: elips terminator melebar nol (garis lurus).
+        if (abs(k - 0.5) < 0.003) {
+            return buildHalfDisc(cx, cy, r)
+        }
+
+        val outerRect = RectF(cx - r, cy - r, cx + r, cy + r)
+        val rx = (r * abs(1.0 - 2.0 * k)).toFloat()
+        val innerRect = RectF(cx - rx, cy - r, cx + rx, cy + r)
+
+        // Sabit (k<0.5): sisi elips membulat ke sisi terang yang sama (lensa
+        // tipis di pinggir). Cembung (k>0.5): membulat ke sisi gelap
+        // (menambah area terang melewati garis tengah).
+        val innerBulgesRight = if (k < 0.5) brightOnRight else !brightOnRight
+
+        return Path().apply {
+            arcTo(outerRect, -90f, if (brightOnRight) 180f else -180f)
+            arcTo(innerRect, 90f, if (innerBulgesRight) -180f else 180f)
+            close()
+        }
+    }
+
+    private fun buildHalfDisc(cx: Float, cy: Float, r: Float): Path {
+        val rect = RectF(cx - r, cy - r, cx + r, cy + r)
+        return Path().apply {
+            if (brightOnRight) addArc(rect, -90f, 180f) else addArc(rect, -90f, -180f)
             lineTo(cx, cy - r)
             close()
         }
-
-        // Setengah moon persis (k=0.5) rawan glitch numerik kalau dipaksa
-        // lewat Path.op dengan elips terminator berlebar nol, jadi pakai
-        // bentuk setengah lingkaran langsung.
-        if (abs(k - 0.5) < 0.003) {
-            return brightHalf
-        }
-
-        val brightSideRect = if (brightOnRight) {
-            RectF(cx, cy - r, cx + r, cy + r)
-        } else {
-            RectF(cx - r, cy - r, cx, cy + r)
-        }
-        val darkSideRect = if (brightOnRight) {
-            RectF(cx - r, cy - r, cx, cy + r)
-        } else {
-            RectF(cx, cy - r, cx + r, cy + r)
-        }
-
-        val rx = (r * abs(1.0 - 2.0 * k)).toFloat()
-        val terminatorOval = Path().apply {
-            addOval(RectF(cx - rx, cy - r, cx + rx, cy + r), Path.Direction.CW)
-        }
-
-        val litPath = Path()
-        if (k < 0.5) {
-            // Sabit: potong limb terang dengan bagian elips di sisi yang sama.
-            val terminatorOnBrightSide = Path()
-            terminatorOnBrightSide.op(terminatorOval, Path().apply { addRect(brightSideRect, Path.Direction.CW) }, Path.Op.INTERSECT)
-            litPath.op(brightHalf, terminatorOnBrightSide, Path.Op.DIFFERENCE)
-        } else {
-            // Cembung: tambahkan bagian elips di sisi gelap ke limb terang.
-            val terminatorOnDarkSide = Path()
-            terminatorOnDarkSide.op(terminatorOval, Path().apply { addRect(darkSideRect, Path.Direction.CW) }, Path.Op.INTERSECT)
-            litPath.op(brightHalf, terminatorOnDarkSide, Path.Op.UNION)
-        }
-        return litPath
     }
 }
