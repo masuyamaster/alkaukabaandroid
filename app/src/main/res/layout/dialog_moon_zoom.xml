@@ -5,6 +5,10 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
+    <site.elahady.alkaukaba.ui.widget.StarfieldView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <site.elahady.alkaukaba.ui.widget.ZoomableImageView
         android:id="@+id/imgMoonZoom"
         android:layout_width="match_parent"

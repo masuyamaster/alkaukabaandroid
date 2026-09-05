@@ -70,54 +70,104 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 
 | File | Peran |
 |---|---|
-| `ui/widget/MoonPhaseView.kt` | Custom `View`: bentuk sabit/cembung dari dua-arc `Path` (lebar elips terminator = `r * |1 - 2k|`, `k` = fraksi tersinari). Di-fill pakai `BitmapShader` dari `res/drawable-nodpi/moon_texture.jpg` (bukan warna flat) supaya terlihat foto asli — bisa dimatikan per-instance lewat `setRealisticTexture(false)` (fallback ke `flatBrightPaint` putih flat), dipakai `AwalBulanActivity` untuk ilustrasi hilal. Per 2026-09-05 (lihat §4 lanjutan di bawah): sisi malam tidak lagi digambar warna solid, melainkan "dihapus" transparan dengan batas terminator melembut alami. |
+| `ui/widget/MoonPhaseView.kt` | Custom `View`: bentuk sabit/cembung dari dua-arc `Path` (lebar elips terminator = `r * |1 - 2k|`, `k` = fraksi tersinari). Di-fill pakai `BitmapShader` dari `res/drawable-nodpi/moon_texture.jpg` (bukan warna flat) supaya terlihat foto asli — bisa dimatikan per-instance lewat `setRealisticTexture(false)` (fallback ke `flatBrightPaint` putih flat), dipakai `AwalBulanActivity` untuk ilustrasi hilal. Per 2026-09-05 (lihat §4 lanjutan di bawah untuk detail lengkap termasuk 2 iterasi salah yang sempat ter-commit): sisi malam tetap piringan solid opak (`nightBasePaint`, blok apa pun di belakangnya) tapi tekstur terangnya "dihapus" di sisi malam dengan tepi melembut alami (bukan lagi garis tajam) — bisa dimatikan lewat `setSoftNightSide(false)` (kembali ke tepi tajam, dipakai `AwalBulanActivity` untuk kejelasan bentuk hilal saat rukyah). |
 | `res/drawable-nodpi/moon_texture.jpg` | Foto purnama Bulan asli, di-crop dari `File:FullMoon2010.jpg` di Wikimedia Commons — © Gregory H. Revera, lisensi CC BY-SA 3.0 (**atribusi wajib** kalau file/versi turunannya didistribusikan lagi di luar app ini; ditampilkan sebagai UI di dalam app tidak butuh watermark, tapi kredit ini harus tetap ada di sini & tidak boleh dihapus). `drawable-nodpi` supaya didekode di resolusi piksel aslinya di semua densitas device, bukan di-scale otomatis. Per 2026-09-05: sumber awal (`File:Full moon.jpeg`, NASA, domain publik) diganti karena piringan bulannya tidak simetris dalam frame (margin kiri/atas ada, kanan/bawah nol — disc-nya kepotong tepi foto), bikin celah kelihatan antara tepi foto & lingkaran gold yang digambar `MoonPhaseView`. `FullMoon2010.jpg` di-crop presisi (deteksi bounding box piksel non-hitam via kode Java sekali pakai, radius = setengah sisi terpanjang bbox, crop persegi center pas di situ) supaya piringannya nyaris pas isi seluruh frame simetris (margin ~4-5px di semua sisi pada file 900×900) — align rapi dengan lingkaran yang digambar, tanpa celah. |
 | `utils/MoonPhaseLabel.kt` | 8 bucket nama fase (masing-masing 45°) dari sudut sinodik 0-360°. |
 | `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
 | `MainActivity.kt` | `setupMoonPhaseCard()` mengisi kartu home + wiring klik ke `FaseBulanActivity`. |
 | `activity_main.xml` | Kartu `cardMoonPhase`/`btnMoonPhase` (gaya `bg_card_gradient_navy`, konsisten dengan kartu Gerhana). |
-| `ui/widget/ZoomableImageView.kt` + `res/layout/dialog_moon_zoom.xml` | Modal zoom (per 2026-09-05): tap ilustrasi 160dp di layar detail → `FaseBulanActivity.showMoonZoomDialog()` render `moonPhaseView.renderToBitmap(1024)` ke `Dialog` fullscreen custom (`android.R.style.Theme_Black_NoTitleBar_Fullscreen`, bukan `BottomSheetDialog` seperti dialog lain di app ini — drag-to-dismiss bottom sheet akan bentrok dengan gesture pan saat zoom). `ZoomableImageView` (extends `AppCompatImageView`, `scaleType=MATRIX`) implementasi pinch-zoom/pan/double-tap manual pakai `ScaleGestureDetector`+`GestureDetector`+`Matrix` — bukan library (`PhotoView` dkk) karena repo belum punya dependency image-zoom apa pun & kebutuhannya sederhana (satu bitmap persegi). Known gap: ada strip tipis warna cream di ujung atas modal (area status bar) yang belum berhasil dihilangkan meski sudah dicoba beberapa pendekatan (`WindowCompat.setDecorFitsSystemWindows`, `FLAG_LAYOUT_NO_LIMITS`, `WindowInsetsControllerCompat.hide()`, `window.setLayout(MATCH_PARENT,...)`) — dugaan sementara terkait `targetSdk 36` yang meng-enforce edge-to-edge dengan cara yang belum cocok dengan tema fullscreen dialog lama ini; murni kosmetik, tidak mengganggu fungsi zoom. |
+| `ui/widget/ZoomableImageView.kt` + `res/layout/dialog_moon_zoom.xml` | Modal zoom (per 2026-09-05): tap ilustrasi 160dp di layar detail → `FaseBulanActivity.showMoonZoomDialog()` render `moonPhaseView.renderToBitmap(1024)` ke `Dialog` fullscreen custom (`android.R.style.Theme_Black_NoTitleBar_Fullscreen`, bukan `BottomSheetDialog` seperti dialog lain di app ini — drag-to-dismiss bottom sheet akan bentrok dengan gesture pan saat zoom). `ZoomableImageView` (extends `AppCompatImageView`, `scaleType=MATRIX`) implementasi pinch-zoom/pan/double-tap manual pakai `ScaleGestureDetector`+`GestureDetector`+`Matrix` — bukan library (`PhotoView` dkk) karena repo belum punya dependency image-zoom apa pun & kebutuhannya sederhana (satu bitmap persegi). `StarfieldView` (lihat baris di bawah) juga dipasang di belakang `ZoomableImageView` di layout ini, supaya background hitam modal ikut penuh bintang seperti kartu Fase Bulan. Known gap: ada strip tipis warna cream di ujung atas modal (area status bar) yang belum berhasil dihilangkan meski sudah dicoba beberapa pendekatan (`WindowCompat.setDecorFitsSystemWindows`, `FLAG_LAYOUT_NO_LIMITS`, `WindowInsetsControllerCompat.hide()`, `window.setLayout(MATCH_PARENT,...)`) — dugaan sementara terkait `targetSdk 36` yang meng-enforce edge-to-edge dengan cara yang belum cocok dengan tema fullscreen dialog lama ini; murni kosmetik, tidak mengganggu fungsi zoom. |
 | `ui/widget/StarfieldView.kt` | Custom `View` (per 2026-09-05): gambar ~70 bintang (posisi/ukuran/alpha random tapi seed tetap, jadi tidak "berkedip" tiap `invalidate()`) sebagai layer paling belakang di kartu Fase Bulan (`activity_fase_bulan.xml` & `activity_main.xml`, sebelum `ic_sparkle`/`dot_star` yang sudah ada) — supaya kartu terasa seperti langit malam sungguhan, bukan cuma gradient + 1-2 titik dekoratif. Tidak dipakai di kartu hilal `AwalBulanActivity` (tidak diminta). |
 
-**Sisi malam transparan + terminator lembut (per 2026-09-05):** sebelumnya
-sisi malam digambar warna flat navy (`shadowPaint`) dan batas terminator
-selalu berupa garis tajam (langsung dari geometri `Path`) — dibanding
-aplikasi astronomi lain yang piringan tak-tersinarinya menyatu dengan langit
-gelap di belakangnya dan batasnya melembut alami, hasil kita terlihat "kaku".
-Diperbaiki dengan pola gambar-lalu-hapus di `drawMoonDisc()`:
-1. Gambar seluruh piringan seakan 100% tersinari (`canvas.drawCircle` radius
-   `r`, texture atau `flatBrightPaint`) — tanpa clip apa pun, limb luarnya
-   otomatis tajam karena itu memang radius gambar lingkarannya.
-2. "Hapus" (bukan timpa warna) sisi malam pakai `nightErasePaint`
-   (`PorterDuffXfermode(PorterDuff.Mode.CLEAR)` + `BlurMaskFilter`) di atas
-   shape dari `buildNightErasePath()` — hasilnya benar-benar alpha=0
-   (transparan tembus ke background View, apa pun warnanya) dengan tepi yang
-   melembut karena mask-nya di-blur, bukan garis `Path` mentah.
-3. View di-paksa `LAYER_TYPE_SOFTWARE` (lihat `init{}`) karena `BlurMaskFilter`
-   tidak konsisten didukung di hardware-accelerated canvas di banyak versi
-   Android.
+**Sisi malam opak + terminator lembut (per 2026-09-05, revisi final):**
+sebelumnya sisi malam digambar warna flat navy (`shadowPaint`) dan batas
+terminator selalu berupa garis tajam (langsung dari geometri `Path`) —
+dibanding aplikasi astronomi lain yang batas terminatornya melembut alami,
+hasil kita terlihat "kaku". Perbaikan ini melalui 3 iterasi sebelum benar;
+dua iterasi awal SALAH dan sempat ter-commit — dicatat di sini supaya tidak
+diulang kalau ada yang menyentuh area ini lagi.
 
-Dua jebakan yang sempat bikin hasil salah (dicoba & dibuang, dicatat supaya
-tidak diulang):
-- **Percobaan pertama** men-scale seluruh shape penghapus 5% dari titik pusat
-  (uniform) — masih menyisakan cincin tipis semi-transparan tepat di limb,
+**Iterasi 1 (salah): sisi malam transparan penuh.** `drawMoonDisc()` gambar
+seluruh piringan seakan 100% tersinari, lalu "menghapus" sisi malam ke
+alpha=0 (`PorterDuffXfermode(PorterDuff.Mode.CLEAR)` + `BlurMaskFilter`)
+supaya tembus ke background View apa pun warnanya. **Bug**: Bulan jadi
+benar-benar tembus pandang — `StarfieldView` di baliknya (lihat baris
+tabel di atas) kelihatan MENEMBUS piringan Bulan, padahal Bulan itu benda
+padat yang seharusnya menghalangi apa pun di belakangnya (foto real: sisi
+malam tidak reflektif, tapi tetap opak). User baru sadar bug ini setelah
+efeknya jelas kelihatan di layar hilal `AwalBulanActivity` (background
+putih polos di situ, bukan navy — bikin "tembus pandang"-nya sangat
+mencolok, tidak seperti di kartu Fase Bulan yang background navy-nya
+kebetulan mirip warna sisi malam sehingga bug-nya tersamar).
+
+**Iterasi 2 (masih salah): tambah `nightBasePaint` (piringan navy solid)
+digambar SEBELUM tekstur, dengan asumsi "erase" akan menyingkap warna itu
+alih-alih background View.** Ternyata `PorterDuff.Mode.CLEAR` tidak peduli
+"lapisan" gambar sebelumnya — dia menghapus TUNTAS ke transparan apa pun
+yang sudah ada di buffer canvas saat itu, termasuk `nightBasePaint` yang
+baru saja digambar di canvas yang sama. Hasilnya sisi malam tetap
+transparan (bug iterasi 1 tidak benar-benar hilang, cuma di kartu Fase
+Bulan kebetulan sulit dibedakan dari background-nya yang senada) —
+dikonfirmasi dengan crop-zoom manual ke screenshot, ketemu bintang
+`StarfieldView` yang jelas kelihatan tepat di dalam siluet Bulan.
+
+**Iterasi 3 (final, benar):** kuncinya isolasi lewat `canvas.saveLayer()`.
+`nightBasePaint` (piringan solid navy) digambar ke canvas UTAMA seperti
+biasa, TAPI tekstur + operasi hapus (`nightErasePaint`) dibungkus di dalam
+`saveLayer()`/`restoreToCount()` tersendiri. Karena CLEAR di dalam
+`saveLayer` cuma menghapus isi LAYER itu (bukan buffer canvas utama di
+baliknya), begitu layer di-restore, sisa tekstur (bentuk sabit/cembung)
+dikomposit normal (SRC_OVER) di atas `nightBasePaint` yang sudah aman —
+sisi malam akhirnya benar-benar opak (blok apa pun di belakangnya) sekaligus
+terminatornya tetap lembut karena blur pada erase di dalam layer tidak
+berubah. Alur lengkap di `drawMoonDisc()`:
+1. `canvas.drawCircle(cx, cy, r, nightBasePaint)` ke canvas utama — SELALU,
+   bahkan untuk bulan baru (k=0, `return` di titik ini, tanpa bagian terang).
+2. `canvas.saveLayer(...)` — buka layer terpisah.
+3. Di dalam layer: gambar seluruh piringan seakan 100% tersinari
+   (`canvas.drawCircle` radius `r`, texture atau `flatBrightPaint`) — tanpa
+   clip apa pun, limb luarnya otomatis tajam karena itu memang radius
+   gambar lingkarannya.
+4. Masih di dalam layer: "hapus" sisi malam pakai `nightErasePaint`
+   (`PorterDuffXfermode(PorterDuff.Mode.CLEAR)` + `BlurMaskFilter` kalau
+   [useSoftNightSide]) di atas shape dari `buildNightPath()`.
+5. `canvas.restoreToCount(layer)` — komposit layer (dengan lubang
+   transparan di sisi malam) ke canvas utama, menyingkap `nightBasePaint`.
+6. View di-paksa `LAYER_TYPE_SOFTWARE` (lihat `init{}`) karena
+   `BlurMaskFilter` tidak konsisten didukung di hardware-accelerated canvas
+   di banyak versi Android.
+
+Dua jebakan geometri tambahan yang sempat bikin hasil salah (dicoba &
+dibuang sebelum solusi final di atas, murni soal bentuk shape-nya, terpisah
+dari bug transparansi di atas):
+- **Percobaan A**: men-scale seluruh shape penghapus 5% dari titik pusat
+  (uniform) — masih menyisakan cincin tipis semi-terhapus tepat di limb,
   karena mem-blur+geser SELURUH shape (termasuk sisi terminator) tidak
   menjamin sisi limb-nya sendiri terdorong cukup jauh melewati lebar blur.
-- **Percobaan kedua** menambah `canvas.clipPath(lingkaran r)` sebelum semua
+- **Percobaan B**: menambah `canvas.clipPath(lingkaran r)` sebelum semua
   gambar/hapus (dengan asumsi klasik "clip supaya limb tajam") — ternyata
   interaksi clip vs anti-alias/blur malah SELALU menyisakan cincin gelap
   tipis tepat di batas clip, walau shape penghapusnya sudah diperbesar
   berapa pun. **Clip akhirnya dilepas total** — ternyata tidak diperlukan
-  sama sekali: area di luar radius `r` memang belum pernah digambar apa pun
-  (transparan dari awal berkat `LAYER_TYPE_SOFTWARE`), jadi menghapus
-  "sampai jauh melewati limb" di situ tidak berefek apa pun secara visual.
-  Limb tetap tajam murni karena `drawCircle(r)` sendiri memang berhenti
-  presisi di radius `r`.
-- Solusi final: `buildNightErasePath()` (terpisah dari `buildLitPath`, bukan
-  reuse) memakai radius `r + expand` (`expand = feather * 2.2`, `feather = r
-  * TERMINATOR_FEATHER_RATIO = r * 0.10`) khusus untuk arc/rentang vertikal
-  yang berimpit dengan limb, sementara lebar terminator (`rx`) tetap dihitung
+  sama sekali: `drawCircle(r)` sendiri memang berhenti presisi di radius
+  `r`, jadi limb tetap tajam murni tanpa bantuan clip apa pun.
+- Solusi geometri final: `buildNightPath()` (terpisah dari `buildLitPath`,
+  bukan reuse) memakai radius `r + expand` (`expand = feather * 2.2`,
+  `feather = r * TERMINATOR_FEATHER_RATIO = r * 0.10`, atau `0` kalau
+  `useSoftNightSide` tidak aktif) khusus untuk arc/rentang vertikal yang
+  berimpit dengan limb, sementara lebar terminator (`rx`) tetap dihitung
   dari `r` asli (tidak ikut membesar) supaya posisi/proporsi sabitnya akurat.
+
+**`setSoftNightSide(enabled)`** (per 2026-09-05): toggle tambahan di
+`MoonPhaseView`, pola sama seperti `setRealisticTexture`. Kalau `false` —
+dipakai `AwalBulanActivity` untuk layar hilal — `feather`/`expand` di atas
+jadi 0 dan `maskFilter` dilepas (`null`), sehingga `nightErasePaint`
+menghapus dengan tepi TAJAM (bukan blur): hasilnya identik gaya lama
+(piringan solid + sabit tepi tajam). Alasan: orang yang rukyah butuh bentuk
+hilal yang jelas & tidak ambigu (hilal sudah setipis 0.1-0.3% tersinari),
+bukan realisme foto — blur/soft edge di sini justru mengaburkan bentuk yang
+krusial untuk diidentifikasi. Kartu Fase Bulan (home/detail) dan modal zoom
+tetap pakai versi lembut (default `true`).
 
 Alur data (fase & info geosentris saat ini, tanpa lokasi):
 `Time.fromMillisecondsSince1970(now)` → `moonPhase(time)` (sudut sinodik

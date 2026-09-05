@@ -97,6 +97,7 @@ class AwalBulanActivity : AppCompatActivity() {
                 sunAltitudeDeg = result.tinggiMatahari
             )
             binding.moonPhaseView.setRealisticTexture(false)
+            binding.moonPhaseView.setSoftNightSide(false)
             binding.moonPhaseView.setWaxingCrescent(result.illumFraction)
             binding.moonPhaseView.setBrightLimbAngle(tiltDegrees)
             binding.tvHilalIllumination.text = "%.2f%% tersinari".format(Locale.US, result.illumFraction * 100.0)

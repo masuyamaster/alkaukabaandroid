@@ -21,13 +21,20 @@ import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * Ilustrasi 2D fase bulan saat ini: piringan digambar penuh dengan tekstur
- * (seolah sepenuhnya tersinari), lalu sisi malamnya "dihapus" (bukan ditimpa
- * warna solid) memakai [BlurMaskFilter] + [PorterDuff.Mode.CLEAR] supaya sisi
- * itu benar-benar transparan (menyatu dengan background di belakang View,
- * apa pun warnanya) dan batas terminator-nya melembut secara alami alih-alih
- * garis tajam — limb luar (tepi lingkaran) tetap tajam karena semua
- * penghapusan di-clip ketat ke lingkaran itu duluan.
+ * Ilustrasi 2D fase bulan saat ini: piringan gelap solid digambar dulu
+ * ([nightBasePaint], selalu, walau bulan baru sekalipun) — Bulan tetap benda
+ * padat yang menghalangi apa pun di belakangnya, termasuk bintang di
+ * [StarfieldView] pada kartu Fase Bulan. Di atasnya digambar tekstur penuh
+ * (seolah sepenuhnya tersinari), lalu sisi malam tekstur itu "dihapus"
+ * ([nightErasePaint], `PorterDuff.Mode.CLEAR`) supaya warna dasar gelap tadi
+ * tersingkap lagi, dengan tepi di-[BlurMaskFilter] supaya batas terminator
+ * melembut alami alih-alih garis tajam. (Catatan: erase+blur dipakai alih-alih
+ * fill+blur langsung karena BlurMaskFilter di atas `Paint.Style.FILL` opaque
+ * biasa ternyata merender bentuk jadi poligon patah — keterbatasan/bug Skia
+ * untuk shape besar.) Perilaku blur ini bisa dimatikan per-instance lewat
+ * [setSoftNightSide] untuk kembali ke gaya lama (piringan solid + sabit tepi
+ * tajam, tanpa blur) — dipakai layar hilal Awal Bulan yang butuh kejelasan
+ * bentuk untuk keperluan rukyah, bukan realisme.
  */
 class MoonPhaseView @JvmOverloads constructor(
     context: Context,
@@ -54,6 +61,7 @@ class MoonPhaseView @JvmOverloads constructor(
     private var illuminatedFraction = 0.5
     private var brightOnRight = true
     private var useRealisticTexture = true
+    private var useSoftNightSide = true
 
     private val texturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val flatBrightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -61,9 +69,23 @@ class MoonPhaseView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
-    // Paint "penghapus" sisi malam: warna tidak relevan (CLEAR cuma pakai alpha
-    // mask-nya), maskFilter di-set ulang tiap draw karena radius blur mengikuti
-    // ukuran piringan saat itu (beda antara kartu home 56dp & layar detail 160dp).
+    // Warna dasar sisi malam - sama seperti shadowPaint versi lama, digambar
+    // PENUH (piringan solid, tanpa blur) SEBELUM tekstur, supaya selalu ada
+    // sesuatu yang opak di balik tekstur - kalau tekstur sisi malamnya nanti
+    // "dihapus" (lihat nightErasePaint), yang kelihatan warna ini, bukan
+    // background di belakang View (Bulan tetap benda padat, tidak boleh
+    // tembus ke bintang di StarfieldView kartu Fase Bulan).
+    private val nightBasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#10192A")
+        style = Paint.Style.FILL
+    }
+
+    // Paint "penghapus" sisi malam dari LAPISAN TEKSTUR (bukan dari canvas
+    // asli) - CLEAR di sini menyingkap nightBasePaint yang sudah digambar
+    // duluan, bukan transparansi View. Sengaja tetap pakai Xfermode.CLEAR
+    // (bukan fill warna solid biasa) karena BlurMaskFilter dikombinasikan
+    // dengan fill opaque normal ternyata merender bentuk jadi poligon patah
+    // (bug/keterbatasan Skia untuk shape besar) - CLEAR+blur terbukti mulus.
     private val nightErasePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
@@ -85,6 +107,19 @@ class MoonPhaseView @JvmOverloads constructor(
      */
     fun setRealisticTexture(enabled: Boolean) {
         useRealisticTexture = enabled
+        invalidate()
+    }
+
+    /**
+     * Aktifkan/nonaktifkan sisi malam yang lembut (transisi terminator blur,
+     * lihat KDoc kelas ini). Kalau dinonaktifkan, tampilan kembali ke gaya
+     * lama: piringan solid + sabit dengan tepi tajam, tanpa blur - dipakai
+     * layar hilal Awal Bulan (lihat AwalBulanActivity) karena orang yang
+     * rukyah butuh bentuk yang jelas & tidak ambigu, bukan realisme. Kartu
+     * Fase Bulan & home tetap pakai versi lembut (default true).
+     */
+    fun setSoftNightSide(enabled: Boolean) {
+        useSoftNightSide = enabled
         invalidate()
     }
 
@@ -173,8 +208,12 @@ class MoonPhaseView @JvmOverloads constructor(
         // supaya bentuk sabitnya tetap terlihat (angka persen asli tetap
         // ditampilkan terpisah sebagai teks, ilustrasi ini cuma bantu bentuk).
         val k = if (illuminatedFraction <= 0.0) 0.0 else illuminatedFraction.coerceAtLeast(0.05)
-        // Bulan baru (k=0): tidak digambar sama sekali - seluruhnya transparan,
-        // menyatu dengan background, bukan piringan gelap solid.
+
+        // Dasar piringan: selalu digambar solid dulu (Bulan tetap benda padat,
+        // harus menghalangi apa pun di belakangnya - termasuk bintang di
+        // StarfieldView pada kartu Fase Bulan). Bulan baru (k=0) berhenti di
+        // sini saja: piringan gelap polos, tanpa bagian terang sama sekali.
+        canvas.drawCircle(cx, cy, r, nightBasePaint)
         if (k <= 0.0) return
 
         val litPaint = if (useRealisticTexture) {
@@ -184,31 +223,57 @@ class MoonPhaseView @JvmOverloads constructor(
             flatBrightPaint
         }
 
-        // Gambar seluruh piringan seolah sepenuhnya tersinari dulu (drawCircle
+        if (k >= 0.999) {
+            // Purnama: tidak ada sisi malam sama sekali, tidak perlu layer terpisah.
+            canvas.drawCircle(cx, cy, r, litPaint)
+            return
+        }
+
+        // Tekstur + "penghapusan" sisi malam digambar di layer TERPISAH
+        // (saveLayer), BUKAN langsung ke canvas utama yang sudah punya
+        // nightBasePaint - PorterDuff.Mode.CLEAR menghapus tuntas ke
+        // transparan apa pun yang ada di buffer saat itu, tanpa peduli
+        // "lapisan" gambar sebelumnya (nightBasePaint ikut kehapus juga kalau
+        // digambar ke canvas yang sama). Dengan layer sendiri, yang kehapus
+        // cuma isi layer ini (teksturnya) - begitu layer di-restore, sisa
+        // teksturnya (lit path) dikomposit normal (SRC_OVER) di atas
+        // nightBasePaint yang sudah aman duluan di canvas utama.
+        val pad = r * 0.5f
+        val layerBounds = RectF(cx - r - pad, cy - r - pad, cx + r + pad, cy + r + pad)
+        val layer = canvas.saveLayer(layerBounds, null)
+
+        // Gambar seluruh piringan seolah sepenuhnya tersinari (drawCircle
         // sendiri sudah otomatis berhenti tajam di radius r, tanpa perlu clip).
         canvas.drawCircle(cx, cy, r, litPaint)
 
-        // ...lalu "hapus" sisi malam (bukan timpa warna solid) supaya benar-benar
-        // transparan & batas terminator melembut alami. Sengaja TIDAK di-clip ke
-        // lingkaran r - clip malah bikin cincin tipis tidak-terhapus-tuntas di
-        // limb (interaksi clip vs anti-alias blur yang sulit diprediksi persis).
-        // Tanpa clip aman: area di luar r memang belum pernah digambar apa pun
-        // (transparan dari awal), jadi menghapusnya di situ tidak berefek apa pun.
-        if (k < 0.999) {
-            val feather = r * TERMINATOR_FEATHER_RATIO
-            nightErasePaint.maskFilter = BlurMaskFilter(feather, BlurMaskFilter.Blur.NORMAL)
-            // Batas luar shape ini (arc yang berimpit dengan limb) tetap didorong
-            // keluar melewati lebar blur, supaya mask sempat jenuh (alpha penuh)
-            // SEBELUM mencapai limb sungguhan (radius r) - kalau batasnya persis di
-            // r, transisi blur baru separuh jalan tepat di limb, sisa piksel
-            // texture tidak terhapus tuntas di situ. Lebar terminator (rx) tetap
-            // dihitung dari r asli supaya posisi/proporsi sabitnya akurat - yang
-            // didorong keluar cuma sisi luarnya, bukan seluruh shape.
-            canvas.drawPath(
-                buildNightErasePath(cx, cy, r, k, brightOnRight, expand = feather * 2.2f),
-                nightErasePaint
-            )
+        // ...lalu "hapus" sisi malam dari LAPISAN TEKSTUR INI SAJA - tepinya
+        // di-blur (jika [useSoftNightSide]) supaya batas terminator melembut
+        // alami. Sengaja TIDAK di-clip ke lingkaran r - clip malah bikin
+        // cincin tipis tidak-terhapus-tuntas di limb (interaksi clip vs
+        // anti-alias blur yang sulit diprediksi persis). Tanpa clip aman:
+        // area di luar r memang belum pernah digambar apa pun di layer ini,
+        // jadi menghapusnya di situ tidak berefek apa pun.
+        val feather = if (useSoftNightSide) r * TERMINATOR_FEATHER_RATIO else 0f
+        nightErasePaint.maskFilter = if (useSoftNightSide) {
+            BlurMaskFilter(feather, BlurMaskFilter.Blur.NORMAL)
+        } else {
+            null
         }
+        // Batas luar shape ini (arc yang berimpit dengan limb) tetap didorong
+        // keluar melewati lebar blur, supaya mask sempat jenuh (alpha penuh)
+        // SEBELUM mencapai limb sungguhan (radius r) - kalau batasnya persis di
+        // r, transisi blur baru separuh jalan tepat di limb, sisa piksel
+        // texture tidak terhapus tuntas di situ. Lebar terminator (rx) tetap
+        // dihitung dari r asli supaya posisi/proporsi sabitnya akurat - yang
+        // didorong keluar cuma sisi luarnya, bukan seluruh shape. Kalau
+        // !useSoftNightSide, expand=0 (feather=0) sehingga shape ini persis
+        // sama dengan buildLitPath(1-k, !brightOnRight) - tepi tajam biasa.
+        canvas.drawPath(
+            buildNightPath(cx, cy, r, k, brightOnRight, expand = feather * 2.2f),
+            nightErasePaint
+        )
+
+        canvas.restoreToCount(layer)
     }
 
     /**
@@ -268,14 +333,16 @@ class MoonPhaseView @JvmOverloads constructor(
 
     /**
      * Shape sisi malam (komplemen [buildLitPath]: fraksi 1-k, sisi terang
-     * dibalik) untuk dipakai [nightErasePaint] - beda dari `buildLitPath(cx,
-     * cy, r, 1.0-k, !brightOnRight)` biasa, di sini radius outer arc DAN
-     * rentang vertikal sengaja pakai `r + expand` (bukan `r`) supaya batas
-     * shape yang berimpit dengan limb didorong keluar, sementara lebar
-     * terminator (rx) tetap dihitung dari `r` asli supaya posisinya akurat.
-     * Lihat pemanggilnya di [drawMoonDisc] untuk kenapa dorongan ini perlu.
+     * dibalik) untuk dipakai [nightErasePaint] - beda dari `buildLitPath(cx, cy,
+     * r, 1.0-k, !brightOnRight)` biasa, di sini radius outer arc DAN rentang
+     * vertikal sengaja pakai `r + expand` (bukan `r`) supaya batas shape yang
+     * berimpit dengan limb didorong keluar, sementara lebar terminator (rx)
+     * tetap dihitung dari `r` asli supaya posisinya akurat. Saat `expand=0`
+     * (mis. [useSoftNightSide] mati), hasilnya identik dengan `buildLitPath`
+     * versi komplemen - tepi tajam biasa. Lihat pemanggilnya di
+     * [drawMoonDisc] untuk kenapa dorongan `expand` ini perlu saat blur aktif.
      */
-    private fun buildNightErasePath(cx: Float, cy: Float, r: Float, k: Double, brightOnRight: Boolean, expand: Float): Path {
+    private fun buildNightPath(cx: Float, cy: Float, r: Float, k: Double, brightOnRight: Boolean, expand: Float): Path {
         val nightK = 1.0 - k
         val nightBrightOnRight = !brightOnRight
         val r2 = r + expand
