@@ -66,6 +66,46 @@ object AdDurrulAniqIjtimaCalculator {
         val hariPasaran: String
     )
 
+    /** Momen ijtima' (UT) sebagai epoch millis, utk dibandingkan dengan "sekarang". */
+    fun IjtimaResult.toUtcMillis(): Long {
+        val cal = GregorianCalendar(TimeZone.getTimeZone("UTC"))
+        cal.clear()
+        cal.set(gregorianYear, gregorianMonth - 1, gregorianDay)
+        cal.timeInMillis += (jamUt * 3600.0 * 1000.0).toLong()
+        return cal.timeInMillis
+    }
+
+    /**
+     * Cari ijtima' (yang mengakhiri suatu bulan Hijriyah) terdekat SETELAH [nowMillis].
+     * Estimasi tahun/bulan Hijriyah awal dihitung kasar (formula rasio kalender),
+     * lalu digeser mundur beberapa bulan sebagai margin aman, baru dicari maju
+     * bulan-demi-bulan sampai ketemu ijtima' pertama yang > sekarang.
+     */
+    fun findNearestFuture(nowMillis: Long): IjtimaResult {
+        val nowCal = GregorianCalendar(TimeZone.getTimeZone("UTC")).apply { timeInMillis = nowMillis }
+        val gYear = nowCal.get(Calendar.YEAR)
+        val gDayOfYear = nowCal.get(Calendar.DAY_OF_YEAR)
+        val approxHijriYear = ((gYear + gDayOfYear / 365.25 - 622.0) * (365.2425 / 354.36707)).toInt()
+
+        var hijriYear = approxHijriYear
+        var hijriMonth = 1
+        // Mundur 3 bulan dari estimasi sbg margin aman (estimasi kasar bisa meleset beberapa bulan).
+        repeat(3) {
+            hijriMonth--
+            if (hijriMonth < 1) { hijriMonth = 12; hijriYear-- }
+        }
+
+        var result = calculate(hijriYear, hijriMonth)
+        var guard = 0
+        while (result.toUtcMillis() <= nowMillis && guard < 60) {
+            hijriMonth++
+            if (hijriMonth > 12) { hijriMonth = 1; hijriYear++ }
+            result = calculate(hijriYear, hijriMonth)
+            guard++
+        }
+        return result
+    }
+
     private val HARI_MINGGUAN = arrayOf("Sabtu", "Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at")
     private val HARI_PASARAN = arrayOf("Kliwon", "Legi", "Pahing", "Pon", "Wage")
 

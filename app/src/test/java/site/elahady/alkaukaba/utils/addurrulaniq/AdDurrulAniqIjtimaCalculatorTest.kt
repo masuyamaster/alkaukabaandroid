@@ -1,6 +1,7 @@
 package site.elahady.alkaukaba.utils.addurrulaniq
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -68,5 +69,22 @@ class AdDurrulAniqIjtimaCalculatorTest {
         assertEquals(10, r.gregorianDay)
         assertEquals("Jum'at", r.hariMingguan)
         assertEquals("Legi", r.hariPasaran)
+    }
+
+    @Test
+    fun `findNearestFuture menemukan ijtima setelah sekarang`() {
+        val now = java.util.GregorianCalendar(java.util.TimeZone.getTimeZone("UTC")).apply {
+            clear(); set(2026, 8, 6) // 6 September 2026 (bulan 0-indexed)
+        }.timeInMillis
+        with(AdDurrulAniqIjtimaCalculator) {
+            val r = findNearestFuture(now)
+            println(
+                "Nearest future -> ${r.gregorianDay}-${r.gregorianMonth}-${r.gregorianYear} " +
+                    "${r.jamUt}, hari=${r.hariMingguan} ${r.hariPasaran}, millis=${r.toUtcMillis()}"
+            )
+            assertTrue(r.toUtcMillis() > now)
+            // Ijtima' berikutnya harusnya dalam <35 hari dari sekarang (bukan meleset tahun/bulan jauh).
+            assertTrue(r.toUtcMillis() - now < 35L * 24 * 3600 * 1000)
+        }
     }
 }
