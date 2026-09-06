@@ -76,11 +76,13 @@ class KonfigurasiActivity : AppCompatActivity() {
         binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
         binding.rowNotifikasiAdzan.setOnClickListener { showAdzanSoundSheet() }
+        binding.rowHisabMethod.setOnClickListener { showHisabMethodSheet() }
 
         updateCurrentLocationLabel()
         updateCurrentQiblaSourceLabel()
         updateCurrentMethodLabel()
         updateCurrentAdzanSoundLabel()
+        updateCurrentHisabMethodLabel()
     }
 
     // --- Lokasi ---
@@ -169,6 +171,46 @@ class KonfigurasiActivity : AppCompatActivity() {
         }.addOnFailureListener {
             Toast.makeText(this, "Gagal mengambil lokasi GPS", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    // --- Hisab Awal Bulan ---
+
+    private fun updateCurrentHisabMethodLabel() {
+        binding.tvCurrentHisabMethod.text =
+            if (sessionManager.getHisabAwalBulanMethod() == SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ) {
+                "Ad-Durrul Aniq"
+            } else {
+                "Astronomy Engine"
+            }
+    }
+
+    private fun showHisabMethodSheet() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_hisab_method, null)
+        bottomSheetDialog.setContentView(view)
+
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupHisabMethod)
+        val radioAstronomyEngine = view.findViewById<RadioButton>(R.id.radioHisabAstronomyEngine)
+        val radioDurrulAniq = view.findViewById<RadioButton>(R.id.radioHisabDurrulAniq)
+        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveHisabMethod)
+
+        val isDurrulAniq = sessionManager.getHisabAwalBulanMethod() == SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ
+        radioDurrulAniq.isChecked = isDurrulAniq
+        radioAstronomyEngine.isChecked = !isDurrulAniq
+
+        btnSave.setOnClickListener {
+            val method = if (radioGroup.checkedRadioButtonId == R.id.radioHisabDurrulAniq) {
+                SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ
+            } else {
+                SessionManager.HISAB_AWAL_BULAN_ASTRONOMY_ENGINE
+            }
+            sessionManager.setHisabAwalBulanMethod(method)
+            updateCurrentHisabMethodLabel()
+            Toast.makeText(this, "Metode hisab awal bulan disimpan", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
     }
 
     // --- Arah Kiblat ---

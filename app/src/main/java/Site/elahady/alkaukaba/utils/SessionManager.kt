@@ -28,6 +28,10 @@ class SessionManager(context: Context) {
         const val ADZAN_SOUND_MODE_ADZAN = "ADZAN"
         const val ADZAN_SOUND_MODE_BEEP = "BEEP"
         const val ADZAN_SOUND_MODE_SILENT = "SILENT"
+
+        private const val KEY_HISAB_AWAL_BULAN_METHOD = "HISAB_AWAL_BULAN_METHOD"
+        const val HISAB_AWAL_BULAN_ASTRONOMY_ENGINE = "ASTRONOMY_ENGINE"
+        const val HISAB_AWAL_BULAN_DURRUL_ANIQ = "DURRUL_ANIQ"
     }
 
     /**
@@ -91,6 +95,14 @@ class SessionManager(context: Context) {
 
     fun getAdzanSoundMode(): String =
         prefs.getString(KEY_ADZAN_SOUND_MODE, ADZAN_SOUND_MODE_ADZAN) ?: ADZAN_SOUND_MODE_ADZAN
+
+    /** Metode hisab awal bulan Hijriyah (fitur "Bulan Hijriyah") — Astronomy Engine (default) atau Ad-Durrul Aniq. */
+    fun setHisabAwalBulanMethod(method: String) {
+        prefs.edit().putString(KEY_HISAB_AWAL_BULAN_METHOD, method).apply()
+    }
+
+    fun getHisabAwalBulanMethod(): String =
+        prefs.getString(KEY_HISAB_AWAL_BULAN_METHOD, HISAB_AWAL_BULAN_ASTRONOMY_ENGINE) ?: HISAB_AWAL_BULAN_ASTRONOMY_ENGINE
 
     fun setLogin(isLoggedIn: Boolean) {
         val editor = prefs.edit()

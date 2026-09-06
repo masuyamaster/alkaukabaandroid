@@ -136,7 +136,8 @@ object EphemerisCalculator {
             rows = listOf(
                 PrayerBreakdownRow("Lintang", decimalToDMS(input.latitude)),
                 PrayerBreakdownRow("Bujur", decimalToDMS(input.longitude)),
-                PrayerBreakdownRow("Ketinggian", "${"%.1f".format(input.heightMeters)} m")
+                PrayerBreakdownRow("Ketinggian", "${"%.1f".format(input.heightMeters)} m"),
+                PrayerBreakdownRow("Metode", "Astronomy Engine")
             )
         ),
         PrayerBreakdownSection(

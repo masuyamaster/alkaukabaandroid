@@ -215,7 +215,7 @@ class AwalBulanActivity : AppCompatActivity() {
 
     private fun runCalculation() {
         val height = binding.etKetinggian.text.toString().toDoubleOrNull() ?: 0.0
-        viewModel.calculateHilal(currentLat, currentLng, height)
+        viewModel.calculateHilal(currentLat, currentLng, height, sessionManager.getHisabAwalBulanMethod())
     }
 
     companion object {
