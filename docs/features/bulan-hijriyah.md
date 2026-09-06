@@ -175,6 +175,24 @@ tinggi, elongasi Matahari & Bulan, semua presisi tinggi), `AdDurrulAniqCalculato
 karena tidak ada contoh kitab utk tanggal sembarang, yang dicek kewajaran
 fisis: ijtima' & ghurub di hari yang sama, kriteria konsisten dgn angka).
 
+**Verifikasi manual di emulator (Pixel6_API34, 2026-09-06)**: toggle metode
+di Konfigurasi berhasil ganti hasil hitung `AwalBulanActivity` tanpa restart
+app, setting persist setelah app di-restart. Dibandingkan langsung kedua
+metode utk tanggal & lokasi sama (Jakarta Selatan, ijtima' 11 September 2026):
+
+| | Astronomy Engine | Ad-Durrul Aniq | Selisih |
+|---|---|---|---|
+| Ijtima' | 10:27:28 | 10:25:15 | ~2 menit |
+| Ghurub | 17:50:40 | 17:50:42 | 2 detik |
+| Tinggi Hilal | 1.69° | 1.32° | 0.37° |
+| Elongasi | 4.42° | 3.81° | 0.61° |
+| Status kriteria | Belum Memenuhi | Belum Memenuhi | konsisten |
+
+Dua implementasi yang sepenuhnya independen (library astronomi modern vs
+rumus kitab klasik) saling cocok dalam orde menit/derajat kecil — validasi
+silang tambahan di luar unit test, utk 1 tanggal/lokasi nyata (bukan
+perbandingan sistematis banyak tanggal, lihat Known limitations).
+
 ## 6. Testing
 
 `EphemerisCalculator` tidak ada test otomatis (`app/src/androidTest` masih
@@ -220,6 +238,22 @@ Sekalian, `MoonPhaseView` diganti dari pendekatan `Path.op`
 terbukti tidak stabil ketika elips terminator hampir sekoinsiden dengan
 lingkaran luar (persis kasus hilal sangat tipis) — sempat membuat sabit tidak
 tergambar sama sekali di percobaan pertama.
+
+## 6b. Fix label breakdown row hilang untuk value teks panjang
+
+Per 2026-09-06, ditemukan saat verifikasi manual toggle metode Ad-Durrul Aniq
+di emulator: `item_breakdown_row.xml` (dipakai accordion di sini **dan** di
+Waktu Sholat) sebelumnya kasih `tvRowLabel` weight=1 (fleksibel) + `tvRowValue`
+wrap_content — aman selama value pendek (mis. koordinat/derajat), tapi baris
+baru "Metode" (isinya "Ad-Durrul Aniq (Ahmad Ghozali Muhammad Fathulloh)",
+jauh lebih panjang dari value lain) bikin label terdesak nyaris 0 lebar dan
+tidak kelihatan sama sekali.
+
+Diperbaiki dengan menukar alokasi: `tvRowLabel` jadi `wrap_content` (selalu
+tampil penuh), `tvRowValue` yang dapat `layout_weight="1"` + `gravity="end"`
+(bisa wrap ke baris berikutnya, rata kanan). Diverifikasi ulang di emulator —
+tidak mengubah tampilan baris pendek yang sudah ada (Lintang/Bujur/Ketinggian
+di sini, Lintang/Bujur/Deklinasi/dst di Waktu Sholat).
 
 ## 7. Known limitations
 
