@@ -42,6 +42,23 @@ class StarfieldView @JvmOverloads constructor(
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
 
+    /**
+     * View ini murni dekoratif (background), tidak punya ukuran intrinsik
+     * sendiri - kalau dibiarkan pakai onMeasure default View, dipasang
+     * match_parent di dalam parent wrap_content (mis. kartu Fase Bulan di
+     * home yang duduk di ConstraintLayout tanpa bottom constraint) akan
+     * membengkak mengisi SISA layar: default onMeasure me-resolve mode
+     * AT_MOST jadi ukuran spec penuh, bukan 0, sehingga ikut jadi penentu
+     * tinggi wrap_content parent-nya. Lapor 0 untuk UNSPECIFIED/AT_MOST
+     * supaya ukuran wrap_content parent ditentukan sibling ber-konten
+     * (ikon+teks), lalu FrameLayout otomatis meregangkan view ini kembali
+     * ke ukuran akhir lewat re-measure match_parent pass-nya - jadi EXACTLY
+     * tetap dihormati apa adanya.
+     */
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        setMeasuredDimension(resolveSize(0, widthMeasureSpec), resolveSize(0, heightMeasureSpec))
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
