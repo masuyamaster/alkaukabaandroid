@@ -336,6 +336,16 @@ di kartu home (56dp) & layar detail (160dp), field Detail Astronomis terisi
       resolve (atau kalau izin ditolak), ilustrasi tetap fallback ke
       `setPhase()` generik (kiri/kanan tanpa rotasi) — bukan lagi masalah akurasi tapi
       transisi/state saat lokasi belum siap.
+- [x] ~~`MoonTilt.brightLimbAngleDegrees()` mencerminkan kiri-kanan~~ — Per
+      2026-09-07: `screenRight` di `MoonTilt.kt` (`cross(screenUp, moon)`)
+      ternyata menghasilkan arah kiri sejati, bukan kanan (lolos dari
+      validasi sebelumnya karena kombinasi rumus Meeus χ+q yang dipakai
+      untuk cross-check saat itu ikut tercermin juga). Diperbaiki jadi
+      `cross(moon, screenUp)`, dikonfirmasi lewat fakta kompas dasar
+      (menghadap Utara → kanan = Timur) dan verifikasi visual di emulator
+      (`FaseBulanActivity`, limb terang kanan-bawah cocok posisi Matahari
+      Az lebih besar & Alt lebih rendah dari Bulan). `MoonTiltTest.kt`
+      diperbarui mengikuti arah yang benar.
 - [ ] Belum ada test otomatis untuk `MoonPhaseLabel`/logika `MoonPhaseView`.
 - [ ] Tekstur `moon_texture.jpg` selalu piringan purnama tanpa libration —
       dipotong ke bentuk sabit/cembung yang benar, tapi corak kawah yang

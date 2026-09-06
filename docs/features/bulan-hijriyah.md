@@ -332,11 +332,19 @@ teruji langsung.
       lebih tinggi.
 - [ ] Belum ada test otomatis untuk `EphemerisCalculator`/`HijriDateUtil`
       (lihat section 6).
-- [ ] Orientasi kemiringan hilal (`MoonTilt`) diturunkan & divalidasi lewat
+- [x] ~~Orientasi kemiringan hilal (`MoonTilt`) diturunkan & divalidasi lewat
       penalaran vektor + satu kasus fisik yang dikenal (hilal senyum
       khatulistiwa), bukan dibandingkan langsung ke foto rukyah sungguhan —
       kalau suatu saat ada laporan orientasi kelihatan terbalik/miring salah
-      di lapangan, mulai cek dari sini (`utils/MoonTilt.kt`).
+      di lapangan, mulai cek dari sini (`utils/MoonTilt.kt`).~~ — Prediksi ini
+      terbukti: per 2026-09-07 ditemukan `screenRight` di `MoonTilt.kt`
+      memang mencerminkan kiri-kanan (`cross(screenUp, moon)` seharusnya
+      `cross(moon, screenUp)`), lolos dari validasi lama karena kasus "hilal
+      senyum" (dA=0) tidak menguji komponen kiri-kanan sama sekali, dan
+      cross-check ke rumus Meeus χ+q yang dipakai saat itu ikut tercermin
+      juga. Sudah diperbaiki & diverifikasi lewat fakta kompas dasar +
+      visual di emulator — detail di
+      [fase-bulan.md §7](fase-bulan.md#7-known-issues--todos).
 - [ ] (Ad-Durrul Aniq) Tabel Ijtima' `tahunMajmuah[1020]` — F dan M' terbaca
       identik saat transkrip foto, kemungkinan salah baca, belum
       diverifikasi ke buku fisik (lihat section 5a).
