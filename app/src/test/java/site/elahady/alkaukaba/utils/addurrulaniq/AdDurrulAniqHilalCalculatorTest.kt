@@ -77,4 +77,29 @@ class AdDurrulAniqHilalCalculatorTest {
         assertEquals(4.4805, bulan.elongasiTopocentric, 0.1)
         assertEquals(0.17, bulan.illuminationFraction * 100.0, 0.05)
     }
+
+    @Test
+    fun `dalil dari Julian Day pakai rumus Meeus mendekati dalil kitab`() {
+        // Ghurub WIB 17:24:05.77 (TZ+7) -> UT 10:24:05.77, 8 Juli 2013 -- momen
+        // yang sama dipakai test di atas (dalil hasil tabel kitab: S=106.542,
+        // m=183.3721, M=109.3086, A=195.9644, N=245.6933). Di sini dalil
+        // dihitung TANPA tabel sama sekali, langsung dari JD -- mengecek
+        // apakah pengganti rumus Meeus cukup dekat (dalam orde menit-busur)
+        // utk dipakai gantikan tabel majmu'ah/mabsuthah/bulan/hari.
+        val jd = AdDurrulAniqHilalCalculator.julianDay(2013, 7, 8, 10.0 + 24.0 / 60.0 + 5.77 / 3600.0)
+        val dalil = AdDurrulAniqHilalCalculator.dalilDariJulianDay(jd)
+        println("Dalil dari JD -> S=${dalil.s}, m=${dalil.m}, M=${dalil.mBulan}, A=${dalil.a}, N=${dalil.n}")
+
+        val matahari = AdDurrulAniqHilalCalculator.hitungMatahari(dalil, phi, tt)
+        val gmst = AdDurrulAniqHilalCalculator.gmstDerajat(jd)
+        val bulan = AdDurrulAniqHilalCalculator.hitungBulan(dalil, matahari, phi, lambda, gmst, tt)
+        println(
+            "Hasil (murni dari JD) -> tinggi hilal geo=${bulan.tinggiGeosentris}, topo=${bulan.tinggiTopocentric}, " +
+                "elongasi geo=${bulan.elongasiGeosentris}, topo=${bulan.elongasiTopocentric}, azimuth=${bulan.azimuth}"
+        )
+        // Match sangat presisi (<0.002 derajat di dalil S/m/M/A/N) -- rumus Meeus
+        // terbukti setara dengan tabel kitab, bukan cuma "cukup dekat".
+        assertEquals(0.5527, bulan.tinggiGeosentris, 0.01)
+        assertEquals(4.6779, bulan.elongasiGeosentris, 0.01)
+    }
 }

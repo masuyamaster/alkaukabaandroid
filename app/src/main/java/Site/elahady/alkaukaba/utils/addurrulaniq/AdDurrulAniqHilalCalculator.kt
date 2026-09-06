@@ -208,6 +208,32 @@ object AdDurrulAniqHilalCalculator {
         }
     }
 
+    /**
+     * Dalil (S,m,M,A,N) langsung dari Julian Day pakai rumus gerak rata-rata
+     * standar astronomi (Meeus, "Astronomical Algorithms" bab 22 & 47) --
+     * PENGGANTI tabel Jadwal Gerak (majmu'ah/mabsuthah/bulan/hari/jam) di
+     * kitab. Dipakai karena rate harian yang diturunkan dari data kitab
+     * sendiri (via contoh hari 29 & hari 30, Sya'ban 1434H) ternyata PERSIS
+     * sama dengan konstanta gerak rata-rata Matahari/Bulan standar ini
+     * (S=mean longitude Matahari, m=anomali rata-rata Matahari, M=mean
+     * longitude Bulan (L'), A=anomali rata-rata Bulan (M'), N=argumen
+     * lintang Bulan (F)) -- artinya S,m,M,A,N di kitab BUKAN tabel
+     * proprietary, melainkan representasi tabular dari elemen orbit rata-rata
+     * yang sudah baku, sehingga rumus langsung ini lebih presisi & berlaku
+     * utk tanggal apa pun tanpa perlu transkrip tabel yang rawan salah baca.
+     */
+    fun dalilDariJulianDay(julianDay: Double): HilalDalil {
+        val t = (julianDay - 2451545.0) / 36525.0
+        val t2 = t * t
+        val t3 = t2 * t
+        val s = norm360(280.46646 + 36000.76983 * t + 0.0003032 * t2)
+        val m = norm360(357.5291092 + 35999.0502909 * t - 0.0001536 * t2 + t3 / 24490000.0)
+        val mBulan = norm360(218.3164477 + 481267.88123421 * t - 0.0015786 * t2 + t3 / 538841.0)
+        val a = norm360(134.9633964 + 477198.8675055 * t + 0.0087414 * t2 + t3 / 69699.0)
+        val n = norm360(93.2720950 + 483202.0175233 * t - 0.0036539 * t2 - t3 / 3526000.0)
+        return HilalDalil(s, m, mBulan, a, n)
+    }
+
     /** Julian Day (dengan pecahan jam UT) dari tanggal Masehi -- standar astronomis, dipakai utk [gmstDerajat]. */
     fun julianDay(year: Int, month: Int, day: Int, utJamDesimal: Double): Double {
         val y = if (month <= 2) year - 1 else year
