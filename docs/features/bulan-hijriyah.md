@@ -7,13 +7,25 @@ tinggi hilal mar'i, elongasi, mukuts) untuk bulan Hijriyah mendatang
 terdekat, berbasis lokasi markaz (GPS atau setting manual di Konfigurasi),
 dengan kesimpulan kriteria Neo-MABIMS dan opsi export hasil ke PDF.
 
-Perhitungan dilakukan 100% oleh "Astronomy Engine" (`utils/Astronomy.kt`,
-`io.github.cosinekitty.astronomy`, MIT license, vendored penuh di repo) —
-bukan lagi simulasi/hardcode seperti versi sebelumnya. Satu-satunya bagian
-yang masih pakai pendekatan tabular (bukan Astronomy Engine) adalah label
-"bulan Hijriyah yang dicek" di kartu ringkasan (lihat section 4), yang
-akurasinya ±1-2 hari — itu murni kosmetik dan tidak memengaruhi hasil
-ijtima'/ghurub/kriteria.
+Per 2026-09-06: ada **2 metode hisab**, dipilih via row "Metode Hisab" di
+Konfigurasi (`SessionManager.getHisabAwalBulanMethod()`,
+`HISAB_AWAL_BULAN_ASTRONOMY_ENGINE` default / `HISAB_AWAL_BULAN_DURRUL_ANIQ`):
+
+1. **Astronomy Engine** (`EphemerisCalculator`, section 5) — ephemeris modern
+   `io.github.cosinekitty.astronomy`, sudah ada sejak awal fitur ini.
+2. **Ad-Durrul Aniq** (`utils/addurrulaniq/AdDurrulAniqCalculator`, section 5a)
+   — kitab hisab klasik Ahmad Ghozali Muhammad Fathulloh, ditambahkan sebagai
+   alternatif/pembanding, BUKAN pengganti.
+
+Keduanya menghasilkan `HilalResult` yang sama bentuknya (dipilih di
+`HilalViewModel.calculateHilal()`) sehingga UI tidak perlu tahu metode mana
+yang aktif — breakdown "Markaz" di kedua metode menyebutkan nama metodenya
+supaya user tahu dari hasil yang ditampilkan.
+
+Satu-satunya bagian yang masih pakai pendekatan tabular murni kosmetik
+(bukan bagian mesin hisab manapun) adalah label "bulan Hijriyah yang dicek"
+di kartu ringkasan (lihat section 4), akurasinya ±1-2 hari — tidak
+memengaruhi hasil ijtima'/ghurub/kriteria metode manapun.
 
 ## 2. Entry point & navigasi
 
@@ -96,15 +108,85 @@ apa pun di skenario scroll/expand manapun.
 Local-date/midnight helper pakai `java.util.Calendar` dengan timezone default
 device (bukan hardcode offset WIB seperti versi lama).
 
+## 5a. Mesin hisab (`AdDurrulAniqCalculator`) — metode Ad-Durrul Aniq
+
+Implementasi kitab **"Ad-Durrul Aniq fi Ma'rifatil Hilal wal Kusufain
+bit-Tadqiq"** (Ahmad Ghozali Muhammad Fathulloh), ditranskrip dari foto tabel
+kitab + rangkuman riset di halaman Notion "Ad-Durul Aniq" (Ruang Perpustakaan
+: I am a Reader). Tiga file di `utils/addurrulaniq/`:
+
+| File | Peran |
+|---|---|
+| `AdDurrulAniqTables.kt` | Tabel Ijtima' (Majmu'ah/Mabsuthah/Bulan, halaman 156-158 kitab) + konstanta Ta'dilul 'Alamah (T1-T8) + konstanta ta'dil Hilal (S1-S2, M1-M9, B1-B4, r1-r4) + tabel konversi Julian->Masehi |
+| `AdDurrulAniqIjtimaCalculator.kt` | Hisab Ijtima' (konjungsi) dari tabel di atas + `findNearestFuture()` (cari ijtima' terdekat ke depan dari sekarang, pola sama dgn `EphemerisCalculator`) |
+| `AdDurrulAniqHilalCalculator.kt` | Hisab Ghurub + posisi Matahari/Bulan (deklinasi, asensiorekta, azimuth, tinggi, elongasi, illuminasi) |
+| `AdDurrulAniqCalculator.kt` | Entry point `calculate(HilalInput): HilalResult` — satukan Ijtima'+Ghurub+Hilal+kriteria, dipanggil `HilalViewModel` |
+
+**Temuan penting selama implementasi** (lihat commit history utk detail):
+
+1. **Ta'dilul 'Alamah (T1-T8)** terlihat seperti tabel lookup 31x6 di kitab,
+   tapi terbukti (tervalidasi 2x-silang: contoh Sya'ban & Ramadhan 1434H,
+   presisi 4 desimal) murni fungsi `amplitudo x sin(dalil)` — disimpan
+   sebagai 8 konstanta (`TadilAlamah`), bukan tabel.
+2. **Ta'dil Hilal** (S1-S2 bujur Matahari, M1-M9 bujur Bulan, B1-B4 latitude
+   Bulan, r1-r4 jarak Bulan) sama polanya (sin utk S/M/B, **cos** utk r) —
+   semua tervalidasi & disimpan sebagai konstanta (`TadilHilal`).
+3. **R1/R2** (jarak Bumi-Matahari) SENGAJA tidak dipakai — dampaknya ke
+   semidiameter Matahari cuma ~1-2 detik busur (di bawah presisi target
+   metode), kitab sendiri sediakan alternatif rumus langsung (Ghurub Wasaty
+   cara 2, halaman 12): `sd = 0.267/(1-0.017*cos(m))`.
+4. **Kolom "D"/obliquitas** di tabel gerak Hilal ditandai kitab sendiri
+   "(tetap)" — dipakai konstan `TadilHilal.OBLIQUITAS = 23.437533`, bukan
+   tabel (obliquitas sungguhan berubah ~0.00013°/tahun, tidak relevan).
+5. **Terbukti setara ELP2000/Meeus**: rate harian S,m,M,A,N yang diturunkan
+   dari data kitab (hari 29 & 30, Sya'ban 1434H) ternyata PERSIS sama dengan
+   konstanta gerak rata-rata Matahari/Bulan standar astronomi modern (Meeus,
+   *Astronomical Algorithms* bab 22 & 47). Ini juga berlaku utk kedelapan
+   T1-T8 (cocok dengan koefisien new-moon standar Meeus bab 49). Karena itu,
+   tabel Jadwal Gerak (majmu'ah/mabsuthah/bulan/hari/jam/menit/detik) untuk
+   S,m,M,A,N — yang jadi hambatan transkrip terbesar (10 kolom padat, rawan
+   salah baca foto) — **diganti rumus polynomial langsung dari Julian Day**
+   (`AdDurrulAniqHilalCalculator.dalilDariJulianDay()`), tervalidasi <0.002
+   derajat terhadap dalil tabel kitab.
+6. **Sidereal time** (kolom "O" di kitab) diganti rumus GMST standar Meeus
+   dari Julian Day (`gmstDerajat()`) — lebih presisi & berlaku universal,
+   tidak terikat konvensi markaz Sampang seperti tabel aslinya.
+7. **Formula azimuth kitab** (`tan⁻¹` gabungan) cuma beri hasil mentah
+   -90..90 (rentang atan); utk konteks ghurub/moonset azimuth sejati selalu
+   ada di belahan barat (180-360°), jadi perlu pergeseran **+270** (bukan
+   quadrant generik +360-jika-negatif) — lihat komentar
+   `azimuthDariSudutWaktu()`.
+
+**Yang MASIH pakai tabel kitab (bukan rumus)**: hisab Ijtima' (Majmu'ah
+tahun -180..1770/Mabsuthah 1-30/Bulan 1-12 utk Alamat/Hishshatul-Ardh/
+Khashshah/Markaz) — berbeda dari S,m,M,A,N Hilal, kuantitas ini punya
+kompounding rounding antar-baris yang tidak bisa direproduksi rumus rate
+sederhana (lihat komentar `sumDalil()`), jadi harus tabel asli. Satu baris
+(`tahunMajmuah[1020]`) ditandai TODO — F dan M' terbaca sama persis saat
+transkrip, kemungkinan salah baca foto, belum memengaruhi 4 contoh
+tervalidasi tapi perlu verifikasi ke buku fisik kalau ada kebutuhan hitung
+Hijriyah tahun ~1021-1050.
+
+**Validasi**: `AdDurrulAniqIjtimaCalculatorTest` (4/4 contoh manual kitab —
+Sya'ban 1434H, Ramadhan 1434H, Shafar 1434H/Vancouver, Shafar -52H/Makkah),
+`AdDurrulAniqHilalCalculatorTest` (Sya'ban 1434H — deklinasi, azimuth,
+tinggi, elongasi Matahari & Bulan, semua presisi tinggi), `AdDurrulAniqCalculatorTest`
+(uji integrasi end-to-end utk tanggal sekarang — bukan cocok-persis ke buku
+karena tidak ada contoh kitab utk tanggal sembarang, yang dicek kewajaran
+fisis: ijtima' & ghurub di hari yang sama, kriteria konsisten dgn angka).
+
 ## 6. Testing
 
-Tidak ada test otomatis untuk fitur ini (`app/src/test` dan
-`app/src/androidTest` masih boilerplate default). Verifikasi sejauh ini
-manual: install APK debug, buka "Bulan Hijriyah" dari home, cek kartu
-ringkasan/status/accordion terisi, dan export PDF menghasilkan file di
-Download. Untuk memverifikasi akurasi astronomisnya, bandingkan
-ijtima'/ghurub yang dihasilkan dengan referensi resmi (mis. jadwal Kemenag
-atau publikasi PCNU/Al-Kaukaba Lamongan) untuk bulan yang sama.
+`EphemerisCalculator` tidak ada test otomatis (`app/src/androidTest` masih
+boilerplate default) — verifikasi manual: install APK debug, buka "Bulan
+Hijriyah" dari home, cek kartu ringkasan/status/accordion terisi, dan export
+PDF menghasilkan file di Download. Untuk memverifikasi akurasi astronomisnya,
+bandingkan ijtima'/ghurub yang dihasilkan dengan referensi resmi (mis. jadwal
+Kemenag atau publikasi PCNU/Al-Kaukaba Lamongan) untuk bulan yang sama.
+
+`AdDurrulAniqCalculator` (dan Ijtima'/Hilal calculator-nya) PUNYA test JVM
+otomatis di `app/src/test/.../utils/addurrulaniq/` (lihat section 5a) — jalankan
+`./gradlew testDebugUnitTest --tests "*.addurrulaniq.*"`.
 
 ## 6a. Visualisasi Wujud Hilal (bantuan rukyah)
 
@@ -155,3 +237,14 @@ tergambar sama sekali di percobaan pertama.
       khatulistiwa), bukan dibandingkan langsung ke foto rukyah sungguhan —
       kalau suatu saat ada laporan orientasi kelihatan terbalik/miring salah
       di lapangan, mulai cek dari sini (`utils/MoonTilt.kt`).
+- [ ] (Ad-Durrul Aniq) Tabel Ijtima' `tahunMajmuah[1020]` — F dan M' terbaca
+      identik saat transkrip foto, kemungkinan salah baca, belum
+      diverifikasi ke buku fisik (lihat section 5a).
+- [ ] (Ad-Durrul Aniq) Tabel `JulianMasehiTables` baru mencakup tahun Masehi
+      400-2900 — cukup utk seluruh rentang tabel Ijtima' (-180..1770 H) tapi
+      kalau kitab diperluas ke tahun Masehi < 400, perlu tabel majmu'ah
+      miladiyah tambahan.
+- [ ] (Ad-Durrul Aniq) Belum ada perbandingan sistematis hasil vs
+      `EphemerisCalculator` utk banyak tanggal/lokasi berbeda — baru
+      tervalidasi ketat terhadap 1 contoh kitab (Sya'ban 1434H) + uji
+      kewajaran fisis utk tanggal sekarang.

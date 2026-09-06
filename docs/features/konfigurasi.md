@@ -2,8 +2,9 @@
 
 ## 1. Ringkasan
 
-**Fitur**: Konfigurasi — layar setting terpusat berisi Lokasi, Sumber
-Perhitungan Arah Kiblat, dan Metode Perhitungan Waktu Sholat.
+**Fitur**: Konfigurasi — layar setting terpusat berisi Lokasi, Metode Hisab
+Awal Bulan, Sumber Perhitungan Arah Kiblat, dan Metode Perhitungan Waktu
+Sholat.
 
 Sebelumnya tiap fitur (Waktu Sholat, Arah Kiblat, Kalender) selalu mengambil
 lokasi live dari GPS sendiri-sendiri, tanpa cara untuk memakai koordinat tetap
@@ -37,6 +38,11 @@ internet).
     `hasManualLocation()`, `isManualLocationMode()` (helper gabungan: mode
     Manual **dan** sudah pernah ada koordinat tersimpan).
   - `getQiblaSource()`/`setQiblaSource()` (`"ALADHAN"`/`"MANUAL_FORMULA"`).
+  - `getHisabAwalBulanMethod()`/`setHisabAwalBulanMethod()`
+    (`"ASTRONOMY_ENGINE"`/`"DURRUL_ANIQ"`, default Astronomy Engine) — dibaca
+    `AwalBulanActivity` saat `runCalculation()`, diteruskan ke
+    `HilalViewModel.calculateHilal()` (lihat `docs/features/bulan-hijriyah.md`
+    section 5a untuk detail metode Ad-Durrul Aniq).
   - `getPrayerMethodId()` dkk — sudah ada sebelumnya, tidak berubah (lihat
     `docs/features/waktu-sholat.md`).
 - `KonfigurasiActivity.showLocationSheet()` — inflate `dialog_lokasi.xml`,
@@ -47,6 +53,9 @@ internet).
 - `KonfigurasiActivity.showQiblaSourceSheet()` — inflate
   `dialog_qibla_source.xml`, radio Aladhan/Rumus Manual, simpan langsung
   (tidak ada input tambahan).
+- `KonfigurasiActivity.showHisabMethodSheet()` — inflate
+  `dialog_hisab_method.xml`, radio Astronomy Engine/Ad-Durrul Aniq, simpan
+  langsung (pola identik dgn `showQiblaSourceSheet()`).
 - Ini **bukan** setting yang otomatis "aktif" begitu disimpan di sini — tiap
   fitur pemakai (lihat daftar di bawah) yang bertanggung jawab membaca
   `SessionManager` di titik masuk lokasinya sendiri (`checkLocationPermission()`
@@ -66,7 +75,11 @@ internet).
 | `WaktuSholatActivity` | ✅ | tidak relevan |
 | `KiblatActivity` | ✅ | ✅ |
 | `CalendarActivity` | ❌ tidak langsung — terima lat/lon lewat extra `Intent` dari `MainActivity`, jadi otomatis ikut kalau `MainActivity` sudah benar (lihat `docs/features/kalender.md`) | tidak relevan |
-| `AwalBulanActivity` (Bulan Hijriyah) | ❌ belum — fitur ini sendiri masih dummy/belum disambung navigasi, lihat `docs/features/bulan-hijriyah.md`. Saat fitur itu dibangun ulang, **harus** ikut baca `SessionManager` ini, bukan bikin logic lokasi baru | tidak relevan |
+| `AwalBulanActivity` (Bulan Hijriyah) | ✅ (`isManualLocationMode()`, lihat `docs/features/bulan-hijriyah.md`) | tidak relevan |
+
+`AwalBulanActivity` juga satu-satunya konsumen `getHisabAwalBulanMethod()`
+(Astronomy Engine/Ad-Durrul Aniq) — tidak ada di tabel di atas karena bukan
+setting lokasi/kiblat.
 
 ## 4. Struktur & alur data
 
@@ -74,10 +87,11 @@ File yang terlibat:
 
 | File | Peran |
 |---|---|
-| `ui/konfigurasi/KonfigurasiActivity.kt` | Satu-satunya Activity untuk layar ini: wiring 3 row + 3 sheet (tidak ada logout di sini lagi, lihat catatan 2026-08-30 di bawah) |
-| `utils/SessionManager.kt` | Persistensi semua setting (lokasi, sumber kiblat, metode sholat) di `SharedPreferences "AppSession"` |
-| `res/layout/activity_konfigurasi.xml` | Layout utama: 3 section (LOKASI, ARAH KIBLAT, WAKTU SHOLAT), masing-masing satu row card |
+| `ui/konfigurasi/KonfigurasiActivity.kt` | Satu-satunya Activity untuk layar ini: wiring 4 row + 4 sheet (tidak ada logout di sini lagi, lihat catatan 2026-08-30 di bawah) |
+| `utils/SessionManager.kt` | Persistensi semua setting (lokasi, sumber kiblat, metode hisab awal bulan, metode sholat) di `SharedPreferences "AppSession"` |
+| `res/layout/activity_konfigurasi.xml` | Layout utama: 4 section (LOKASI, HISAB AWAL BULAN, ARAH KIBLAT, WAKTU SHOLAT), masing-masing satu row card |
 | `res/layout/dialog_lokasi.xml` | Bottom sheet Lokasi: radio Otomatis/Manual, field lat/lon, tombol GPS, tombol Simpan |
+| `res/layout/dialog_hisab_method.xml` | Bottom sheet Metode Hisab: radio Astronomy Engine/Ad-Durrul Aniq, tombol Simpan |
 | `res/layout/dialog_qibla_source.xml` | Bottom sheet Arah Kiblat: radio Aladhan/Rumus Manual, tombol Simpan |
 | `res/layout/dialog_prayer_method.xml` | Bottom sheet Waktu Sholat — sudah ada sebelumnya, tidak berubah |
 
