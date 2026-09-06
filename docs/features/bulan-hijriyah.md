@@ -52,8 +52,12 @@ Berbeda dari rencana lama (user pilih tanggal bebas), alurnya sekarang
 2. Tombol "Hitung Ulang" (`btnCalculate`) tersedia untuk menghitung ulang
    dengan lokasi/ketinggian saat ini (mis. setelah ubah field ketinggian).
 3. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang.
-4. `btnDownloadPdf` -> `HilalViewModel.generatePdf()` -> `HilalPdfService`
-   (tidak berubah dari versi lama, cuma baca `HilalResult.calculationLog`).
+4. Tombol PDF di toolbar (`btnToolbarAction`, ikon `ic_pdf_icon`) ->
+   `openLaporanHisab()` -> buka `LaporanHisabActivity` (bawa `HilalResult`
+   lewat Intent extra, model-nya sekarang `Serializable`) -> user tekan
+   "Unduh PDF" di halaman itu -> `HilalPdfService.exportViewAsPdf()`. Per
+   2026-09-06: diganti dari alur lama (`btnDownloadPdf` langsung panggil
+   `HilalViewModel.generatePdf()`) — lihat section 6c.
 5. `btnBack` -> `finish()`.
 
 `EphemerisCalculator.calculate()` selalu mencari **ijtima' (new moon)
@@ -68,7 +72,8 @@ terdekat ke depan dari waktu sekarang** — tidak ada pilihan bulan manual.
 | `model/HilalModels.kt` | `HilalInput` (lat, lng, heightMeters) dan `HilalResult` (label, status, tinggi hilal, elongasi, mukuts, `breakdownSections`, `calculationLog`) |
 | `utils/EphemerisCalculator.kt` | Mesin hisab real — lihat section 5 |
 | `utils/HijriDateUtil.kt` | Konversi Masehi->Hijriyah tabular (Kuwaiti algorithm) untuk label tampilan — dipakai untuk "bulan Hijriyah yang dicek" di sini (`nextMonthLabel()`) **dan** tanggal Hijriyah hari ini di kartu Sholat Berikutnya `MainActivity` (`fullDateLabel()`, sejak 2026-08-30) |
-| `utils/HilalPdfService.kt` | Render `HilalResult.calculationLog` jadi PDF via `android.graphics.pdf.PdfDocument`, simpan ke folder Download publik — tidak diubah dari versi lama |
+| `ui/awalbulan/LaporanHisabActivity.kt` + `activity_laporan_hisab.xml` | Per 2026-09-06: halaman viewer laporan hisab (pengganti download-langsung) — kartu navy+emas meratakan `breakdownSections` jadi tabel bernomor (`item_laporan_table_row.xml`), tombol "Unduh PDF" tunggal di bawah — lihat section 6c |
+| `utils/HilalPdfService.kt` | Per 2026-09-06: `exportViewAsPdf(context, view, fileName)` — render View `LaporanHisabActivity.reportContent` ke Bitmap lalu ke `PdfDocument` (WYSIWYG), simpan via `MediaStore.Downloads` (API 29+) / `WRITE_EXTERNAL_STORAGE` + runtime permission (API ≤28). Versi lama (`generatePdf()` gambar `calculationLog` sebagai teks polos via `canvas.drawText`, simpan langsung ke `File` publik tanpa permission) sudah dihapus — lihat section 6c |
 | `utils/Astronomy.kt` | "Astronomy Engine" (`io.github.cosinekitty.astronomy`) — sekarang **dipakai** oleh `EphemerisCalculator` (`Observer`, `Time`, `searchMoonQuarter`/`nextMoonQuarter`, `searchRiseSet`, `equator`, `horizon`, `elongation`, `illumination`) |
 | `utils/prayerbreakdown/PrayerBreakdownModels.kt` | Model accordion (`PrayerBreakdownSection`/`PrayerBreakdownRow`) — di-reuse dari fitur Waktu Sholat, bukan model baru khusus fitur ini |
 
@@ -197,8 +202,10 @@ perbandingan sistematis banyak tanggal, lihat Known limitations).
 
 `EphemerisCalculator` tidak ada test otomatis (`app/src/androidTest` masih
 boilerplate default) — verifikasi manual: install APK debug, buka "Bulan
-Hijriyah" dari home, cek kartu ringkasan/status/accordion terisi, dan export
-PDF menghasilkan file di Download. Untuk memverifikasi akurasi astronomisnya,
+Hijriyah" dari home, cek kartu ringkasan/status/accordion terisi, buka
+laporan (tombol PDF toolbar) via `LaporanHisabActivity`, dan tekan "Unduh
+PDF" di sana untuk cek file benar tersimpan di Download (lihat section 6c).
+Untuk memverifikasi akurasi astronomisnya,
 bandingkan ijtima'/ghurub yang dihasilkan dengan referensi resmi (mis. jadwal
 Kemenag atau publikasi PCNU/Al-Kaukaba Lamongan) untuk bulan yang sama.
 
@@ -255,6 +262,65 @@ tampil penuh), `tvRowValue` yang dapat `layout_weight="1"` + `gravity="end"`
 tidak mengubah tampilan baris pendek yang sudah ada (Lintang/Bujur/Ketinggian
 di sini, Lintang/Bujur/Deklinasi/dst di Waktu Sholat).
 
+## 6c. Viewer laporan hisab + export PDF WYSIWYG (`LaporanHisabActivity`)
+
+Per 2026-09-06: tombol "Download PDF" yang lama (langsung generate & simpan
+file begitu ditekan) diganti alur "view dulu, baru download" — dipicu
+permintaan user yang share referensi visual laporan resmi (kartu hijau tua +
+ornamen emas + tabel bernomor, lihat riwayat percakapan) dan minta tampilan
+serupa tapi warnanya mengikuti desain app yang sudah ada (palet
+navy/gold_accent), bukan meniru warna referensi mentah-mentah.
+
+- **Kenapa WYSIWYG lewat render-View, bukan gambar ulang tabel di Canvas**:
+  supaya PDF yang di-export dijamin identik dengan apa yang dilihat user di
+  layar (`HilalPdfService.exportViewAsPdf()` cukup `view.draw(Canvas)` ke
+  `Bitmap`, lalu bitmap itu di-scale ke halaman `PdfDocument` lebar A4 sebagai
+  satu gambar) — tidak perlu maintain dua implementasi tabel (satu di XML,
+  satu lagi re-draw manual di Canvas PDF) yang gampang divergen seiring waktu.
+- **Isi tabel** = flatten `HilalResult.breakdownSections` apa adanya
+  (`LaporanHisabActivity.buildTableRows()`) — **bukan** rekonstruksi ulang
+  1:1 dari referensi visual (yang formatnya beda: field ekstra seperti sudut
+  waktu τ Matahari/Bulan, posisi hilal dari ufuq/Matahari, dll belum dihitung
+  di `EphemerisCalculator`/`AdDurrulAniqCalculator` manapun). Sengaja
+  diputuskan begitu (bukan nambah hitungan astronomi baru) untuk menghindari
+  risiko salah rumus di angka hisab — lihat known limitation di section 7
+  kalau nanti mau nyusulin field-field itu.
+- Setiap section tanpa `resultTime` (mis. "Markaz") digabung jadi satu baris
+  multi-baris; section dengan `resultTime` DAN `rows` (Data Matahari/Bulan,
+  Kesimpulan) tampil sebagai baris ringkasan + baris rincian bernomor di
+  bawahnya (indented, warna diredam). Dua baris "Catatan" statis ditambahkan
+  di akhir tabel (kriteria belum terpenuhi kalau relevan + boilerplate
+  menunggu Sidang Isbat Kemenag).
+- Header laporan reuse asset yang sudah ada (`@drawable/logo_alkaukaba_header`,
+  wordmark+bulan sabit putih — sama persis dengan yang dipakai `MainActivity`)
+  — tidak ada asset baru yang di-extract dari referensi visual (ornamen emas
+  di referensi ternyata full vector path SVG, bukan raster, terlalu besar
+  untuk direplikasi 1:1; didekati dengan pembatas emas tipis sesuai instruksi
+  user "sesuaikan dengan desain yang ada untuk warna, komponen lain
+  mendekati saja").
+- Nama "Al-Hasib" di footer dinamis dari `SessionManager.getUserName()`
+  (fallback "Hasib Al-Kaukaba" kalau belum login/nama kosong) — sengaja
+  tidak hardcode nama satu orang, dan tidak ada gambar tanda tangan (yang ada
+  di referensi visual itu tanda tangan tulisan tangan spesifik satu orang,
+  tidak representatif untuk user lain).
+- Fix sekalian bug penyimpanan file lama: `HilalPdfService` versi sebelumnya
+  pakai `Environment.getExternalStoragePublicDirectory()` + `FileOutputStream`
+  langsung TANPA permission apa pun dideklarasikan di manifest — berpotensi
+  gagal di semua versi Android modern (scoped storage API 29+, atau
+  `SecurityException` API 23-28 karena `WRITE_EXTERNAL_STORAGE` tidak pernah
+  diminta). Sekarang API 29+ pakai `MediaStore.Downloads`, API ≤28 minta
+  permission runtime dulu (`LaporanHisabActivity.downloadPdf()`).
+**Verifikasi manual (emulator Pixel6_API34, 2026-09-06)**: alur penuh
+home -> Awal Bulan Hijriyah -> tombol PDF toolbar -> `LaporanHisabActivity`
+-> tombol "Unduh PDF" -> file tersimpan, semuanya jalan tanpa crash. File
+`Laporan_Hisab_<timestamp>.pdf` (277KB) berhasil tersimpan ke `/sdcard/Download/`
+via `MediaStore.Downloads` (jalur API 29+) dan isinya WYSIWYG — persis sama
+dengan tampilan di layar (logo, warna, 21 baris tabel, nama Hasib dari
+`SessionManager.getUserName()`, 2 baris catatan penutup). Jalur legacy
+(API ≤28, `WRITE_EXTERNAL_STORAGE` + runtime permission) belum dicoba di
+device nyata (emulator ini API 34) — masih teori sesuai kode, bukan
+teruji langsung.
+
 ## 7. Known limitations
 
 - [ ] Label "bulan Hijriyah yang dicek" pakai kalender tabular (Kuwaiti
@@ -282,3 +348,15 @@ di sini, Lintang/Bujur/Deklinasi/dst di Waktu Sholat).
       `EphemerisCalculator` utk banyak tanggal/lokasi berbeda — baru
       tervalidasi ketat terhadap 1 contoh kitab (Sya'ban 1434H) + uji
       kewajaran fisis utk tanggal sekarang.
+- [ ] (Viewer laporan, section 6c) Tabel laporan cuma menampilkan field yang
+      sudah dihitung `breakdownSections` (Markaz, Ijtima', ringkasan data
+      Matahari/Bulan, kriteria) — field tambahan ala laporan resmi Kemenag
+      (sudut waktu τ Matahari/Bulan, posisi hilal dari ufuq/dari Matahari,
+      "keadaan hilal", "lebar Nurul Hilal") belum dihitung di mesin hisab
+      manapun. Kalau nanti user minta field-field itu, perlu nambah rumus
+      baru ke `EphemerisCalculator`/`AdDurrulAniqCalculator` dulu (bukan
+      sekadar ubah UI) — dan itu perlu divalidasi cermat karena angka hisab.
+- [ ] (Viewer laporan, section 6c) Belum ada verifikasi manual di
+      device/emulator — baru lolos compile. Perlu dicek tampilan kartu di
+      berbagai ukuran layar dan file PDF hasil `exportViewAsPdf()` benar
+      tersimpan & valid dibuka di Download.
