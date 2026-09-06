@@ -7,16 +7,22 @@ import site.elahady.alkaukaba.model.HilalInput
 import kotlin.math.abs
 
 /**
- * Regresi untuk bug tanda terbalik di `screenRight` yang diperbaiki commit
- * "Perbaiki tanda komponen kanan di rumus kemiringan limb terang MoonTilt" --
- * versi lama mencerminkan (mirror) orientasi limb terang secara horizontal,
- * lolos dari test lama karena kasus "hilal senyum" (dA=0) tidak menguji
- * komponen kiri-kanan sama sekali (lihat KDoc MoonTilt.kt).
+ * Regresi untuk bug tanda terbalik di `screenRight` (`cross(screenUp, moon)`
+ * seharusnya `cross(moon, screenUp)`) -- versi lama mencerminkan (mirror)
+ * orientasi limb terang secara horizontal. Bug ini lolos dari test lama
+ * karena dua sebab: (1) kasus "hilal senyum" (dA=0) tidak menguji komponen
+ * kiri-kanan sama sekali (suku itu nol), dan (2) validasi silang terhadap
+ * rumus posisi-sudut Meeus (χ) + parallactic angle (q) saat itu memakai
+ * kombinasi tanda `χ - q` yang ternyata IKUT tercermin, jadi dua bug saling
+ * "membenarkan" satu sama lain -- baru ketahuan setelah dicocokkan langsung
+ * ke pengamatan visual di Stellarium (bukan ke rumus lain).
  *
  * Kasus dA=0 di bawah tetap dipakai sebagai kasus DEGENERATE yang exact
  * (theta pasti 0 atau 180 dari rumus, tanpa perlu hitung tangan), sementara
- * kasus dA!=0 dipakai untuk menguji SISI kiri/kanan secara eksplisit --
- * itulah yang sempat kebalik dan tidak tertangkap sebelumnya.
+ * kasus dA!=0 dipakai untuk menguji SISI kiri/kanan secara eksplisit
+ * berdasarkan fakta kompas: menghadap Utara (moon az=0), tangan kanan =
+ * Timur -- jadi Matahari di Timur (azimuth lebih besar) harus jatuh di
+ * KANAN layar, bukan kiri.
  */
 class MoonTiltTest {
 
@@ -52,31 +58,31 @@ class MoonTiltTest {
     }
 
     @Test
-    fun `matahari di timur bulan membuat limb terang menghadap kiri layar bukan kanan`() {
+    fun `matahari di timur bulan membuat limb terang menghadap kanan layar bukan kiri`() {
         // Bulan tepat di ufuk menghadap utara (az=0, alt=0) -- pada posisi ini
-        // "atas" layar = zenith persis dan "kanan" layar = BARAT persis (lihat
-        // KDoc MoonTilt: arah kanan layar berlawanan dgn arah timur kompas).
+        // "atas" layar = zenith persis dan "kanan" layar = TIMUR persis
+        // (fakta kompas: menghadap Utara, tangan kanan = Timur).
         // Matahari diletakkan di TIMUR bulan (az=30, sedikit di bawah ufuk,
-        // wajar utk saat ghurub) -- karena kanan layar = barat, Matahari di
-        // timur harus jatuh di SISI KIRI layar, yaitu theta NEGATIF (limb
-        // condong kiri-bawah). Versi lama (bug tanda kebalik) akan
-        // menghasilkan theta POSITIF (kanan-bawah) untuk input yang sama --
-        // persis salah arah yang dilihat user.
+        // wajar utk saat ghurub) -- karena kanan layar = timur, Matahari di
+        // timur harus jatuh di SISI KANAN layar, yaitu theta POSITIF (limb
+        // condong kanan-bawah). Versi lama (bug tanda kebalik) menghasilkan
+        // theta NEGATIF (kiri-bawah) untuk input yang sama -- persis salah
+        // arah dari yang benar-benar terlihat di langit/Stellarium.
         val theta = MoonTilt.brightLimbAngleDegrees(
             moonAzimuthDeg = 0.0,
             moonAltitudeDeg = 0.0,
             sunAzimuthDeg = 30.0,
             sunAltitudeDeg = -5.0
         )
-        assertTrue("theta ($theta) harus negatif (limb condong ke kiri layar)", theta < 0.0)
-        assertTrue("theta ($theta) harus di kuadran kiri-bawah (-180..-90)", theta in -180.0..-90.0)
+        assertTrue("theta ($theta) harus positif (limb condong ke kanan layar)", theta > 0.0)
+        assertTrue("theta ($theta) harus di kuadran kanan-bawah (90..180)", theta in 90.0..180.0)
     }
 
     @Test
-    fun `matahari di barat bulan adalah cerminan kasus timur - limb terang menghadap kanan layar`() {
+    fun `matahari di barat bulan adalah cerminan kasus timur - limb terang menghadap kiri layar`() {
         // Cerminan tepat dari test di atas (Matahari di BARAT bulan, az=-30
-        // alih-alih +30, altitude sama) -- kanan layar = barat, jadi Matahari
-        // di barat harus jatuh di SISI KANAN layar, theta POSITIF, dan besarnya
+        // alih-alih +30, altitude sama) -- kanan layar = timur, jadi Matahari
+        // di barat harus jatuh di SISI KIRI layar, theta NEGATIF, dan besarnya
         // sama persis (simetri cermin) dengan kasus timur di atas.
         val thetaTimur = MoonTilt.brightLimbAngleDegrees(
             moonAzimuthDeg = 0.0,
@@ -90,7 +96,7 @@ class MoonTiltTest {
             sunAzimuthDeg = -30.0,
             sunAltitudeDeg = -5.0
         )
-        assertTrue("theta ($thetaBarat) harus positif (limb condong ke kanan layar)", thetaBarat > 0.0)
+        assertTrue("theta ($thetaBarat) harus negatif (limb condong ke kiri layar)", thetaBarat < 0.0)
         assertEquals(-thetaTimur, thetaBarat, 1e-6)
     }
 

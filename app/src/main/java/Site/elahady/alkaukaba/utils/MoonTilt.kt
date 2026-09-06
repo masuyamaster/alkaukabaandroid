@@ -13,20 +13,24 @@ import kotlin.math.sqrt
  *
  * Diturunkan dengan proyeksi vektor: arah Matahari diproyeksikan ke bidang
  * tangen langit di posisi Bulan, dengan basis "atas" = komponen zenith yang
- * tegak lurus arah pandang ke Bulan, dan "kanan" tegak lurus keduanya
- * (orientasi mata/kamera standar, right-handed). Tervalidasi terhadap kasus
- * "hilal senyum" khatulistiwa: saat azimuth Matahari & Bulan sama dan Matahari
- * jauh di bawah ufuk relatif Bulan, limb terang mengarah lurus ke bawah
- * (menuju ufuk) — sesuai fenomena hilal tipis yang dikenal di lintang rendah.
- * Kasus ini TIDAK menguji tanda komponen kiri-kanan (dA=0 membuat suku itu
- * nol) - lihat catatan di bawah soal versi yang sempat lolos dengan tanda
- * kebalik justru karena celah ini.
+ * tegak lurus arah pandang ke Bulan, dan "kanan" tegak lurus keduanya, searah
+ * dengan kanan sejati pengamat (fakta kompas: menghadap Utara, tangan kanan
+ * = Timur — azimuth lebih besar = lebih ke kanan pengamat, tidak dicerminkan).
  *
- * Juga dicocokkan langsung terhadap rumus posisi-sudut limb terang standar
- * (Meeus, dari RA/Dec + parallactic angle) memakai data Bulan & Matahari
- * sungguhan dari Stellarium pada momen yang sama - keduanya cocok persis
- * setelah versi sebelumnya (yang komponen "kanan"-nya kebalik/tercermin,
- * gara-gara operasi cross product yang salah arah) diperbaiki.
+ * Tervalidasi terhadap kasus "hilal senyum" khatulistiwa: saat azimuth
+ * Matahari & Bulan sama dan Matahari jauh di bawah ufuk relatif Bulan, limb
+ * terang mengarah lurus ke bawah (menuju ufuk) — sesuai fenomena hilal tipis
+ * yang dikenal di lintang rendah. Kasus ini TIDAK menguji tanda komponen
+ * kiri-kanan (dA=0 membuat suku itu nol).
+ *
+ * Komponen kiri-kanan sendiri tervalidasi terhadap pengamatan langsung di
+ * Stellarium (posisi Matahari relatif Bulan di layar, bukan cuma kecocokan
+ * rumus lain) — versi sebelumnya (`cross(screenUp, moon)`, tanpa pembalikan
+ * argumen) ternyata mencerminkan arah kiri-kanan secara horizontal walau
+ * lolos cocok dengan rumus posisi-sudut Meeus (χ) + parallactic angle,
+ * karena kombinasi tanda χ dan q yang dipakai saat itu ikut tercermin juga
+ * sehingga saling "membenarkan" satu sama lain. `cross(moon, screenUp)` di
+ * bawah ini adalah versi yang sudah dikoreksi.
  *
  * Rumus tertutup (hasil reduksi aljabar dari operasi vektor di atas — dua
  * suku ini yang sebenarnya dihitung, vektor 3D cuma alat bantu penurunan):
@@ -34,17 +38,16 @@ import kotlin.math.sqrt
  * dan dA = As - Am:
  *
  *   theta = atan2(
- *       -cos(hs) * sin(dA),
+ *       cos(hs) * sin(dA),
  *       sin(hs) * cos(hm) - cos(hs) * sin(hm) * cos(dA)
  *   )
  *
  * Bentuk ini persis rumus initial bearing/forward azimuth trigonometri bola
  * (dipakai juga untuk parallactic angle di astronomi & great-circle course
- * di navigasi, dengan tanda suku pertama dibalik karena arah "kanan" di
- * layar berlawanan arah dengan arah "timur" pada bearing kompas biasa),
- * dengan altitude berperan seperti latitude dan azimuth seperti longitude —
- * theta adalah "arah kompas" dari Bulan menuju Matahari di langit, diukur
- * dari zenith (bukan dari utara sejati).
+ * di navigasi), dengan altitude berperan seperti latitude dan azimuth
+ * seperti longitude — theta adalah "arah kompas" dari Bulan menuju Matahari
+ * di langit sebagaimana benar-benar terlihat mata, diukur dari zenith
+ * (bukan dari utara sejati).
  */
 object MoonTilt {
 
@@ -59,7 +62,7 @@ object MoonTilt {
         val up = doubleArrayOf(0.0, 0.0, 1.0)
 
         val screenUp = normalize(subtract(up, scale(moon, dot(up, moon))))
-        val screenRight = cross(screenUp, moon)
+        val screenRight = cross(moon, screenUp)
 
         val sunPerp = subtract(sun, scale(moon, dot(sun, moon)))
         val right = dot(sunPerp, screenRight)
