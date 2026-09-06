@@ -18,6 +18,15 @@ import kotlin.math.sqrt
  * "hilal senyum" khatulistiwa: saat azimuth Matahari & Bulan sama dan Matahari
  * jauh di bawah ufuk relatif Bulan, limb terang mengarah lurus ke bawah
  * (menuju ufuk) — sesuai fenomena hilal tipis yang dikenal di lintang rendah.
+ * Kasus ini TIDAK menguji tanda komponen kiri-kanan (dA=0 membuat suku itu
+ * nol) - lihat catatan di bawah soal versi yang sempat lolos dengan tanda
+ * kebalik justru karena celah ini.
+ *
+ * Juga dicocokkan langsung terhadap rumus posisi-sudut limb terang standar
+ * (Meeus, dari RA/Dec + parallactic angle) memakai data Bulan & Matahari
+ * sungguhan dari Stellarium pada momen yang sama - keduanya cocok persis
+ * setelah versi sebelumnya (yang komponen "kanan"-nya kebalik/tercermin,
+ * gara-gara operasi cross product yang salah arah) diperbaiki.
  *
  * Rumus tertutup (hasil reduksi aljabar dari operasi vektor di atas — dua
  * suku ini yang sebenarnya dihitung, vektor 3D cuma alat bantu penurunan):
@@ -25,15 +34,17 @@ import kotlin.math.sqrt
  * dan dA = As - Am:
  *
  *   theta = atan2(
- *       cos(hs) * sin(dA),
+ *       -cos(hs) * sin(dA),
  *       sin(hs) * cos(hm) - cos(hs) * sin(hm) * cos(dA)
  *   )
  *
  * Bentuk ini persis rumus initial bearing/forward azimuth trigonometri bola
  * (dipakai juga untuk parallactic angle di astronomi & great-circle course
- * di navigasi), dengan altitude berperan seperti latitude dan azimuth
- * seperti longitude — theta adalah "arah kompas" dari Bulan menuju Matahari
- * di langit, diukur dari zenith (bukan dari utara sejati).
+ * di navigasi, dengan tanda suku pertama dibalik karena arah "kanan" di
+ * layar berlawanan arah dengan arah "timur" pada bearing kompas biasa),
+ * dengan altitude berperan seperti latitude dan azimuth seperti longitude —
+ * theta adalah "arah kompas" dari Bulan menuju Matahari di langit, diukur
+ * dari zenith (bukan dari utara sejati).
  */
 object MoonTilt {
 
@@ -48,7 +59,7 @@ object MoonTilt {
         val up = doubleArrayOf(0.0, 0.0, 1.0)
 
         val screenUp = normalize(subtract(up, scale(moon, dot(up, moon))))
-        val screenRight = negate(cross(screenUp, moon))
+        val screenRight = cross(screenUp, moon)
 
         val sunPerp = subtract(sun, scale(moon, dot(sun, moon)))
         val right = dot(sunPerp, screenRight)
@@ -75,8 +86,6 @@ object MoonTilt {
         doubleArrayOf(a[0] - b[0], a[1] - b[1], a[2] - b[2])
 
     private fun scale(a: DoubleArray, s: Double) = doubleArrayOf(a[0] * s, a[1] * s, a[2] * s)
-
-    private fun negate(a: DoubleArray) = doubleArrayOf(-a[0], -a[1], -a[2])
 
     private fun normalize(a: DoubleArray): DoubleArray {
         val mag = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2])
