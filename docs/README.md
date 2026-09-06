@@ -81,6 +81,11 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
   hisab Nusantara, Wujudul Hilal vs Imkanur Rukyat Neo-MABIMS, KHGT) yang
   jadi latar belakang konseptual fitur Bulan Hijriyah & Fase Bulan — bukan
   dokumen arsitektur/rumus teknis.
+- [strategi-unit-test.md](strategi-unit-test.md) — bukan per-fitur, metodologi
+  lintas-fitur: kapan pakai golden/reference test vs mock test, teknik
+  `mockkObject` untuk dependency berupa Kotlin `object`, alat tambahan
+  (`InstantTaskExecutorRule`/`coroutines-test`/Turbine) dan kapan masing-masing
+  dibutuhkan, serta catatan kompatibilitas versi mockk vs Kotlin plugin 1.7.10.
 
 ## Status dokumentasi
 
