@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
+    tools:context=".ui.awalbulan.LaporanHisabActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="16dp">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@android:color/transparent">
+
+            <!-- reportContent: View ini yang di-capture jadi bitmap untuk export PDF,
+                 supaya hasil PDF persis sama dengan tampilan di layar. -->
+            <LinearLayout
+                android:id="@+id/reportContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card_gradient_navy"
+                android:padding="20dp">
+
+                <!-- Header: logo + wordmark -->
+                <ImageView
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/logo_alkaukaba_header"
+                    android:contentDescription="@string/app_name"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="LINGKARAN STUDI ILMU HISAB RUKYAT"
+                    android:textColor="@color/gold_accent"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12"/>
+
+                <View
+                    android:layout_width="64dp"
+                    android:layout_height="1dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:background="@color/gold_accent"/>
+
+                <TextView
+                    android:id="@+id/tvReportTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:textColor="@color/text_on_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="3dp"
+                    tools:text="PERHITUNGAN AWAL BULAN QOMARIYAH\nMETODE ASTRONOMY ENGINE"/>
+
+                <TextView
+                    android:id="@+id/tvReportSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:textColor="@color/gold_accent_soft"
+                    android:textSize="12sp"
+                    android:lineSpacingExtra="2dp"
+                    tools:text="Menjelang Ramadhan 1447 H\nGhurub: 29 Februari 2026"/>
+
+                <!-- Tabel rincian -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="vertical"
+                    android:background="#26FFFFFF"
+                    android:padding="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@color/gold_accent"
+                        android:paddingVertical="10dp">
+
+                        <TextView
+                            android:layout_width="28dp"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="No"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/login_bg_deep"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginEnd="10dp"
+                            android:text="Nama-Nama Istilah"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/login_bg_deep"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Data Matahari dan Bulan"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/login_bg_deep"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layoutReportRows"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@color/login_bg_deep"
+                        android:paddingHorizontal="8dp"/>
+
+                </LinearLayout>
+
+                <!-- Footer -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:text="Sumber Data: Perhitungan Internal Aplikasi Al-Kaukaba"
+                    android:textColor="#99F6F2E9"
+                    android:textSize="9sp"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="20dp"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Al-Hasib,"
+                        android:textColor="@color/gold_accent"
+                        android:textSize="11sp"/>
+
+                    <TextView
+                        android:id="@+id/tvHasibName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="28dp"
+                        android:textColor="@color/text_on_dark"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        tools:text="Nama Hasib"/>
+
+                    <View
+                        android:layout_width="140dp"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@color/gold_accent_soft"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Anggota Lingkaran Studi Hisab Rukyat Al-Kaukaba"
+                        android:textColor="#CCF6F2E9"
+                        android:textSize="9sp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnDownloadPdf"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="UNDUH PDF"
+        android:textColor="@color/login_bg_deep"
+        android:backgroundTint="@color/gold_accent"
+        app:cornerRadius="28dp"
+        android:elevation="6dp"
+        android:padding="16dp"/>
+
+</LinearLayout>

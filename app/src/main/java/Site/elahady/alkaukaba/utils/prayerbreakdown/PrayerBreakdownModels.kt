@@ -1,12 +1,14 @@
 package site.elahady.alkaukaba.utils.prayerbreakdown
 
-data class PrayerBreakdownRow(val label: String, val value: String)
+import java.io.Serializable
+
+data class PrayerBreakdownRow(val label: String, val value: String) : Serializable
 
 data class PrayerBreakdownSection(
     val prayerLabel: String,
     val resultTime: String,
     val rows: List<PrayerBreakdownRow>
-)
+) : Serializable
 
 /**
  * Titik ekstensi: metode perhitungan waktu sholat manapun BOLEH (tidak wajib) punya

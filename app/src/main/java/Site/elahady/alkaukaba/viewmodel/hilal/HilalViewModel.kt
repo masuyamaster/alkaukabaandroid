@@ -3,10 +3,8 @@ package site.elahady.alkaukaba.viewmodel.hilal
 import site.elahady.alkaukaba.model.HilalInput
 import site.elahady.alkaukaba.model.HilalResult
 import site.elahady.alkaukaba.utils.EphemerisCalculator
-import site.elahady.alkaukaba.utils.HilalPdfService
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.addurrulaniq.AdDurrulAniqCalculator
-import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -28,12 +26,6 @@ class HilalViewModel : ViewModel() {
             AdDurrulAniqCalculator.calculate(input)
         } else {
             EphemerisCalculator.calculate(input)
-        }
-    }
-
-    fun generatePdf(context: Context) {
-        _calculationResult.value?.let {
-            HilalPdfService.generatePdf(context, it)
         }
     }
 }

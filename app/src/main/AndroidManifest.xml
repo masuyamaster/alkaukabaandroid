@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Hanya dipakai di API 28 ke bawah untuk simpan PDF laporan hisab ke folder Download publik;
+         API 29+ pakai MediaStore (lihat HilalPdfService), jadi izin ini tidak diminta di sana. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <application
         android:name=".AlKaukabaApplication"
@@ -39,6 +42,9 @@
             android:exported="false" />
         <activity
             android:name="site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity"
+            android:exported="false" />
+        <activity
+            android:name="site.elahady.alkaukaba.ui.awalbulan.LaporanHisabActivity"
             android:exported="false" />
         <activity
             android:name="site.elahady.alkaukaba.Splashscreen"

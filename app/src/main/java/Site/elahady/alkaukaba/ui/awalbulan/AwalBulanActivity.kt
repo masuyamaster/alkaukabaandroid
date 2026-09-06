@@ -8,6 +8,7 @@ import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
 import site.elahady.alkaukaba.viewmodel.hilal.HilalViewModel
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
@@ -65,7 +66,7 @@ class AwalBulanActivity : AppCompatActivity() {
         binding.includeToolbar.btnToolbarAction.apply {
             visibility = View.VISIBLE
             setImageResource(R.drawable.ic_pdf_icon)
-            setOnClickListener { viewModel.generatePdf(this@AwalBulanActivity) }
+            setOnClickListener { openLaporanHisab() }
         }
         binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
         binding.btnCalculate.setOnClickListener { runCalculation() }
@@ -135,6 +136,17 @@ class AwalBulanActivity : AppCompatActivity() {
 
             binding.layoutHilalBreakdownContainer.addView(itemBinding.root)
         }
+    }
+
+    private fun openLaporanHisab() {
+        val result = viewModel.calculationResult.value
+        if (result == null) {
+            Toast.makeText(this, "Hitung hasil hisab terlebih dahulu", Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(Intent(this, LaporanHisabActivity::class.java).apply {
+            putExtra(LaporanHisabActivity.EXTRA_RESULT, result)
+        })
     }
 
     private fun resolveLocationAndCalculate() {

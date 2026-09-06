@@ -1,6 +1,7 @@
 package site.elahady.alkaukaba.model
 
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
+import java.io.Serializable
 
 data class HilalInput(
     val latitude: Double,
@@ -24,4 +25,4 @@ data class HilalResult(
     val ghurubTime: String,
     val breakdownSections: List<PrayerBreakdownSection>, // Rincian per-seksi, dirender sebagai accordion (reuse komponen dari fitur Waktu Sholat)
     val calculationLog: String // Sama isinya dengan breakdownSections, diratakan jadi teks polos untuk export PDF
-)
+) : Serializable // supaya bisa dikirim lewat Intent extra ke LaporanHisabActivity
