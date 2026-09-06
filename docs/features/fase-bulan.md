@@ -73,11 +73,10 @@ Gerhana — tidak ada perhitungan astronomi baru yang ditambahkan.
 | `ui/widget/MoonPhaseView.kt` | Custom `View`: bentuk sabit/cembung dari dua-arc `Path` (lebar elips terminator = `r * |1 - 2k|`, `k` = fraksi tersinari). Di-fill pakai `BitmapShader` dari `res/drawable-nodpi/moon_texture.jpg` (bukan warna flat) supaya terlihat foto asli — bisa dimatikan per-instance lewat `setRealisticTexture(false)` (fallback ke `flatBrightPaint` putih flat), dipakai `AwalBulanActivity` untuk ilustrasi hilal. Per 2026-09-05 (lihat §4 lanjutan di bawah untuk detail lengkap termasuk 2 iterasi salah yang sempat ter-commit): sisi malam tetap piringan solid opak (`nightBasePaint`, blok apa pun di belakangnya) tapi tekstur terangnya "dihapus" di sisi malam dengan tepi melembut alami (bukan lagi garis tajam) — bisa dimatikan lewat `setSoftNightSide(false)` (kembali ke tepi tajam, dipakai `AwalBulanActivity` untuk kejelasan bentuk hilal saat rukyah). |
 | `res/drawable-nodpi/moon_texture.jpg` | Foto purnama Bulan asli, di-crop dari `File:FullMoon2010.jpg` di Wikimedia Commons — © Gregory H. Revera, lisensi CC BY-SA 3.0 (**atribusi wajib** kalau file/versi turunannya didistribusikan lagi di luar app ini; ditampilkan sebagai UI di dalam app tidak butuh watermark, tapi kredit ini harus tetap ada di sini & tidak boleh dihapus). `drawable-nodpi` supaya didekode di resolusi piksel aslinya di semua densitas device, bukan di-scale otomatis. Per 2026-09-05: sumber awal (`File:Full moon.jpeg`, NASA, domain publik) diganti karena piringan bulannya tidak simetris dalam frame (margin kiri/atas ada, kanan/bawah nol — disc-nya kepotong tepi foto), bikin celah kelihatan antara tepi foto & lingkaran gold yang digambar `MoonPhaseView`. `FullMoon2010.jpg` di-crop presisi (deteksi bounding box piksel non-hitam via kode Java sekali pakai, radius = setengah sisi terpanjang bbox, crop persegi center pas di situ) supaya piringannya nyaris pas isi seluruh frame simetris (margin ~4-5px di semua sisi pada file 900×900) — align rapi dengan lingkaran yang digambar, tanpa celah. |
 | `utils/MoonPhaseLabel.kt` | 8 bucket nama fase (masing-masing 45°) dari sudut sinodik 0-360°. |
-| `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu navy besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
+| `ui/fasebulan/FaseBulanActivity.kt` + `activity_fase_bulan.xml` | Layar detail: kartu hitam besar (ilustrasi + nama fase + %), kartu putih "Detail Astronomis" (magnitude/jarak/radius/RA-Dec/Az-Alt/terbit-terbenam), lalu kartu putih daftar 4 fase mendatang. |
 | `MainActivity.kt` | `setupMoonPhaseCard()` mengisi kartu home + wiring klik ke `FaseBulanActivity`. |
-| `activity_main.xml` | Kartu `cardMoonPhase`/`btnMoonPhase` (gaya `bg_card_gradient_navy`, konsisten dengan kartu Gerhana). |
+| `activity_main.xml` | Kartu `cardMoonPhase`/`btnMoonPhase` (background `@color/black`, per 2026-09-06 - lihat catatan di bawah). |
 | `ui/widget/ZoomableImageView.kt` + `res/layout/dialog_moon_zoom.xml` | Modal zoom (per 2026-09-05): tap ilustrasi 160dp di layar detail → `FaseBulanActivity.showMoonZoomDialog()` render `moonPhaseView.renderToBitmap(1024)` ke `Dialog` fullscreen custom (`android.R.style.Theme_Black_NoTitleBar_Fullscreen`, bukan `BottomSheetDialog` seperti dialog lain di app ini — drag-to-dismiss bottom sheet akan bentrok dengan gesture pan saat zoom). `ZoomableImageView` (extends `AppCompatImageView`, `scaleType=MATRIX`) implementasi pinch-zoom/pan/double-tap manual pakai `ScaleGestureDetector`+`GestureDetector`+`Matrix` — bukan library (`PhotoView` dkk) karena repo belum punya dependency image-zoom apa pun & kebutuhannya sederhana (satu bitmap persegi). `StarfieldView` (lihat baris di bawah) juga dipasang di belakang `ZoomableImageView` di layout ini, supaya background hitam modal ikut penuh bintang seperti kartu Fase Bulan. Known gap: ada strip tipis warna cream di ujung atas modal (area status bar) yang belum berhasil dihilangkan meski sudah dicoba beberapa pendekatan (`WindowCompat.setDecorFitsSystemWindows`, `FLAG_LAYOUT_NO_LIMITS`, `WindowInsetsControllerCompat.hide()`, `window.setLayout(MATCH_PARENT,...)`) — dugaan sementara terkait `targetSdk 36` yang meng-enforce edge-to-edge dengan cara yang belum cocok dengan tema fullscreen dialog lama ini; murni kosmetik, tidak mengganggu fungsi zoom. |
-| `utils/CardGradientColor.kt` | (per 2026-09-05) Sampling piksel sungguhan dari `cardView.background` (bukan tebak rumus gradient) untuk `MoonPhaseView.setNightBaseColor()` — lihat §4 lanjutan "requirement sisi malam" untuk kenapa & riwayat percobaan sebelumnya yang gagal. |
 | `ui/widget/StarfieldView.kt` | Custom `View` (per 2026-09-05): gambar ~70 bintang (posisi/ukuran/alpha random tapi seed tetap, jadi tidak "berkedip" tiap `invalidate()`) sebagai layer paling belakang di kartu Fase Bulan (`activity_fase_bulan.xml` & `activity_main.xml`, sebelum `ic_sparkle`/`dot_star` yang sudah ada) — supaya kartu terasa seperti langit malam sungguhan, bukan cuma gradient + 1-2 titik dekoratif. Tidak dipakai di kartu hilal `AwalBulanActivity` (tidak diminta). |
 
 **Sisi malam opak + terminator lembut (per 2026-09-05, revisi final):**
@@ -190,26 +189,31 @@ dicampur** (klarifikasi user setelah iterasi opak di atas sempat dikira
    cuma untuk satu kali render (swap-restore `nightBasePaint.color` di
    dalam `renderToBitmap`), tidak mengubah warna default View.
 
-   Kartu home & detail pakai `bg_card_gradient_navy` (gradient diagonal
-   `navy_gradient_top` #1D2A45 → `login_bg_deep` #10192A), BUKAN warna
-   flat. Percobaan pertama: asumsi `nightBasePaint` default `#10192A`
-   (salah satu ujung gradient) "sudah cukup dekat" — user melaporkan masih
-   kelihatan jelas beda (piringan navy vs background di sekitarnya), karena
-   Bulan biasanya tidak persis di ujung gradient yang paling gelap.
-   Percobaan kedua: aproksimasi manual - proyeksikan posisi Bulan ke fraksi
-   `(fx + fy) / 2` di sepanjang diagonal card, lalu interpolasi RGB linear
-   antara dua warna gradient - lebih baik tapi masih menyisakan garis
-   siluet tipis (rumus Android untuk `android:angle` gradient tidak
-   benar-benar diagonal sudut-ke-sudut sederhana, jadi aproksimasi manapun
-   akan sedikit meleset). **Solusi final** di `utils/CardGradientColor.kt`:
-   render `cardView.background` (drawable APAPUN, bukan cuma gradient
-   khusus ini) ke `Bitmap` seukuran card lewat `Canvas`, lalu baca piksel
-   sungguhan (`Bitmap.getPixel()`) tepat di posisi tengah `MoonPhaseView` -
-   hasilnya identik dengan yang benar-benar dirender sistem, bukan tebakan
-   rumus. Dipanggil dari `MainActivity.setupMoonPhaseCard()` dan
-   `FaseBulanActivity.onCreate()` lewat `cardView.doOnLayout { ... }`
-   (perlu width/height/posisi asli hasil layout pass, belum tersedia
-   sebelum itu) → `MoonPhaseView.setNightBaseColor(color)`.
+   Kartu home & detail tadinya pakai `bg_card_gradient_navy` (gradient
+   diagonal `navy_gradient_top` #1D2A45 → `login_bg_deep` #10192A), BUKAN
+   warna flat. Percobaan pertama: asumsi `nightBasePaint` default
+   `#10192A` (salah satu ujung gradient) "sudah cukup dekat" — user
+   melaporkan masih kelihatan jelas beda (piringan navy vs background di
+   sekitarnya), karena Bulan biasanya tidak persis di ujung gradient yang
+   paling gelap. Percobaan kedua: aproksimasi manual - proyeksikan posisi
+   Bulan ke fraksi `(fx + fy) / 2` di sepanjang diagonal card, lalu
+   interpolasi RGB linear antara dua warna gradient - lebih baik tapi
+   masih menyisakan garis siluet tipis (rumus Android untuk
+   `android:angle` gradient tidak benar-benar diagonal sudut-ke-sudut
+   sederhana, jadi aproksimasi manapun akan sedikit meleset). Percobaan
+   ketiga (`utils/CardGradientColor.kt`, sekarang sudah dihapus): render
+   `cardView.background` ke `Bitmap` seukuran card lewat `Canvas`, lalu
+   baca piksel sungguhan (`Bitmap.getPixel()`) tepat di posisi tengah
+   `MoonPhaseView` — akurat, tapi jadi tidak relevan lagi begitu user
+   memutuskan (2026-09-06) kartu home & detail diganti ke background hitam
+   solid (`@color/black`), bukan gradient — requirement "sisi malam
+   menyatu dengan background lokal" TIDAK berubah, cuma nilai background
+   lokalnya sekarang konstan hitam, jadi cukup
+   `MoonPhaseView.setNightBaseColor(Color.BLACK)` langsung di
+   `MainActivity.setupMoonPhaseCard()` & `FaseBulanActivity.onCreate()`,
+   tanpa perlu sampling gradient/`doOnLayout` lagi. Modal zoom tidak
+   berubah (sudah hitam solid dari awal, lihat baris `renderToBitmap` di
+   atas).
 
 Alur data (fase & info geosentris saat ini, tanpa lokasi):
 `Time.fromMillisecondsSince1970(now)` → `moonPhase(time)` (sudut sinodik
