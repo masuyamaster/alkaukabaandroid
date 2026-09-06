@@ -101,6 +101,35 @@ class MoonTiltTest {
     }
 
     @Test
+    fun `data sungguhan dari Stellarium - limb terang di kuadran kiri-atas sesuai pengamatan visual`() {
+        // Sumber kebenaran EKSTERNAL (bukan rumus lain, bukan penalaran
+        // vektor sendiri): pengamatan visual langsung di Stellarium Web,
+        // 2026-09-07 18:32 WIB, lokasi -7.11316,112.43213 -- inilah kasus
+        // yang MEMBONGKAR bug mirror `screenRight` (lihat KDoc kelas ini).
+        // User melihat sendiri di screenshot Stellarium: Matahari berada di
+        // kiri-atas Bulan. Data Az/Alt persis dari panel info Stellarium
+        // saat itu:
+        //   Bulan    Az=305.038 Alt=-59.174
+        //   Matahari Az=274.139 Alt=-15.947
+        // (Kedua benda di bawah ufuk -- Stellarium dipakai dengan ground
+        // disembunyikan, jadi ini bukan momen bisa dirukyah sungguhan, tapi
+        // tetap data Az/Alt riil yang sah untuk uji arah.)
+        // Matahari (az lebih kecil -> kiri, alt lebih tinggi -> atas)
+        // dibanding Bulan, jadi limb terang harus di KIRI-ATAS: theta
+        // negatif, di rentang -90..0. Versi lama (bug kebalik) akan
+        // menghasilkan +41 (kanan-atas), bukan -41 (kiri-atas).
+        val theta = MoonTilt.brightLimbAngleDegrees(
+            moonAzimuthDeg = 305.038,
+            moonAltitudeDeg = -59.174,
+            sunAzimuthDeg = 274.139,
+            sunAltitudeDeg = -15.947
+        )
+        assertTrue("theta ($theta) harus negatif (limb condong ke kiri layar)", theta < 0.0)
+        assertTrue("theta ($theta) harus di kuadran kiri-atas (-90..0)", theta in -90.0..0.0)
+        assertEquals(-41.015, theta, 0.01)
+    }
+
+    @Test
     fun `dipakai dengan geometri hilal sungguhan saat ghurub, limb terang menghadap paruh bawah bukan paruh atas`() {
         // Integrasi dgn EphemerisCalculator persis seperti dipanggil di
         // AwalBulanActivity -- saat ghurub, Matahari selalu di bawah ufuk
