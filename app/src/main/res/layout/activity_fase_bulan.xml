@@ -28,7 +28,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
-                android:background="@drawable/bg_card_gradient_navy">
+                android:background="@color/black">
 
                 <site.elahady.alkaukaba.ui.widget.StarfieldView
                     android:layout_width="match_parent"

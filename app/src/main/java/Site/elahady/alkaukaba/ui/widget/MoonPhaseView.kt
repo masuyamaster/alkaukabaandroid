@@ -125,12 +125,8 @@ class MoonPhaseView @JvmOverloads constructor(
 
     /**
      * Ganti warna dasar sisi malam (default `#10192A`) - dipakai supaya sisi
-     * malam menyatu dengan background sungguhan di lokasi Bulan ditampilkan
-     * (kartu Fase Bulan pakai gradient, bukan warna flat, jadi `#10192A`
-     * bawaan cuma akurat kalau Bulan pas di ujung gradient yang paling
-     * gelap). Lihat [site.elahady.alkaukaba.utils.CardGradientColor] untuk
-     * cara hitung warna gradient di posisi Bulan sungguhan. Tetap opak
-     * (bukan transparan) - cuma warnanya yang berubah.
+     * malam menyatu dengan background sungguhan di lokasi Bulan ditampilkan.
+     * Tetap opak (bukan transparan) - cuma warnanya yang berubah.
      */
     fun setNightBaseColor(color: Int) {
         nightBasePaint.color = color

@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.doOnLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -52,7 +51,6 @@ import kotlinx.coroutines.withContext
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityFaseBulanBinding
 import site.elahady.alkaukaba.ui.widget.ZoomableImageView
-import site.elahady.alkaukaba.utils.CardGradientColor
 import site.elahady.alkaukaba.utils.MoonPhaseLabel
 import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
@@ -90,15 +88,9 @@ class FaseBulanActivity : AppCompatActivity() {
 
         binding.moonPhaseView.setOnClickListener { showMoonZoomDialog() }
 
-        // Sisi malam kartu ini pakai gradient (bg_card_gradient_navy), bukan
-        // warna flat - warna default MoonPhaseView cuma akurat di satu ujung
-        // gradient, jadi hitung warna sungguhan di posisi Bulan begitu layout
-        // selesai (perlu width/height/posisi asli, belum tersedia di onCreate).
-        binding.cardMoonPhaseDetail.doOnLayout {
-            binding.moonPhaseView.setNightBaseColor(
-                CardGradientColor.approximateAt(binding.cardMoonPhaseDetail, binding.moonPhaseView)
-            )
-        }
+        // Kartu ini pakai background hitam solid, jadi sisi malam Bulan
+        // ikut hitam juga supaya tetap menyatu (opak + warna sama).
+        binding.moonPhaseView.setNightBaseColor(Color.BLACK)
 
         showCurrentPhase()
         loadUpcomingQuarters()
