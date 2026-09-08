@@ -19,6 +19,13 @@
          API 29+ pakai MediaStore (lihat HilalPdfService), jadi izin ini tidak diminta di sana. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
+    <!-- Kamera cuma dipakai untuk ambil foto profil (opsional, ada alternatif pilih dari
+         galeri) di ProfileActivity, bukan fitur wajib. Tanpa required="false" di sini,
+         Android otomatis anggap kamera wajib dan device tanpa kamera di-exclude dari listing
+         Play Store. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <application
         android:name=".AlKaukabaApplication"
         android:allowBackup="true"
