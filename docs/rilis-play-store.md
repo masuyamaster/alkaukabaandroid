@@ -212,3 +212,53 @@ di `alkaukabaweb` (`7a1c1cb`). Isinya instruksi hapus akun lewat app
 5. (Optional, tidak blocking) Setup upload mapping/deobfuscation file
    (R8/Proguard) ke Play Console — warning muncul saat prepare release,
    diabaikan dulu, tidak menghalangi rilis.
+
+### Draft jawaban Data Safety form (siap isi, 2026-09-09)
+
+Mapping tabel audit di atas ke kategori form Play Console. **Nama kategori
+persis bisa berubah sedikit tergantung versi UI Play Console** — cocokkan
+istilahnya, tapi isi/jawabannya tetap ini.
+
+**Halaman pembuka "Data collection and security":**
+- "Does your app collect or share any of the required user data types?" →
+  **Yes**
+- "Is all of the user data collected by your app encrypted in transit?" →
+  **Yes** (HTTPS/SSL via Certbot di `alkaukaba.com` & `api.alkaukaba.com`,
+  lihat `alkaukabaweb/CLAUDE.md`)
+- "Do you provide a way for users to request that their data is
+  deleted?" → **Yes**, isi **Delete account URL**:
+  `https://alkaukaba.com/hapus-akun`
+
+**Data types:**
+
+| Kategori Play | Sub-tipe | Dikumpulkan | Dibagikan ke pihak ketiga | Tujuan |
+|---|---|---|---|---|
+| Location | Approximate location **dan** Precise location | Yes | Yes — `api.aladhan.com` | App functionality |
+| Personal info | Name | Yes | No | Account management |
+| Personal info | Email address | Yes | No* | Account management |
+| Personal info | Other info (kredensial akun / password) | Yes | No | Account management |
+| Photos and videos | Photos | Yes | No | Account management (foto profil, opsional) |
+| Device or other IDs | — | **No** | — | (lihat item 4 TODO — `READ_PHONE_STATE` di-declare tapi tidak dipakai) |
+
+\* Email juga lewat Google Sign-In SDK saat login Google — itu pertukaran
+data user dengan Google secara langsung (user login ke akun Google-nya
+sendiri), bukan app yang membagikan data ke Google sebagai pihak ketiga,
+jadi tetap **No** untuk "shared". Kalau versi form terbaru minta declare
+SDK pihak ketiga secara terpisah, cukup sebut Google Sign-In sebagai SDK
+autentikasi.
+
+Untuk **Location**, cek "Is this data processed ephemerally?" → jawaban
+**Yes** kalau memang lokasi cuma diteruskan ke `PrayersApiService.kt` →
+`api.aladhan.com` saat itu juga dan **tidak pernah disimpan** ke database
+sendiri (`laravel_api`) — **konfirmasi ini dulu ke kode sebelum submit**,
+karena kalau ternyata ada logging/cache lokasi di server, jawabannya
+harus **No**.
+
+Untuk setiap sub-tipe di atas, form biasanya juga minta jawaban "Is this
+data required or optional?" → semuanya **Required** kecuali foto profil
+(**Optional**, karena `ProfileActivity.kt` punya alternatif tanpa upload
+foto).
+
+**Metode pembuatan akun** (kalau form menanyakan ini secara terpisah):
+centang **"Username and password"** + **"OAuth"** (Google Sign-In), sesuai
+catatan §7 di atas.
