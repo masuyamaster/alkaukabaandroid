@@ -5,7 +5,6 @@ import site.elahady.alkaukaba.databinding.ActivityLaporanHisabBinding
 import site.elahady.alkaukaba.databinding.ItemLaporanTableRowBinding
 import site.elahady.alkaukaba.model.HilalResult
 import site.elahady.alkaukaba.utils.HilalPdfService
-import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
@@ -94,8 +93,7 @@ class LaporanHisabActivity : AppCompatActivity() {
     }
 
     private fun renderReport(result: HilalResult) {
-        val sessionManager = SessionManager(this)
-        binding.tvHasibName.text = sessionManager.getUserName()?.takeIf { it.isNotBlank() } ?: "Hasib Al-Kaukaba"
+        binding.tvHasibName.text = "Roziq Rizal"
 
         val metode = result.breakdownSections
             .firstOrNull { it.prayerLabel == "Markaz" }
