@@ -174,33 +174,35 @@ supaya jawaban Data Safety akurat (bukan asal tebak):
 Metode pembuatan akun yang harus dicentang di form: **"Username and
 password"** (register/login email+password) + **"OAuth"** (Google Sign-In).
 
-### BLOCKER: Delete account URL
+### BLOCKER: Delete account URL — SUDAH DIBUAT (2026-09-09)
 
 Form Data Safety minta **"Delete account URL"** — link publik (bukan
 in-app) yang menjelaskan cara user minta akun+data dihapus. App ini
 **sudah punya fitur hapus akun in-app** (`ProfileActivity.kt`, konfirmasi
-password → `delete_account` endpoint), tapi **belum ada halaman web** buat
-ini di `alkaukaba.com`. **Belum dibuat — rencana dikerjakan besok.**
+password → `delete_account` endpoint).
 
-**Catatan penting sebelum bikin halaman itu**: ada kejanggalan yang belum
-diklarifikasi — komentar di `SessionManager.kt` (baris ~141) menyebut
-`AuthController::userResponse` dari repo bernama **`alkaukabaweb`**,
-sedangkan folder backend yang ada di mesin ini namanya
-**`alkaukabawebserver`**, dan isinya cuma skeleton Laravel kosong (tidak
-ada route/controller untuk `register`/`login`/`google_login`/
-`upload_avatar`/`delete_account` yang sebenarnya dipanggil app). Jadi
-**pastikan dulu repo backend mana yang benar-benar live di server**
-sebelum nambah halaman delete-account, supaya tidak salah taruh di repo
-yang tidak ke-deploy.
+**Kejanggalan repo backend sudah diklarifikasi**: repo yang benar-benar
+live & dipanggil app adalah **`alkaukabaweb`** (`C:\xampp\htdocs\
+alkaukabaweb`) — dikonfirmasi lewat `AuthController.php` yang memang
+punya endpoint `register`/`login`/`google_login`/`update_profile`/
+`change_password`/`delete_account` via `POST /api.php?action=...`, cocok
+dengan komentar di `SessionManager.kt`. `alkaukabawebserver` bukan repo
+yang dipakai (skeleton kosong, diabaikan).
 
-### TODO lanjutan (bisa dikerjakan besok dari PC manapun)
+Halaman publik sudah dibuat: `resources/views/hapus-akun.blade.php` +
+route `GET /hapus-akun` (name `hapus-akun`) di `routes/web.php`, di-commit
+di `alkaukabaweb` (`7a1c1cb`). Isinya instruksi hapus akun lewat app
+(Profil → Hapus Akun) + tabel data yang dihapus. **Belum di-deploy ke
+`alkaukaba.com`** — perlu push ke `main` lalu `git pull` manual di VPS
+(lihat workflow deploy di `alkaukabaweb/CLAUDE.md`) supaya URL
+`https://alkaukaba.com/hapus-akun` bisa dipakai di form Data Safety.
 
-1. **Buat halaman "Hapus Akun" publik** di `alkaukaba.com` (misal
-   `/hapus-akun`) — isinya minimal instruksi cara hapus akun lewat app
-   (buka app → Profil → Hapus Akun), sesuai syarat Play. Perlu identifikasi
-   dulu repo backend yang benar (lihat catatan di atas).
-2. Setelah ada URL-nya, lanjutkan isi form Data Safety pakai tabel di atas,
-   lalu submit.
+### TODO lanjutan
+
+1. ~~Buat halaman "Hapus Akun" publik~~ — **selesai**, tinggal deploy
+   (push `alkaukabaweb` ke `main` + `git pull` di VPS).
+2. Isi form Data Safety pakai tabel di §7 + URL
+   `https://alkaukaba.com/hapus-akun`, lalu submit.
 3. Baru setelah Data Safety selesai, kembali ke draft release production →
    upload AAB versionCode 8 → lanjut ke tahap review/rollout (lihat §4).
 4. (Optional, tidak blocking) Pertimbangkan hapus `<uses-permission
