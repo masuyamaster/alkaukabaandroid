@@ -23,12 +23,15 @@ biasa (bukan Navigation Component/DeepLink).
 ## Rilis ke Play Store (proses update sedang berjalan)
 
 Ada proses rilis update Play Store (v1.6 → 1.7) yang belum selesai per
-2026-09-04 — status lengkap, lokasi keystore, dan langkah lanjutan ada di
+2026-09-08 — status lengkap, lokasi keystore, dan langkah lanjutan ada di
 [`docs/rilis-play-store.md`](docs/rilis-play-store.md). **Cek dokumen itu
 dulu** sebelum bantu proses build/signing/upload rilis apapun — jangan mulai
-dari nol nanya lokasi keystore dsb, itu semua sudah tercatat di sana
-(termasuk kalau statusnya sudah berubah dari "pending review" jadi
-approved/rejected, update juga catatannya).
+dari nol nanya lokasi keystore dsb, itu semua sudah tercatat di sana. Status
+per 2026-09-08: upload key reset **sudah approved**, AAB versionCode 8 siap
+upload, tapi ke-blok sementara oleh **Data safety declaration** yang belum
+selesai di Play Console (butuh halaman "Hapus Akun" publik di
+alkaukaba.com yang belum ada — lihat §7 di docs itu untuk detail & TODO
+lanjutan).
 
 ## Menjalankan & build via CLI (tanpa Android Studio)
 
