@@ -296,3 +296,42 @@ catatan §7 di atas.
     overview 2026-09-12).
   - Kalau **rejected**: catat pesan penolakannya di sini dulu sebelum
     diperbaiki lagi.
+
+### KOREKSI 2026-09-12: login ternyata WAJIB, bukan opsional
+
+Saat coba jalankan app di emulator (Pixel6_API34) buat verifikasi, ternyata
+asumsi "fitur inti app jalan tanpa login/akun" yang dipakai buat isi form
+Data Safety di atas **salah**. `Splashscreen.kt`:
+```kotlin
+val intent = if (sessionManager.isLoggedIn()) {
+    Intent(this, MainActivity::class.java)
+} else {
+    Intent(this, LoginActivity::class.java)
+}
+```
+Tidak ada mode guest — semua fitur (Waktu Sholat, Kiblat, Awal Bulan,
+Gerhana, dst) cuma bisa diakses **setelah** login. Jadi jawaban form Data
+Safety untuk **Email address**, **User IDs**, dan **Other info
+(password)** seharusnya **"Data collection is required (users can't turn
+off this data collection)"** — bukan **"Optional"** seperti yang sudah
+disubmit 2026-09-12.
+
+**Belum dikoreksi di Play Console** — declare yang lebih longgar dari
+kenyataan (Optional padahal Required) bukan pelanggaran serius dan
+kemungkinan tidak menghalangi approval yang sedang berjalan, tapi kalau
+mau akurat: submit revisi form Data Safety lagi (ubah 3 item itu ke
+Required) setelah review yang sekarang selesai — submit ulang tidak akan
+mengulang dari nol, cuma nunggu antrean review lagi (~7 hari).
+
+Catatan lain dari sesi run-di-emulator ini:
+- App-nya jalan normal — build `assembleDebug` sukses, install & launch
+  di emulator lancar (setelah fix gotcha R.jar lock yang sudah tercatat
+  di memori, lihat catatan Gradle daemon/Kotlin LSP).
+- SDK Android di mesin ini ada di `C:\Android\Sdk` (bukan default
+  `%LOCALAPPDATA%\Android\Sdk`), AVD yang tersedia: `Pixel6_API34`.
+- Jangan tulis manual ke `shared_prefs/AppSession.xml` app via
+  `run-as`/`adb shell` buat set lokasi manual saat testing — pernah
+  dicoba dan malah merusak state sesi lain (app jadi nyasar ke halaman
+  Login padahal sebelumnya langsung ke Home). Kalau perlu set lokasi
+  manual buat testing, pakai jalur resmi di app: Konfigurasi (ikon
+  gear) → Lokasi → Manual.
