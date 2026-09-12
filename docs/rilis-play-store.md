@@ -262,3 +262,37 @@ foto).
 **Metode pembuatan akun** (kalau form menanyakan ini secara terpisah):
 centang **"Username and password"** + **"OAuth"** (Google Sign-In), sesuai
 catatan §7 di atas.
+
+### Update 2026-09-12: form Data Safety sudah diisi & disubmit
+
+- URL hapus akun sudah live & dikonfirmasi tampil normal di
+  `alkaukaba.com/hapus-akun` (sempat 404 karena route cache basi di VPS,
+  fixed dengan `php artisan route:clear && route:cache` — lihat gotcha
+  baru di `alkaukabaweb/CLAUDE.md`).
+- Saat mau submit perubahan, Play Console sempat kasih blocker baru di
+  **Publishing overview**: **"Data safety (Email address not declared)"**
+  — kategori Personal info di form ternyata belum lengkap diisi (Email
+  address, User IDs, Other info/password belum ada detail
+  collected/shared/ephemeral/required-nya), padahal sudah pernah dikira
+  selesai. Sudah dilengkapi (pola sama seperti Location/Photos: Collected
+  Yes, Shared No — semua dikirim ke server sendiri bukan pihak ketiga,
+  Ephemeral No, **Optional** karena fitur inti app jalan tanpa
+  login/akun, Purpose: Account management).
+- Setelah dilengkapi, **"Submit 2 changes for review"** di Publishing
+  overview berhasil dikirim. Status sekarang (dicek di **Policy status**):
+  **"Update in review"** — Google bilang review **biasanya sampai 7
+  hari**. Entri lama "Data safety section removed" (Enforced Aug 29) masih
+  tampil di halaman itu tapi ini **normal/belum ter-update** — halaman
+  itu sendiri bilang akan di-update begitu review selesai, bukan berarti
+  perbaikan gagal.
+- **Lanjutan setelah review Google selesai** (cek email dari Google Play
+  atau balik ke Policy status secara berkala):
+  - Kalau **approved**: entri "Data safety section removed" harus hilang
+    dari Policy issues. Baru setelah itu aman lanjut ke §4 — upload/submit
+    AAB versionCode 8 ke production kalau belum, atau cek apakah rilis
+    production sudah otomatis lanjut (rollout production sempat ikut
+    ke-submit bareng perubahan Data Safety, lihat item "Production — 8
+    (1.7) — Start full rollout" yang muncul bareng di Publishing
+    overview 2026-09-12).
+  - Kalau **rejected**: catat pesan penolakannya di sini dulu sebelum
+    diperbaiki lagi.
