@@ -209,9 +209,10 @@ di `alkaukabaweb` (`7a1c1cb`). Isinya instruksi hapus akun lewat app
    android:name="android.permission.READ_PHONE_STATE" />` dari manifest
    karena tidak dipakai — biar jawaban Data Safety soal "Device or other
    IDs" bisa jujur "not collected" tanpa perlu penjelasan tambahan.
-5. (Optional, tidak blocking) Setup upload mapping/deobfuscation file
-   (R8/Proguard) ke Play Console — warning muncul saat prepare release,
-   diabaikan dulu, tidak menghalangi rilis.
+5. ~~(Optional, tidak blocking) Setup upload mapping/deobfuscation file
+   (R8/Proguard) ke Play Console~~ — **selesai** (lihat §8 di bawah,
+   `minifyEnabled` sekarang aktif; tinggal upload `mapping.txt` bareng
+   AAB rilis berikutnya di Play Console → App bundle explorer).
 
 ### Draft jawaban Data Safety form (siap isi, 2026-09-09)
 
@@ -322,6 +323,63 @@ kemungkinan tidak menghalangi approval yang sedang berjalan, tapi kalau
 mau akurat: submit revisi form Data Safety lagi (ubah 3 item itu ke
 Required) setelah review yang sekarang selesai — submit ulang tidak akan
 mengulang dari nol, cuma nunggu antrean review lagi (~7 hari).
+
+## 8. R8/obfuscation diaktifkan (2026-09-13)
+
+Play Console kasih notice "needs attention" (deadline Feb 2027): skor
+obfuscation cuma 1%, jauh di bawah rekomendasi 25%, karena
+`minifyEnabled false` di `app/build.gradle`.
+
+**Sudah diperbaiki:**
+- `app/build.gradle`: `minifyEnabled true` + `shrinkResources true` untuk
+  buildType `release`.
+- `app/proguard-rules.pro`: tambah `-keep class
+  site.elahady.alkaukaba.model.** { *; }` dan `-keep class
+  site.elahady.alkaukaba.api.** { *; }`. **Wajib ada** — banyak model
+  Retrofit+Gson di app ini (mis. `Timings`, `PrayerResponse`,
+  `LoginRequest`, `UserData`, `GoogleLoginRequest`) **tidak** pakai
+  `@SerializedName`, jadi Gson bergantung field Kotlin persis sama
+  dengan key JSON. Tanpa `-keep` ini R8 mengacak nama field itu dan
+  deserialisasi JSON gagal diam-diam (login/waktu sholat/kiblat rusak
+  tanpa crash yang jelas) — persis risiko yang disebut Google soal
+  "reflection yang tidak di-keep".
+
+**Sudah diverifikasi** (build `assembleRelease` unsigned + sign pakai
+debug keystore cuma untuk testing lokal, install ke emulator
+Pixel6_API34):
+- Build R8 sukses, app jalan normal di emulator (splash → login screen,
+  tidak crash).
+- Cek `app/build/outputs/mapping/release/mapping.txt`: class
+  `site.elahady.alkaukaba.model.*`/`.api.*` **tidak** diacak namanya,
+  sementara class library lain (mis. `androidx.activity...`) memang
+  diacak jadi `a.a`, `b.a`, dst — bukti obfuscation beneran aktif untuk
+  bagian yang aman, dan model JSON tetap utuh.
+- Ukuran APK turun dari 13,4 MB (debug, unminified) jadi 8,3 MB
+  (release, minified) — konsisten dengan shrinking yang jalan.
+
+**Belum dilakukan** (perlu keputusan/aksi manual sebelum rilis
+berikutnya):
+- Belum dibuild dengan keystore upload asli (`keystore-upload-2026.jks`)
+  — mesin ini tidak punya `keystore.properties`-nya. Build final untuk
+  upload ke Play Console harus dari mesin yang punya file itu.
+- **versionCode harus naik ke 9** kalau AAB baru ini mau di-upload —
+  versionCode 8 yang sekarang lagi "in review" di Play Console (lihat
+  §7 update 2026-09-12) sudah terlanjur pakai binary TANPA minify;
+  jangan timpa/upload ulang versionCode 8 dengan binary yang beda
+  (Play Console akan menolak, sama seperti insiden versionCode 7 di §3).
+  Rencana paling aman: biarkan proses review versionCode 8 (tanpa
+  minify) selesai dulu, baru siapkan versionCode 9 dengan minify aktif
+  untuk rilis berikutnya — jangan buru-buru bikin AAB baru sebelum
+  versionCode 8 kelar direview, supaya tidak dobel antrean review.
+- Setelah rilis pakai minify pertama kali nanti: upload
+  `app/build/outputs/mapping/release/mapping.txt` ke Play Console
+  (App bundle explorer → pilih versi → Upload deobfuscation file) biar
+  crash report di Play Console kebaca nama class aslinya, bukan `a.a`.
+- Test manual menyeluruh sebelum rilis (bukan cuma jalan tanpa crash):
+  login, register, Google Sign-In, lihat waktu sholat & kalender
+  Hijriyah beneran nampilkan data (bukan cuma "tidak crash") — untuk
+  memastikan tidak ada model JSON lain yang kelewat di luar
+  `model.**`/`api.**` yang butuh `-keep` tambahan.
 
 Catatan lain dari sesi run-di-emulator ini:
 - App-nya jalan normal — build `assembleDebug` sukses, install & launch
