@@ -72,6 +72,9 @@
             android:name="site.elahady.alkaukaba.ui.gerhana.GerhanaActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.okultasi.OkultasiActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity"
             android:exported="false" />
         <activity

@@ -30,6 +30,8 @@
     <color name="icon_yellow">#CA8A04</color>
     <color name="bg_blue_light">#DBEAFE</color>
     <color name="icon_blue">#2563EB</color>
+    <color name="bg_orange_light">#FFEDD5</color>
+    <color name="icon_orange">#EA580C</color>
 
     <color name="calendar_bg">#8897B3</color>
 
