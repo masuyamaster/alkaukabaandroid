@@ -298,6 +298,18 @@ catatan §7 di atas.
   - Kalau **rejected**: catat pesan penolakannya di sini dulu sebelum
     diperbaiki lagi.
 
+### Update 2026-09-13: review LOLOS, versionCode 8 sudah live
+
+Dikonfirmasi dari **Dashboard** Play Console: "Publishing overview: You
+have no unpublished changes", "Latest production release ... 21 hours
+ago ... 100%", notifikasi "App update published." — blocker Data Safety
+(Email address not declared + delete account URL invalid) sudah
+**resolved**, versionCode 8 (1.7) sudah live 100% rollout ke semua user.
+
+Belum dicek manual: apakah entri "Data safety section removed" sudah
+hilang dari **Policy status** (indikator penutup tambahan, tapi dashboard
+di atas sudah cukup meyakinkan approved).
+
 ### KOREKSI 2026-09-12: login ternyata WAJIB, bukan opsional
 
 Saat coba jalankan app di emulator (Pixel6_API34) buat verifikasi, ternyata
