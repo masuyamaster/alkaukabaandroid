@@ -5,9 +5,12 @@
 - **Nama fitur**: Al-Qur'an Digital & Audio.
 - **Deskripsi singkat**: Menampilkan daftar 114 surah beserta detail ayat
   (teks Arab, transliterasi Latin, terjemahan Indonesia) dan tombol putar
-  audio murottal per ayat, plus pencarian surat & ayat. Item backlog Notion
-  dengan prioritas tertinggi karena ini fitur paling dicari user aplikasi
-  sholat Al-Kaukaba.
+  audio murottal per ayat, plus pencarian surat & ayat. Layar detail surah
+  punya 2 mode baca yang bisa ditoggle: **Terjemahan** (kartu per-ayat +
+  transliterasi + terjemahan + tombol audio) dan **Mushaf** (teks Arab
+  mengalir satu paragraf tanpa terjemahan, meniru halaman mushaf fisik).
+  Item backlog Notion dengan prioritas tertinggi karena ini fitur paling
+  dicari user aplikasi sholat Al-Kaukaba.
 
 ### 2. Entry point & prasyarat
 
@@ -72,13 +75,27 @@
   header section, item surat, item ayat) — hasil surat difilter lokal dari
   `allSurah` yang sudah dimuat, hasil ayat dari `viewModel.searchAyat(...)`.
 - `ui/quran/DetailSurahActivity.kt` — header info surah (card gradient navy,
-  deskripsi bisa expand/collapse) + RecyclerView ayat, adapter
-  `adapter/AyatAdapter.kt`. Audio diputar via `android.media.MediaPlayer`
-  biasa (bukan Service) langsung di Activity — `prepareAsync()` dari URL
-  `ayat.audio[DEFAULT_QORI_KEY]`, `release()` setiap ganti ayat/keluar layar.
-  Highlight ayat yang sedang diputar dikelola lewat
-  `AyatAdapter.setPlayingAyat(nomorAyat)` (pakai `notifyItemChanged`, bukan
-  `notifyDataSetChanged`, supaya scroll position tidak reset).
+  deskripsi bisa expand/collapse) + toggle mode baca (`tvModeTerjemahan`/
+  `tvModeMushaf`, enum privat `ReadingMode`) yang switch visibility antara
+  `rvAyat` (RecyclerView, adapter `adapter/AyatAdapter.kt`) dan `scrollMushaf`
+  (`ScrollView` + satu `TextView tvMushaf`). Audio diputar via
+  `android.media.MediaPlayer` biasa (bukan Service) langsung di Activity —
+  `prepareAsync()` dari URL `ayat.audio[DEFAULT_QORI_KEY]`, `release()` setiap
+  ganti ayat/keluar layar; hanya tersedia di mode Terjemahan (mode Mushaf
+  murni baca, tidak ada tombol audio). Highlight ayat yang sedang diputar
+  dikelola lewat `AyatAdapter.setPlayingAyat(nomorAyat)` (pakai
+  `notifyItemChanged`, bukan `notifyDataSetChanged`, supaya scroll position
+  tidak reset).
+- `utils/MushafTextBuilder.kt` + `utils/AyahMarkerSpan.kt` — susun teks Arab
+  satu surah jadi satu `SpannableStringBuilder` mengalir untuk mode Mushaf.
+  Batas antar-ayat ditandai lingkaran kecil gold gambar manual
+  (`AyahMarkerSpan`, sebuah `ReplacementSpan`) berisi nomor Arab-Indic, BUKAN
+  karakter Unicode tanda kurung hias U+FD3E/FD3F (konvensi teks Mushaf
+  digital seperti Tanzil) — karakter itu tidak punya glyph di font Arab
+  bawaan Android yang dipakai app ini dan tampil sebagai kotak/tofu. Placeholder
+  span sengaja cuma 1 karakter tanpa spasi tambahan di sekitarnya; beberapa
+  spasi netral berurutan terbukti bikin algoritma bidi salah menempatkan
+  marker (meloncat ke tengah kata ayat berikutnya, bukan di akhir ayat).
 
 Alur data: `Activity -> ViewModel -> QuranRepository -> Retrofit (equran.id)`.
 
@@ -100,7 +117,11 @@ Alur data: `Activity -> ViewModel -> QuranRepository -> Retrofit (equran.id)`.
   diputar. Pencarian: keyword "yasin" -> muncul section "Surat" dengan surah
   36; keyword "rahmat" -> muncul section "Ayat" (30 hasil) dari beberapa
   surah, tap salah satu ("Al-Baqarah Ayat 64") -> berhasil buka
-  `DetailSurahActivity`, auto-scroll & highlight persis ke ayat 64.
+  `DetailSurahActivity`, auto-scroll & highlight persis ke ayat 64. Toggle
+  mode Mushaf: dites di Al-Fatihah, urutan baca 7 ayat benar & marker
+  lingkaran ada tepat di batas tiap ayat (sempat ada bug marker meloncat ke
+  tengah kata sebelum fix spasi di `MushafTextBuilder`), toggle balik ke
+  Terjemahan juga normal.
 
 ### 7. Known issues & TODOs
 
@@ -123,3 +144,9 @@ Alur data: `Activity -> ViewModel -> QuranRepository -> Retrofit (equran.id)`.
 - Belum ada bookmark/penanda "terakhir dibaca".
 - Font Arab masih rendering default Android (Noto Sans/Naskh Arabic bawaan
   OS), belum ada font kaligrafi Utsmani khusus yang di-bundle.
+- Highlight & auto-scroll dari hasil pencarian ayat (`EXTRA_HIGHLIGHT_AYAT`)
+  cuma jalan di mode Terjemahan (`rvAyat`, RecyclerView) — mode Mushaf selalu
+  mulai dari atas karena `ScrollView` + satu `TextView` panjang tidak punya
+  API "scroll ke posisi ayat X" sesederhana `LinearLayoutManager`. Mode baca
+  juga selalu reset ke Terjemahan tiap buka surah baru (tidak diingat lintas
+  sesi).

@@ -12,13 +12,17 @@ class AyatAdapter(private val onPlayClick: (Ayat) -> Unit) : RecyclerView.Adapte
 
     private val items = ArrayList<Ayat>()
     private var playingAyatNomor: Int? = null
+    private var highlightedAyatNomor: Int? = null
 
     fun setData(newItems: List<Ayat>) {
         items.clear()
         items.addAll(newItems)
         playingAyatNomor = null
+        highlightedAyatNomor = null
         notifyDataSetChanged()
     }
+
+    fun indexOf(nomorAyat: Int): Int = items.indexOfFirst { it.nomorAyat == nomorAyat }
 
     /** Dipanggil dari Activity setiap kali MediaPlayer ganti ayat/berhenti, supaya highlight
      * kartu & ikon play/pause ikut pindah tanpa refresh seluruh list. */
@@ -26,6 +30,17 @@ class AyatAdapter(private val onPlayClick: (Ayat) -> Unit) : RecyclerView.Adapte
         val previousIndex = items.indexOfFirst { it.nomorAyat == playingAyatNomor }
         playingAyatNomor = nomorAyat
         val newIndex = items.indexOfFirst { it.nomorAyat == playingAyatNomor }
+        if (previousIndex != -1) notifyItemChanged(previousIndex)
+        if (newIndex != -1) notifyItemChanged(newIndex)
+    }
+
+    /** Highlight sementara (beda dari [setPlayingAyat]) dipakai saat user datang dari hasil
+     * pencarian ayat di DaftarSurahActivity - menandai kartu yang dicari tanpa ikut memutar
+     * audionya (ikon play/pause tetap mengikuti status [playingAyatNomor] saja). */
+    fun setHighlightedAyat(nomorAyat: Int?) {
+        val previousIndex = items.indexOfFirst { it.nomorAyat == highlightedAyatNomor }
+        highlightedAyatNomor = nomorAyat
+        val newIndex = items.indexOfFirst { it.nomorAyat == highlightedAyatNomor }
         if (previousIndex != -1) notifyItemChanged(previousIndex)
         if (newIndex != -1) notifyItemChanged(newIndex)
     }
@@ -39,14 +54,16 @@ class AyatAdapter(private val onPlayClick: (Ayat) -> Unit) : RecyclerView.Adapte
             binding.tvTeksIndonesia.text = item.teksIndonesia
 
             val isPlaying = item.nomorAyat == playingAyatNomor
+            val isHighlighted = item.nomorAyat == highlightedAyatNomor
+            binding.cardAyat.setCardBackgroundColor(
+                ContextCompat.getColor(context, if (isPlaying || isHighlighted) R.color.card_gold_tint else R.color.card_white)
+            )
             if (isPlaying) {
-                binding.cardAyat.setCardBackgroundColor(ContextCompat.getColor(context, R.color.card_gold_tint))
                 binding.btnPlayAyat.setBackgroundResource(R.drawable.bg_circle_button)
                 binding.btnPlayAyat.backgroundTintList = ContextCompat.getColorStateList(context, R.color.gold_accent)
                 binding.btnPlayAyat.setImageResource(R.drawable.ic_pause)
                 binding.btnPlayAyat.imageTintList = ContextCompat.getColorStateList(context, R.color.white)
             } else {
-                binding.cardAyat.setCardBackgroundColor(ContextCompat.getColor(context, R.color.card_white))
                 binding.btnPlayAyat.setBackgroundResource(R.drawable.bg_circle_outline_gold)
                 binding.btnPlayAyat.backgroundTintList = null
                 binding.btnPlayAyat.setImageResource(R.drawable.ic_play)

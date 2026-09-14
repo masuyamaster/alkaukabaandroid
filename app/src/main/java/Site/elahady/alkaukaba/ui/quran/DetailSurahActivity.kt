@@ -1,10 +1,12 @@
 package site.elahady.alkaukaba.ui.quran
 
+import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.adapter.AyatAdapter
 import site.elahady.alkaukaba.databinding.ActivityDetailSurahBinding
 import site.elahady.alkaukaba.model.Ayat
 import site.elahady.alkaukaba.model.SurahDetail
 import site.elahady.alkaukaba.repo.DEFAULT_QORI_KEY
+import site.elahady.alkaukaba.utils.MushafTextBuilder
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -14,14 +16,22 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 
 class DetailSurahActivity : AppCompatActivity() {
 
+    /** TERJEMAHAN = tampilan lama (kartu per-ayat: Arab + transliterasi + terjemahan + tombol
+     * audio). MUSHAF = teks Arab mengalir jadi satu paragraf tanpa terjemahan/transliterasi,
+     * meniru halaman mushaf fisik - baca-saja, tombol audio tetap di mode Terjemahan. */
+    private enum class ReadingMode { TERJEMAHAN, MUSHAF }
+
     companion object {
         const val EXTRA_NOMOR_SURAH = "EXTRA_NOMOR_SURAH"
+        const val EXTRA_HIGHLIGHT_AYAT = "EXTRA_HIGHLIGHT_AYAT"
+        private const val HIGHLIGHT_DURATION_MS = 3000L
     }
 
     private lateinit var binding: ActivityDetailSurahBinding
@@ -31,6 +41,10 @@ class DetailSurahActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var playingAyatNomor: Int? = null
     private var isDeskripsiExpanded = false
+    private var highlightAyatNomor: Int = -1
+    private var highlightApplied = false
+    private var readingMode = ReadingMode.TERJEMAHAN
+    private var currentAyatList: List<Ayat> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,11 +58,13 @@ class DetailSurahActivity : AppCompatActivity() {
         binding.includeToolbar.btnBack.setOnClickListener { finish() }
 
         val nomorSurah = intent.getIntExtra(EXTRA_NOMOR_SURAH, 1)
+        highlightAyatNomor = intent.getIntExtra(EXTRA_HIGHLIGHT_AYAT, -1)
         viewModel = ViewModelProvider(this)[DetailSurahViewModel::class.java]
 
         setupRecyclerView()
         setupObserver()
         setupDeskripsiToggle()
+        setupModeToggle()
 
         viewModel.fetchSurahDetail(nomorSurah)
     }
@@ -65,6 +81,37 @@ class DetailSurahActivity : AppCompatActivity() {
             binding.tvDeskripsi.maxLines = if (isDeskripsiExpanded) Int.MAX_VALUE else 2
             binding.tvToggleDeskripsi.text = if (isDeskripsiExpanded) "Sembunyikan" else "Baca selengkapnya"
         }
+    }
+
+    private fun setupModeToggle() {
+        binding.tvModeTerjemahan.setOnClickListener { switchMode(ReadingMode.TERJEMAHAN) }
+        binding.tvModeMushaf.setOnClickListener { switchMode(ReadingMode.MUSHAF) }
+    }
+
+    private fun switchMode(mode: ReadingMode) {
+        readingMode = mode
+
+        val activePill = if (mode == ReadingMode.TERJEMAHAN) binding.tvModeTerjemahan else binding.tvModeMushaf
+        val inactivePill = if (mode == ReadingMode.TERJEMAHAN) binding.tvModeMushaf else binding.tvModeTerjemahan
+        activePill.setBackgroundResource(R.drawable.bg_toggle_pill_active)
+        activePill.setTextColor(ContextCompat.getColor(this, R.color.text_selected))
+        inactivePill.background = null
+        inactivePill.setTextColor(ContextCompat.getColor(this, R.color.text_unselected))
+
+        binding.rvAyat.visibility = if (mode == ReadingMode.TERJEMAHAN) View.VISIBLE else View.GONE
+        binding.scrollMushaf.visibility = if (mode == ReadingMode.MUSHAF) View.VISIBLE else View.GONE
+
+        if (mode == ReadingMode.MUSHAF) {
+            renderMushafText()
+        }
+    }
+
+    private fun renderMushafText() {
+        binding.tvMushaf.text = MushafTextBuilder.build(
+            currentAyatList,
+            circleColor = ContextCompat.getColor(this, R.color.gold_accent),
+            numberColor = ContextCompat.getColor(this, R.color.navy_dongker)
+        )
     }
 
     private fun setupObserver() {
@@ -97,7 +144,29 @@ class DetailSurahActivity : AppCompatActivity() {
         binding.tvTempatTurun.text = detail.tempatTurun
         binding.tvJumlahAyat.text = "${detail.jumlahAyat} Ayat"
         binding.tvDeskripsi.text = android.text.Html.fromHtml(detail.deskripsi, android.text.Html.FROM_HTML_MODE_COMPACT)
+        currentAyatList = detail.ayat
         adapter.setData(detail.ayat)
+        if (readingMode == ReadingMode.MUSHAF) {
+            renderMushafText()
+        }
+        scrollToHighlightedAyatIfNeeded()
+    }
+
+    /** Dipanggil dari layar pencarian ayat (DaftarSurahActivity) - scroll ke ayat yang dicari
+     * lalu kasih highlight sementara (dibersihkan otomatis setelah [HIGHLIGHT_DURATION_MS])
+     * supaya user langsung lihat ayat yang dimaksud tanpa perlu scroll manual. Cuma dijalankan
+     * sekali (bukan tiap kali surahDetail LiveData emit ulang, mis. habis putar audio). */
+    private fun scrollToHighlightedAyatIfNeeded() {
+        if (highlightApplied || highlightAyatNomor < 0) return
+        val position = adapter.indexOf(highlightAyatNomor)
+        if (position < 0) return
+        highlightApplied = true
+
+        binding.rvAyat.post {
+            (binding.rvAyat.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, 0)
+        }
+        adapter.setHighlightedAyat(highlightAyatNomor)
+        binding.rvAyat.postDelayed({ adapter.setHighlightedAyat(null) }, HIGHLIGHT_DURATION_MS)
     }
 
     private fun onPlayAyatClicked(ayat: Ayat) {

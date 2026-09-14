@@ -1,9 +1,15 @@
 package site.elahady.alkaukaba.repo
 
+import site.elahady.alkaukaba.api.AlQuranCloudRetrofitClient
 import site.elahady.alkaukaba.api.QuranRetrofitClient
+import site.elahady.alkaukaba.model.AyatSearchMatch
 import site.elahady.alkaukaba.model.Surah
 import site.elahady.alkaukaba.model.SurahDetail
 import site.elahady.alkaukaba.utils.Resource
+
+/** Batas jumlah hasil pencarian ayat yang ditampilkan - query umum ("Allah", dsb) bisa balikin
+ * ribuan match dari alquran.cloud, tidak realistis dirender semua di satu RecyclerView. */
+private const val MAX_AYAT_SEARCH_RESULTS = 30
 
 /** Qori default untuk audio murottal - key sesuai `audio`/`audioFull` map dari API equran.id
  * ("05" = Misyari Rasyid Al-Afasi). Belum ada UI pemilihan qori, jadi disimpan di satu
@@ -18,6 +24,7 @@ const val DEFAULT_QORI_KEY = "05"
 object QuranRepository {
 
     private val api = QuranRetrofitClient.instance
+    private val searchApi = AlQuranCloudRetrofitClient.instance
 
     private var surahListCache: List<Surah>? = null
     private val surahDetailCache = mutableMapOf<Int, SurahDetail>()
@@ -53,6 +60,26 @@ object QuranRepository {
             }
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Gagal memuat surah")
+        }
+    }
+
+    /** Nama Latin surah dari cache daftar surah (equran.id) - dipakai untuk menampilkan nama
+     * surah yang benar di hasil pencarian ayat, karena penulisan nama surah di alquran.cloud
+     * (mis. "Al-Faatiha") beda dengan equran.id (mis. "Al-Fatihah"). Null kalau daftar surah
+     * belum pernah dimuat (mestinya sudah, karena layar daftar surah memuatnya duluan). */
+    fun getCachedSurahName(nomor: Int): String? = surahListCache?.find { it.nomor == nomor }?.namaLatin
+
+    suspend fun searchAyat(keyword: String): Resource<List<AyatSearchMatch>> {
+        return try {
+            val response = searchApi.searchAyat(keyword)
+            when {
+                response.code() == 404 -> Resource.Success(emptyList())
+                response.isSuccessful && response.body() != null ->
+                    Resource.Success(response.body()!!.data.matches.take(MAX_AYAT_SEARCH_RESULTS))
+                else -> Resource.Error(response.message())
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Gagal mencari ayat")
         }
     }
 }

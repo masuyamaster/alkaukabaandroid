@@ -133,6 +133,40 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/bg_toggle_container"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/tvModeTerjemahan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_toggle_pill_active"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Terjemahan"
+                    android:textColor="@color/text_selected"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvModeMushaf"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="8dp"
+                    android:text="Mushaf"
+                    android:textColor="@color/text_unselected"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvAyat"
                 android:layout_width="match_parent"
@@ -143,6 +177,34 @@
                 android:paddingBottom="16dp"
                 tools:listitem="@layout/item_ayat"
                 tools:itemCount="4" />
+
+            <ScrollView
+                android:id="@+id/scrollMushaf"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvMushaf"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:background="@drawable/bg_card_rounded"
+                    android:backgroundTint="@color/card_white"
+                    android:elevation="1dp"
+                    android:fontFamily="serif"
+                    android:gravity="end"
+                    android:justificationMode="inter_word"
+                    android:lineSpacingMultiplier="2.1"
+                    android:padding="20dp"
+                    android:textColor="@color/text_primary"
+                    android:textDirection="rtl"
+                    android:textSize="24sp"
+                    tools:targetApi="26"
+                    tools:text="بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ ﴿١﴾ اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ ﴿٢﴾" />
+
+            </ScrollView>
 
         </LinearLayout>
 

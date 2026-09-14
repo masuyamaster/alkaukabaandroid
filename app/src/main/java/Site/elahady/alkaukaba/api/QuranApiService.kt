@@ -1,5 +1,6 @@
 package site.elahady.alkaukaba.api
 
+import site.elahady.alkaukaba.model.AyatSearchResponse
 import site.elahady.alkaukaba.model.QuranApiResponse
 import site.elahady.alkaukaba.model.Surah
 import site.elahady.alkaukaba.model.SurahDetail
@@ -27,5 +28,26 @@ object QuranRetrofitClient {
             .build()
 
         retrofit.create(EquranApi::class.java)
+    }
+}
+
+/** equran.id tidak punya endpoint search ayat, jadi khusus pencarian ayat pakai API publik
+ * terpisah ini (alquran.cloud) yang menyediakan full-text search terjemahan Indonesia lintas
+ * seluruh Al-Qur'an. */
+interface AlQuranCloudApi {
+    @GET("v1/search/{keyword}/all/id.indonesian")
+    suspend fun searchAyat(@Path("keyword") keyword: String): Response<AyatSearchResponse>
+}
+
+object AlQuranCloudRetrofitClient {
+    private const val BASE_URL = "https://api.alquran.cloud/"
+
+    val instance: AlQuranCloudApi by lazy {
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        retrofit.create(AlQuranCloudApi::class.java)
     }
 }
