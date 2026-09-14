@@ -82,4 +82,8 @@
     <color name="card_gold_tint">#FDF8ED</color>
     <color name="bg_gold_light">#FDF3DD</color>
 
+    <!-- Kalkulator Scientific (2026-09) -->
+    <color name="bg_indigo_light">#E0E7FF</color>
+    <color name="icon_indigo">#4F46E5</color>
+
 </resources>

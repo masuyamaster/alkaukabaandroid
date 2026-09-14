@@ -9,6 +9,7 @@ import site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity
 import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
+import site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
 import site.elahady.alkaukaba.ui.doa.DaftarKategoriDoaActivity
 import site.elahady.alkaukaba.ui.quran.DaftarSurahActivity
@@ -307,6 +308,9 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btOkultasi.setOnClickListener {
             startActivity(Intent(this, OkultasiActivity::class.java))
+        }
+        binding.btKalkulator.setOnClickListener {
+            startActivity(Intent(this, KalkulatorActivity::class.java))
         }
         binding.btQuran.setOnClickListener {
             startActivity(Intent(this, DaftarSurahActivity::class.java))

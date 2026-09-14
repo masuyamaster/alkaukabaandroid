@@ -104,3 +104,4 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Notifikasi Adzan + Personalisasi Suara | [features/notifikasi-adzan.md](features/notifikasi-adzan.md) | Terdokumentasi (implementasi belum di-commit) |
 | Al-Qur'an Digital & Audio | [features/al-quran.md](features/al-quran.md) | Terdokumentasi |
 | Kumpulan Doa & Dzikir (Al-Mathurat/Hisnul Muslim) | [features/doa-dzikir.md](features/doa-dzikir.md) | Terdokumentasi (backend belum di-deploy produksi) |
+| Kalkulator Scientific | [features/kalkulator-scientific.md](features/kalkulator-scientific.md) | Terdokumentasi |
