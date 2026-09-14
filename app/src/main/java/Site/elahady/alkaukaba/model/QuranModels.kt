@@ -26,16 +26,7 @@ data class SurahDetail(
     val arti: String,
     val deskripsi: String,
     val audioFull: Map<String, String>,
-    val ayat: List<Ayat>,
-    val suratSelanjutnya: SurahRingkas?,
-    val suratSebelumnya: SurahRingkas?
-)
-
-data class SurahRingkas(
-    val nomor: Int,
-    val nama: String,
-    val namaLatin: String,
-    val jumlahAyat: Int
+    val ayat: List<Ayat>
 )
 
 data class Ayat(
