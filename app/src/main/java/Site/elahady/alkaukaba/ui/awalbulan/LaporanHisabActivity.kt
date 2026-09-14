@@ -5,6 +5,7 @@ import site.elahady.alkaukaba.databinding.ActivityLaporanHisabBinding
 import site.elahady.alkaukaba.databinding.ItemLaporanTableRowBinding
 import site.elahady.alkaukaba.model.HilalResult
 import site.elahady.alkaukaba.utils.HilalPdfService
+import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
@@ -93,7 +94,7 @@ class LaporanHisabActivity : AppCompatActivity() {
     }
 
     private fun renderReport(result: HilalResult) {
-        binding.tvHasibName.text = "Roziq Rizal"
+        binding.tvHasibName.text = hasibName()
 
         val metode = result.breakdownSections
             .firstOrNull { it.prayerLabel == "Markaz" }
@@ -128,6 +129,19 @@ class LaporanHisabActivity : AppCompatActivity() {
             rowBinding.tvValue.text = catatan
             binding.layoutReportRows.addView(rowBinding.root)
         }
+    }
+
+    /**
+     * Nama "Al Hasib" di laporan di-hardcode "Team Al Kaukaba" untuk semua user,
+     * kecuali akun pemilik ("M Roziq Rizal") yang tampil dengan namanya sendiri.
+     */
+    private fun hasibName(): String {
+        val session = SessionManager(this)
+        val username = session.getUserName()?.trim()
+        val email = session.getEmail()?.trim()
+        val isOwner = username.equals(OWNER_HASIB_NAME, ignoreCase = true) ||
+            email.equals(OWNER_EMAIL, ignoreCase = true)
+        return if (isOwner) OWNER_HASIB_NAME else "Team Al Kaukaba"
     }
 
     private data class TableRow(val label: String, val value: String, val isSubRow: Boolean = false)
@@ -172,5 +186,7 @@ class LaporanHisabActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_RESULT = "extra_hilal_result"
         private const val STORAGE_PERMISSION_REQUEST_CODE = 200
+        private const val OWNER_HASIB_NAME = "M Roziq Rizal"
+        private const val OWNER_EMAIL = "roziqrizal881992@gmail.com"
     }
 }
