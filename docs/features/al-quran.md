@@ -5,8 +5,9 @@
 - **Nama fitur**: Al-Qur'an Digital & Audio.
 - **Deskripsi singkat**: Menampilkan daftar 114 surah beserta detail ayat
   (teks Arab, transliterasi Latin, terjemahan Indonesia) dan tombol putar
-  audio murottal per ayat. Item backlog Notion dengan prioritas tertinggi
-  karena ini fitur paling dicari user aplikasi sholat Al-Kaukaba.
+  audio murottal per ayat, plus pencarian surat & ayat. Item backlog Notion
+  dengan prioritas tertinggi karena ini fitur paling dicari user aplikasi
+  sholat Al-Kaukaba.
 
 ### 2. Entry point & prasyarat
 
@@ -27,6 +28,11 @@
 - `DEFAULT_QORI_KEY` (di file yang sama) adalah qori default untuk audio
   ("05" = Misyari Rasyid Al-Afasi) — satu-satunya tempat yang perlu diubah
   kalau nanti mau ganti qori default atau menambah picker qori.
+- Kotak pencarian di `DaftarSurahActivity` (`etSearch`) → filter surat lokal
+  + `QuranRepository.searchAyat(keyword)` → tap hasil ayat → buka
+  `DetailSurahActivity` dengan extra tambahan `EXTRA_HIGHLIGHT_AYAT: Int`,
+  yang men-scroll RecyclerView ke ayat itu dan memberi highlight sementara
+  (`AyatAdapter.setHighlightedAyat`).
 
 ### 4. Struktur & alur data
 
@@ -36,15 +42,35 @@
 - `api/QuranApiService.kt` — interface `EquranApi` (Retrofit,
   `GET api/v2/surat` & `GET api/v2/surat/{nomor}`) + `object QuranRetrofitClient`
   (base url `https://equran.id/`), pola sama persis dengan `AladhanApi` di
-  `PrayersApiService.kt` untuk Waktu Sholat.
+  `PrayersApiService.kt` untuk Waktu Sholat. Di file yang sama juga ada
+  `AlQuranCloudApi` + `AlQuranCloudRetrofitClient` (base url
+  `https://api.alquran.cloud/`) khusus untuk **search ayat** — equran.id
+  tidak punya endpoint pencarian sama sekali, jadi dipakai API publik lain
+  yang punya full-text search terjemahan Indonesia lintas seluruh Qur'an
+  (`GET v1/search/{keyword}/all/id.indonesian`).
 - `repo/QuranRepository.kt` — bungkus response Retrofit jadi `Resource<T>`,
   cache in-memory (`surahListCache`, `surahDetailCache`) supaya navigasi
-  bolak-balik tidak fetch API berulang.
+  bolak-balik tidak fetch API berulang. `searchAyat(keyword)` memanggil
+  `AlQuranCloudApi`, membatasi hasil ke 30 teratas (`MAX_AYAT_SEARCH_RESULTS`)
+  karena query umum bisa balikin ribuan match, dan memperlakukan HTTP 404
+  (respons API saat tidak ada match sama sekali) sebagai `Resource.Success`
+  list kosong, bukan error. `getCachedSurahName(nomor)` dipakai untuk
+  menampilkan nama surah versi equran.id di hasil pencarian ayat — penulisan
+  nama surah di alquran.cloud beda (mis. "Al-Faatiha" vs "Al-Fatihah" di
+  equran.id), jadi nama selalu diambil dari cache daftar surah yang sama
+  dengan yang ditampilkan di seluruh layar lain.
 - `viewmodel/quran/DaftarSurahViewModel.kt` & `DetailSurahViewModel.kt` —
   `ViewModel` biasa tanpa Factory (tidak butuh constructor arg, sama seperti
-  `GerhanaViewModel`), expose `LiveData<Resource<T>>`.
-- `ui/quran/DaftarSurahActivity.kt` — RecyclerView + `SwipeRefreshLayout`,
-  adapter `adapter/SurahAdapter.kt`.
+  `GerhanaViewModel`), expose `LiveData<Resource<T>>`. `searchAyat(keyword)`
+  di `DaftarSurahViewModel` debounce 400ms (`Job` di-cancel tiap kali dipanggil
+  ulang) dan skip panggilan API sama sekali kalau keyword di bawah
+  `MIN_AYAT_SEARCH_LENGTH` (3 karakter).
+- `ui/quran/DaftarSurahActivity.kt` — RecyclerView + `SwipeRefreshLayout`
+  untuk daftar normal, adapter `adapter/SurahAdapter.kt`; plus kotak
+  pencarian (`etSearch`) yang saat berisi teks mengganti tampilan ke
+  `rvSearchResults` (adapter `adapter/SearchResultAdapter.kt`, multi-view-type:
+  header section, item surat, item ayat) — hasil surat difilter lokal dari
+  `allSurah` yang sudah dimuat, hasil ayat dari `viewModel.searchAyat(...)`.
 - `ui/quran/DetailSurahActivity.kt` — header info surah (card gradient navy,
   deskripsi bisa expand/collapse) + RecyclerView ayat, adapter
   `adapter/AyatAdapter.kt`. Audio diputar via `android.media.MediaPlayer`
@@ -71,7 +97,10 @@ Alur data: `Activity -> ViewModel -> QuranRepository -> Retrofit (equran.id)`.
   emulator, buka menu Al-Qur'an dari beranda, daftar 114 surah termuat dari
   API asli, buka Al-Fatihah, ayat+terjemahan+transliterasi tampil benar,
   tombol audio berpindah ikon play/pause & kartu ter-highlight saat ayat
-  diputar.
+  diputar. Pencarian: keyword "yasin" -> muncul section "Surat" dengan surah
+  36; keyword "rahmat" -> muncul section "Ayat" (30 hasil) dari beberapa
+  surah, tap salah satu ("Al-Baqarah Ayat 64") -> berhasil buka
+  `DetailSurahActivity`, auto-scroll & highlight persis ke ayat 64.
 
 ### 7. Known issues & TODOs
 
@@ -82,8 +111,12 @@ Alur data: `Activity -> ViewModel -> QuranRepository -> Retrofit (equran.id)`.
   dites di surah 1). Karena field ini juga belum dipakai UI (belum ada
   tombol next/prev surah), solusinya menghapus field itu dari model daripada
   menulis custom Gson adapter untuk data yang tidak dipakai.
-- Belum ada search/filter surah di `DaftarSurahActivity` (114 item, murni
-  scroll).
+- Pencarian ayat bergantung pada API pihak ketiga terpisah (alquran.cloud)
+  dari sumber data utama (equran.id) — cuplikan teks di hasil pencarian
+  berasal dari edisi terjemahan alquran.cloud, bisa sedikit beda kata/tanda
+  baca dari teks final yang tampil di `DetailSurahActivity` (yang selalu
+  dari equran.id). Nomor surah+ayat tetap konsisten (penomoran ayat
+  universal), jadi navigasinya tetap akurat.
 - Belum ada picker qori — qori audio fixed ke `DEFAULT_QORI_KEY` ("05").
 - Belum ada mode offline/download audio — tiap ayat streaming langsung dari
   CDN equran.id, dan cache repository hilang begitu proses app dimatikan.
