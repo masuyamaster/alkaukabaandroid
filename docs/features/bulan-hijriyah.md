@@ -56,14 +56,30 @@ Berbeda dari rencana lama (user pilih tanggal bebas), alurnya sekarang
 3. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang,
    tanpa mereset `currentMonthOffset` (ganti lokasi tidak mengubah bulan yang
    sedang dilihat).
-4. Per 2026-09-14: link "◀ Bulan Sebelumnya" / "Bulan Berikutnya ▶" di atas
-   kartu ringkasan (`btnBulanPrev`/`btnBulanNext`) menambah/mengurangi
-   `AwalBulanActivity.currentMonthOffset` lalu panggil ulang
-   `runCalculation()`; link "Kembali ke Bulan Berjalan" (`tvBulanOffsetReset`,
-   cuma tampil kalau offset != 0) mengembalikan ke 0. State `currentMonthOffset`
-   cuma di memori (hilang kalau Activity di-recreate/rotate) — dianggap cukup
-   karena kasus pakai utamanya cek beberapa bulan berturutan lalu balik,
-   bukan navigasi jauh yang perlu diingat lintas sesi.
+4. Per 2026-09-14: dua `Spinner` di atas kartu ringkasan —
+   `spinnerBulanHijriyah` (12 nama bulan Hijriyah) dan `spinnerTahunHijriyah`
+   (tahun baseline ±10) — biar user bisa pilih langsung bulan & tahun
+   Hijriyah yang mau dihitung, bukan cuma bulan terdekat ke depan. Awalnya
+   iterasi pertama fitur ini cuma link "◀ Bulan Sebelumnya" / "Bulan
+   Berikutnya ▶" (geser 1 bulan per tap), tapi user eksplisit minta selector
+   langsung (bisa loncat banyak bulan/tahun sekaligus tanpa tap berulang) —
+   diganti ke dua `Spinner` ini di hari yang sama.
+   `AwalBulanActivity.setupBulanSelectors()`: baseline (`baselineHijriYear`/
+   `baselineHijriMonth`) dihitung sekali dari `HijriDateUtil.nextMonthYearMonth(
+   Calendar.getInstance())` (bulan terdekat ke depan dari hari ini, offset 0),
+   dipakai isi default kedua spinner + basis konversi. Tiap kali salah satu
+   spinner diganti user, `currentMonthOffset` dihitung ulang murni dari
+   selisih kalender: `(selectedYear*12+selectedMonth) -
+   (baselineHijriYear*12+baselineHijriMonth)`, lalu `runCalculation()`
+   dipanggil ulang. Counter `pendingInitialSpinnerCallbacks` (mulai dari 2)
+   sengaja dipakai untuk skip 2 callback `onItemSelected` otomatis yang
+   ditembak Android begitu `setAdapter`/`setSelection` awal dipasang (bukan
+   aksi user) — tanpa ini, layar akan langsung recalculate 2x ekstra saat
+   dibuka padahal user belum menyentuh apa-apa. State `currentMonthOffset`
+   & pilihan spinner cuma di memori (hilang kalau Activity di-recreate/
+   rotate) — dianggap cukup karena kasus pakai utamanya cek beberapa bulan
+   lalu balik ke bulan berjalan, bukan navigasi yang perlu diingat lintas
+   sesi.
 5. Tombol PDF di toolbar (`btnToolbarAction`, ikon `ic_pdf_icon`) ->
    `openLaporanHisab()` -> buka `LaporanHisabActivity` (bawa `HilalResult`
    lewat Intent extra, model-nya sekarang `Serializable`) -> user tekan
@@ -352,6 +368,16 @@ teruji langsung.
 - [ ] Label "bulan Hijriyah yang dicek" pakai kalender tabular (Kuwaiti
       algorithm, `HijriDateUtil`), akurasi ±1-2 hari — murni kosmetik, tidak
       memengaruhi hasil hisab.
+- [ ] Selector bulan/tahun (section 3) memakai kalender tabular yang sama
+      (`HijriDateUtil.nextMonthYearMonth()`) buat menentukan baseline &
+      mengonversi pilihan user jadi `monthOffset` — beda dari label, di sini
+      dampaknya BUKAN cuma kosmetik: kalau tabular meleset 1 bulan pas
+      persis di ambang batas awal bulan (jarang, hanya di tanggal-tanggal
+      breaking point), pilihan "bulan sekian" bisa menghitung bulan
+      astronomis yang sebenarnya satu offset meleset dari yang diharapkan.
+      Selalu cek label "Menjelang X Y H" & tanggal ghurub di kartu hasil buat
+      konfirmasi bulan yang benar-benar terhitung, jangan cuma percaya nilai
+      spinner.
 - [ ] Elongasi yang dipakai untuk kriteria adalah geocentric
       (`elongation()`), bukan toposentris — simplifikasi yang disengaja
       sesuai ticket, tapi perlu dicatat kalau nanti ada kebutuhan presisi

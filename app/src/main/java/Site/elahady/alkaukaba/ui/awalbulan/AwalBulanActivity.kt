@@ -3,6 +3,7 @@ package site.elahady.alkaukaba.ui.awalbulan
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
 import site.elahady.alkaukaba.databinding.ItemHilalBreakdownRowBinding
+import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.prayerbreakdown.PrayerBreakdownSection
@@ -14,6 +15,8 @@ import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -29,6 +32,7 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 import java.util.Locale
 
 class AwalBulanActivity : AppCompatActivity() {
@@ -43,7 +47,19 @@ class AwalBulanActivity : AppCompatActivity() {
     private var currentLng = 106.8456
 
     // 0 = bulan terdekat ke depan dari sekarang (default), + = maju N bulan, - = mundur N bulan.
+    // Diturunkan dari selisih pilihan spinnerBulan/TahunHijriyah terhadap baseline (lihat setupBulanSelectors()).
     private var currentMonthOffset = 0
+
+    // Bulan (1-12) & tahun Hijriyah (tabular, HANYA utk isi default+konversi selector -- lihat
+    // HijriDateUtil) untuk offset 0 (bulan terdekat ke depan dari sekarang, dihitung sekali di onCreate).
+    private var baselineHijriYear = 0
+    private var baselineHijriMonth = 1
+    private lateinit var hijriYearRange: IntRange
+
+    // Spinner otomatis fire onItemSelected sekali per spinner begitu adapter/selection awal dipasang
+    // (bukan aksi user) -- counter ini menghitung mundur 2 callback awal itu (1 per spinner) sebelum
+    // callback berikutnya dianggap sebagai pilihan user yang harus memicu hitung ulang.
+    private var pendingInitialSpinnerCallbacks = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,26 +90,44 @@ class AwalBulanActivity : AppCompatActivity() {
         binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
         binding.btnCalculate.setOnClickListener { runCalculation() }
 
-        binding.btnBulanPrev.setOnClickListener {
-            currentMonthOffset--
-            updateBulanNavUI()
-            runCalculation()
-        }
-        binding.btnBulanNext.setOnClickListener {
-            currentMonthOffset++
-            updateBulanNavUI()
-            runCalculation()
-        }
-        binding.tvBulanOffsetReset.setOnClickListener {
-            currentMonthOffset = 0
-            updateBulanNavUI()
-            runCalculation()
-        }
+        setupBulanSelectors()
     }
 
-    // Link "Kembali ke Bulan Berjalan" cuma relevan begitu user sudah geser dari bulan default (offset 0).
-    private fun updateBulanNavUI() {
-        binding.tvBulanOffsetReset.visibility = if (currentMonthOffset != 0) View.VISIBLE else View.GONE
+    // Isi spinner bulan (12 nama Hijriyah) & tahun (baseline +-10 tahun) dengan default = bulan
+    // terdekat ke depan dari sekarang (offset 0), lalu recalculate begitu user ganti salah satu.
+    private fun setupBulanSelectors() {
+        val (baseYear, baseMonth) = HijriDateUtil.nextMonthYearMonth(Calendar.getInstance())
+        baselineHijriYear = baseYear
+        baselineHijriMonth = baseMonth
+        hijriYearRange = (baseYear - 10)..(baseYear + 10)
+
+        val monthAdapter = ArrayAdapter(this, R.layout.item_spinner_selector, HijriDateUtil.monthNames)
+        monthAdapter.setDropDownViewResource(R.layout.item_spinner_selector_dropdown)
+        binding.spinnerBulanHijriyah.adapter = monthAdapter
+        binding.spinnerBulanHijriyah.setSelection(baseMonth - 1)
+
+        val yearLabels = hijriYearRange.map { "$it H" }
+        val yearAdapter = ArrayAdapter(this, R.layout.item_spinner_selector, yearLabels)
+        yearAdapter.setDropDownViewResource(R.layout.item_spinner_selector_dropdown)
+        binding.spinnerTahunHijriyah.adapter = yearAdapter
+        binding.spinnerTahunHijriyah.setSelection(hijriYearRange.indexOf(baseYear))
+
+        val listener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (pendingInitialSpinnerCallbacks > 0) {
+                    pendingInitialSpinnerCallbacks--
+                    return
+                }
+                val selectedMonth = binding.spinnerBulanHijriyah.selectedItemPosition + 1
+                val selectedYear = hijriYearRange.first + binding.spinnerTahunHijriyah.selectedItemPosition
+                currentMonthOffset = (selectedYear * 12 + selectedMonth) - (baselineHijriYear * 12 + baselineHijriMonth)
+                runCalculation()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+        binding.spinnerBulanHijriyah.onItemSelectedListener = listener
+        binding.spinnerTahunHijriyah.onItemSelectedListener = listener
     }
 
     private fun setupObservers() {

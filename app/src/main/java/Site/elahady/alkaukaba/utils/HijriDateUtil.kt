@@ -18,6 +18,9 @@ object HijriDateUtil {
         "Ramadhan", "Syawal", "Dzulqa'dah", "Dzulhijjah"
     )
 
+    /** 12 nama bulan Hijriyah urut (index 0 = Muharram) — dipakai selector bulan di Awal Bulan Hijriyah. */
+    val monthNames: List<String> get() = MONTH_NAMES.toList()
+
     private fun gregorianToJdn(year: Int, month: Int, day: Int): Long {
         val a = (14 - month) / 12
         val y = year + 4800 - a
@@ -60,8 +63,10 @@ object HijriDateUtil {
         return "$day ${MONTH_NAMES[month - 1]} $year H"
     }
 
-    /** Label bulan Hijriyah berikutnya (yang sedang dicek awal bulannya) relatif terhadap [gregorianDate]. */
-    fun nextMonthLabel(gregorianDate: Calendar): String {
+    /** Tahun & bulan Hijriyah (tabular, 1-12) "bulan berikutnya" relatif ke [gregorianDate] — bagian
+     * mentah dari [nextMonthLabel], dipakai untuk isi default selector bulan/tahun di Awal Bulan
+     * Hijriyah (`AwalBulanActivity`). */
+    fun nextMonthYearMonth(gregorianDate: Calendar): Pair<Int, Int> {
         val jdn = gregorianToJdn(
             gregorianDate.get(Calendar.YEAR),
             gregorianDate.get(Calendar.MONTH) + 1,
@@ -70,6 +75,12 @@ object HijriDateUtil {
         val (_, month, year) = jdnToHijri(jdn)
         val nextMonth = if (month >= 12) 1 else month + 1
         val nextYear = if (month >= 12) year + 1 else year
-        return "Menjelang ${MONTH_NAMES[nextMonth - 1]} $nextYear H"
+        return nextYear to nextMonth
+    }
+
+    /** Label bulan Hijriyah berikutnya (yang sedang dicek awal bulannya) relatif terhadap [gregorianDate]. */
+    fun nextMonthLabel(gregorianDate: Calendar): String {
+        val (year, month) = nextMonthYearMonth(gregorianDate)
+        return "Menjelang ${MONTH_NAMES[month - 1]} $year H"
     }
 }
