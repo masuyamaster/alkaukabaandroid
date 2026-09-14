@@ -14,6 +14,7 @@ import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.HijriCalendarEngine
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.ImageUtils
 import site.elahady.alkaukaba.utils.MoonPhaseLabel
@@ -32,6 +33,7 @@ import site.elahady.alkaukaba.viewmodel.MainViewModel
 import site.elahady.alkaukaba.viewmodel.MainViewModelFactory
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -50,6 +52,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import site.elahady.alkaukaba.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -228,6 +234,24 @@ class MainActivity : AppCompatActivity() {
         viewModel.fetchUpcomingIslamicHolidays(lat, lon)
         viewModel.initCalendar(lat, lon)
         updateMoonPhaseCardTilt(lat, lon)
+        updateHeaderHijriDate(lat, lon)
+    }
+
+    /** Setelah lokasi tersedia, koreksi label Hijriyah header pakai mesin hisab yang sama
+     * dengan widget Kalender & fitur Awal Bulan ([HijriCalendarEngine]), bukan tabular offline
+     * murni - supaya "hari ini" konsisten di seluruh layar Beranda. */
+    private fun updateHeaderHijriDate(lat: Double, lon: Double) {
+        CoroutineScope(Dispatchers.Default).launch {
+            val label = try {
+                val observer = Observer(lat, lon, 0.0)
+                HijriCalendarEngine.fullDateLabelFor(observer, Calendar.getInstance())
+            } catch (e: Exception) {
+                HijriDateUtil.fullDateLabel(Calendar.getInstance())
+            }
+            withContext(Dispatchers.Main) {
+                binding.tvDateHijri.text = label
+            }
+        }
     }
 
     /**
@@ -333,7 +357,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupMonthlyCalendar() {
-        calendarAdapter = CalendarAdapter()
+        calendarAdapter = CalendarAdapter { date ->
+            viewModel.selectDate(Calendar.getInstance().apply { time = date })
+        }
         binding.rvWeeklyCalendar.apply {
             layoutManager = GridLayoutManager(this@MainActivity, 7)
             adapter = calendarAdapter
@@ -376,6 +402,26 @@ class MainActivity : AppCompatActivity() {
     private fun setupCalendarNavigation() {
         binding.btnPrevMonth.setOnClickListener { viewModel.changeMonth(-1) }
         binding.btnNextMonth.setOnClickListener { viewModel.changeMonth(1) }
+        binding.layoutMonthTitle.setOnClickListener { showMonthTitleDatePicker() }
+    }
+
+    /** Tap judul bulan Masehi/Hijriyah -> lompat langsung ke tanggal mana pun (tidak terbatas
+     * geser bulan satu-satu lewat panah prev/next). Judul & grid otomatis menyesuaikan tanggal terpilih. */
+    private fun showMonthTitleDatePicker() {
+        val seed = Calendar.getInstance()
+        DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val picked = Calendar.getInstance().apply {
+                    set(year, month, dayOfMonth, 0, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                viewModel.selectDate(picked)
+            },
+            seed.get(Calendar.YEAR),
+            seed.get(Calendar.MONTH),
+            seed.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
     /** Ikon profil di header ikut foto profil user - direfresh di onResume juga karena

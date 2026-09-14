@@ -4,8 +4,12 @@ import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.DayUIModel
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.Timings
+import site.elahady.alkaukaba.utils.HijriCalendarEngine
+import site.elahady.alkaukaba.utils.HijriDateUtil
+import site.elahady.alkaukaba.utils.HijriHolidayTranslator
 import site.elahady.alkaukaba.utils.Resource
 import android.location.Geocoder
+import io.github.cosinekitty.astronomy.Observer
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -36,6 +40,7 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
     val weeklyCalendar: LiveData<Resource<List<DayUIModel>>> = _weeklyCalendar
 
     private var currentCalendar = Calendar.getInstance()
+    private var selectedDate: Calendar = Calendar.getInstance()
     private var lastLat = 0.0
     private var lastLng = 0.0
 
@@ -66,7 +71,9 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
 
                     // 2. Proses Hari Besar Islam
                     if (data.date.hijri.holidays.isNotEmpty()) {
-                        val holidays = data.date.hijri.holidays.joinToString(", ")
+                        val holidays = HijriHolidayTranslator.translateJoined(
+                            data.date.hijri.holidays.joinToString(", ")
+                        )
                         _holidayAlert.postValue(holidays)
                     } else {
                         // Cek Hari Nasional Masehi (Logic Sederhana)
@@ -213,7 +220,9 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
 
                             if (dateObj == null) return@map null
 
-                            val holidayNames = data.date.hijri.holidays.joinToString(", ")
+                            val holidayNames = HijriHolidayTranslator.translateJoined(
+                                data.date.hijri.holidays.joinToString(", ")
+                            )
                             val hijriDay = data.date.hijri.day
                             val hijriMonth = data.date.hijri.month.en
                             val hijriYear = data.date.hijri.year
@@ -266,6 +275,15 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         fetchMonthlyCalendar()
     }
 
+    /** Dipanggil saat user memilih tanggal lain (tap sel tanggal, atau lewat date-picker judul).
+     * Pindah tampilan ke bulan Masehi dari [date] dan tandai [date] sebagai tanggal terpilih -
+     * judul bulan Hijriyah & Masehi otomatis menyesuaikan lewat [fetchMonthlyCalendar]. */
+    fun selectDate(date: Calendar) {
+        currentCalendar = date.clone() as Calendar
+        selectedDate = date.clone() as Calendar
+        fetchMonthlyCalendar()
+    }
+
     private fun fetchMonthlyCalendar() {
         // Post Loading State
         _calendarData.postValue(Resource.Loading())
@@ -289,20 +307,29 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                 val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
                 val localDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val todayStr = localDateFormat.format(Date())
+                val selectedDateStr = localDateFormat.format(selectedDate.time)
 
                 val uiList = mutableListOf<DayUIModel>()
 
-                // -- LOGIC JUDUL HIJRIAH --
-                // Ambil data Hijriah dari item pertama yang valid di API response
-                // untuk dijadikan judul bulan ini (Contoh: "Rajab 1447 H")
-                if (response.isSuccessful && response.body()?.data?.isNotEmpty() == true) {
-                    val firstItem = response.body()!!.data[0]
-                    val hijriMonthName = firstItem.date.hijri.month.en // "Rajab"
-                    val hijriYearVal = firstItem.date.hijri.year       // "1447"
+                // -- LOGIC TANGGAL & JUDUL HIJRIAH --
+                // Sumber kebenaran tanggal 1 Hijriyah dipindah dari API pihak ketiga ke mesin
+                // hisab yang sama dengan fitur Awal Bulan (lihat HijriCalendarEngine), supaya
+                // selalu sinkron. API hari besar Islam di bawah ini HANYA dipakai untuk info
+                // hari libur (dicocokkan lewat tanggal Masehi, bukan tanggal Hijriyahnya).
+                val observer = Observer(lastLat, lastLng, 0.0)
+                val hijriDaysForMonth = try {
+                    HijriCalendarEngine.buildCalendar(observer, processingCal, daysInMonth)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
 
-                    _hijriTitle.postValue("$hijriMonthName $hijriYearVal H")
+                if (hijriDaysForMonth != null) {
+                    _hijriTitle.postValue(hijriDaysForMonth[0].label)
                 } else {
-                    _hijriTitle.postValue("-")
+                    // Fallback tabular offline kalau perhitungan astronomi gagal (mis. lokasi ekstrem)
+                    val (monthName, hijriYear) = HijriDateUtil.monthYearAt(processingCal)
+                    _hijriTitle.postValue("$monthName $hijriYear H")
                 }
                 // -------------------------
 
@@ -314,8 +341,6 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                 // B. Isi Tanggal
                 val apiDataList = response.body()?.data ?: emptyList()
                 for (day in 1..daysInMonth) {
-                    // ... (Logic looping pencocokan tanggal sama seperti sebelumnya) ...
-                    // (Copy paste logic loop dari jawaban sebelumnya)
                     processingCal.set(Calendar.DAY_OF_MONTH, day)
                     val date = processingCal.time
                     val dateStr = localDateFormat.format(date)
@@ -328,9 +353,11 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                         } catch (e: Exception) { false }
                     }
 
-                    val hijriDay = matchData?.date?.hijri?.day ?: "-"
+                    val hijriDay = hijriDaysForMonth?.get(day - 1)?.day?.toString()
+                        ?: HijriDateUtil.fullDateLabel(processingCal).substringBefore(" ")
                     val hasHoliday = matchData?.date?.hijri?.holidays?.isNotEmpty() == true
                     val isToday = dateStr == todayStr
+                    val isSelected = dateStr == selectedDateStr
 
                     uiList.add(DayUIModel(
                         date = date,
@@ -338,7 +365,8 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                         hijriDay = hijriDay,
                         isHoliday = hasHoliday,
                         isToday = isToday,
-                        isEmpty = false
+                        isEmpty = false,
+                        isSelected = isSelected
                     ))
                 }
 

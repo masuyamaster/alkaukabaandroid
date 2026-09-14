@@ -15,10 +15,13 @@ data class DayUIModel(
     val hijriDay: String,
     val isHoliday: Boolean,
     val isToday: Boolean,
-    val isEmpty: Boolean
+    val isEmpty: Boolean,
+    val isSelected: Boolean = false
 )
 
-class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.ViewHolder>() {
+class CalendarAdapter(
+    private val onDayClick: ((Date) -> Unit)? = null
+) : RecyclerView.Adapter<CalendarAdapter.ViewHolder>() {
 
     private val listDays = ArrayList<DayUIModel>()
 
@@ -28,17 +31,19 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.ViewHolder>() {
         notifyDataSetChanged()
     }
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val container: View = itemView.findViewById(R.id.containerDay)
         val tvDateNum: TextView = itemView.findViewById(R.id.tvDateNum)
         val tvHijriNum: TextView = itemView.findViewById(R.id.tvHijriNum)
         val bgToday: View = itemView.findViewById(R.id.bgToday)
+        val bgSelected: View = itemView.findViewById(R.id.bgSelected)
         val dotHoliday: View = itemView.findViewById(R.id.dotHoliday)
 
         fun bind(item: DayUIModel) {
             if (item.isEmpty) {
                 // Sembunyikan isi jika ini adalah kotak kosong (padding layout)
                 container.visibility = View.INVISIBLE
+                container.setOnClickListener(null)
                 return
             } else {
                 container.visibility = View.VISIBLE
@@ -46,16 +51,18 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.ViewHolder>() {
 
             tvDateNum.text = item.dayValue
             tvHijriNum.text = item.hijriDay
+            tvDateNum.setTextColor(itemView.context.getColor(android.R.color.white))
 
-            if (item.isToday) {
-                bgToday.visibility = View.VISIBLE
-                tvDateNum.setTextColor(itemView.context.getColor(android.R.color.white))
-            } else {
-                bgToday.visibility = View.GONE
-                tvDateNum.setTextColor(itemView.context.getColor(android.R.color.white))
-            }
+            bgToday.visibility = if (item.isToday) View.VISIBLE else View.GONE
+            // Cincin gold hanya ditampilkan kalau tanggal terpilih BUKAN hari ini,
+            // supaya tidak dobel dengan bgToday yang sudah solid.
+            bgSelected.visibility = if (item.isSelected && !item.isToday) View.VISIBLE else View.GONE
 
             dotHoliday.visibility = if (item.isHoliday) View.VISIBLE else View.GONE
+
+            container.setOnClickListener {
+                item.date?.let { onDayClick?.invoke(it) }
+            }
         }
     }
 

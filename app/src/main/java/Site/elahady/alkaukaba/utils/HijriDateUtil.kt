@@ -37,6 +37,18 @@ object HijriDateUtil {
         return Triple(day, month.coerceIn(1, 12), year)
     }
 
+    /** Nama bulan & tahun Hijriyah (tabular) untuk [gregorianDate] - dipakai [HijriCalendarEngine]
+     * untuk memberi label bulan/tahun pada segmen yang batas awalnya sudah dikoreksi hisab hakiki. */
+    fun monthYearAt(gregorianDate: Calendar): Pair<String, Int> {
+        val jdn = gregorianToJdn(
+            gregorianDate.get(Calendar.YEAR),
+            gregorianDate.get(Calendar.MONTH) + 1,
+            gregorianDate.get(Calendar.DAY_OF_MONTH)
+        )
+        val (_, month, year) = jdnToHijri(jdn)
+        return MONTH_NAMES[month - 1] to year
+    }
+
     /** Tanggal Hijriyah lengkap untuk [gregorianDate], mis. "17 Rabiul Awal 1447 H". */
     fun fullDateLabel(gregorianDate: Calendar): String {
         val jdn = gregorianToJdn(
