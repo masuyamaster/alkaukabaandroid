@@ -37,7 +37,7 @@ object AdDurrulAniqCalculator {
         val lambda = input.longitude
         val tt = input.heightMeters
 
-        val ijtima = AdDurrulAniqIjtimaCalculator.findNearestFuture(System.currentTimeMillis())
+        val ijtima = AdDurrulAniqIjtimaCalculator.findAtOffset(System.currentTimeMillis(), input.monthOffset)
         val ijtimaMillis = with(AdDurrulAniqIjtimaCalculator) { ijtima.toUtcMillis() }
 
         val ghurub = cariGhurubSetelah(ijtimaMillis, phi, lambda, tt)

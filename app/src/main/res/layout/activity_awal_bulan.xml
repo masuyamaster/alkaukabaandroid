@@ -127,6 +127,58 @@
                     android:orientation="vertical"
                     android:visibility="gone">
 
+                    <!-- Navigasi bulan Hijriyah: default menampilkan bulan terdekat ke depan, tapi
+                         user bisa geser maju/mundur untuk menghitung bulan lain. -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/btnBulanPrev"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="◀ Bulan Sebelumnya"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_label_gold"
+                            android:padding="6dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                        <TextView
+                            android:id="@+id/tvBulanOffsetReset"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="Kembali ke Bulan Berjalan"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_secondary"
+                            android:padding="6dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:visibility="gone"/>
+
+                        <TextView
+                            android:id="@+id/btnBulanNext"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bulan Berikutnya ▶"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_label_gold"
+                            android:padding="6dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+                    </LinearLayout>
+
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

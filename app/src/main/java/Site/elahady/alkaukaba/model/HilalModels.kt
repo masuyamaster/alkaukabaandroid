@@ -6,7 +6,8 @@ import java.io.Serializable
 data class HilalInput(
     val latitude: Double,
     val longitude: Double,
-    val heightMeters: Double
+    val heightMeters: Double,
+    val monthOffset: Int = 0 // 0 = bulan terdekat ke depan dari sekarang (default lama), + = maju N bulan, - = mundur N bulan
 )
 
 data class HilalResult(

@@ -44,24 +44,47 @@ memengaruhi hasil ijtima'/ghurub/kriteria metode manapun.
 ## 3. Alur
 
 Berbeda dari rencana lama (user pilih tanggal bebas), alurnya sekarang
-**otomatis**:
+**otomatis** untuk bulan default, tapi user tetap bisa geser ke bulan lain:
 
 1. `onCreate` -> resolve lokasi (manual/GPS/fallback) -> begitu lokasi
    didapat, langsung panggil `HilalViewModel.calculateHilal(lat, lng,
-   heightMeters)` tanpa perlu tombol ditekan dulu.
+   heightMeters)` tanpa perlu tombol ditekan dulu (`monthOffset` default 0 =
+   bulan terdekat ke depan dari sekarang).
 2. Tombol "Hitung Ulang" (`btnCalculate`) tersedia untuk menghitung ulang
-   dengan lokasi/ketinggian saat ini (mis. setelah ubah field ketinggian).
-3. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang.
-4. Tombol PDF di toolbar (`btnToolbarAction`, ikon `ic_pdf_icon`) ->
+   dengan lokasi/ketinggian saat ini (mis. setelah ubah field ketinggian) —
+   tetap pakai `currentMonthOffset` yang sedang aktif.
+3. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang,
+   tanpa mereset `currentMonthOffset` (ganti lokasi tidak mengubah bulan yang
+   sedang dilihat).
+4. Per 2026-09-14: link "◀ Bulan Sebelumnya" / "Bulan Berikutnya ▶" di atas
+   kartu ringkasan (`btnBulanPrev`/`btnBulanNext`) menambah/mengurangi
+   `AwalBulanActivity.currentMonthOffset` lalu panggil ulang
+   `runCalculation()`; link "Kembali ke Bulan Berjalan" (`tvBulanOffsetReset`,
+   cuma tampil kalau offset != 0) mengembalikan ke 0. State `currentMonthOffset`
+   cuma di memori (hilang kalau Activity di-recreate/rotate) — dianggap cukup
+   karena kasus pakai utamanya cek beberapa bulan berturutan lalu balik,
+   bukan navigasi jauh yang perlu diingat lintas sesi.
+5. Tombol PDF di toolbar (`btnToolbarAction`, ikon `ic_pdf_icon`) ->
    `openLaporanHisab()` -> buka `LaporanHisabActivity` (bawa `HilalResult`
    lewat Intent extra, model-nya sekarang `Serializable`) -> user tekan
    "Unduh PDF" di halaman itu -> `HilalPdfService.exportViewAsPdf()`. Per
    2026-09-06: diganti dari alur lama (`btnDownloadPdf` langsung panggil
    `HilalViewModel.generatePdf()`) — lihat section 6c.
-5. `btnBack` -> `finish()`.
+6. `btnBack` -> `finish()`.
 
-`EphemerisCalculator.calculate()` selalu mencari **ijtima' (new moon)
-terdekat ke depan dari waktu sekarang** — tidak ada pilihan bulan manual.
+Per 2026-09-14, `HilalInput.monthOffset` (default 0) diteruskan ke kedua
+mesin hisab: `EphemerisCalculator.calculate()` mencari **ijtima' (new moon)
+ke-N** relatif ke ijtima' terdekat ke depan dari sekarang (offset 0 =
+perilaku lama; + = maju N bulan, - = mundur N bulan), lewat rantai new-moon
+sungguhan (`findIjtimaAtOffset()`, bukan estimasi rata-rata 29.53 hari/bulan
+supaya presisi terjaga di offset besar). `AdDurrulAniqCalculator` lebih
+sederhana: `AdDurrulAniqIjtimaCalculator.findAtOffset()` cukup geser
+(tahun, bulan) Hijriyah baseline lalu panggil ulang `calculate(hijriYear,
+hijriMonth)`, karena metode ini sudah diindeks langsung per bulan Hijriyah
+(bukan dicari dari rantai new-moon). `runCalculation()` di Activity
+membungkus pemanggilan `calculateHilal()` dengan try/catch (Toast kalau
+gagal) sebagai jaring pengaman kalau navigasi offset terlalu jauh (mis. di
+luar jangkauan tabel Ijtima' Ad-Durrul Aniq, tahun Hijriyah -180..1770).
 
 ## 4. Struktur & alur data
 
@@ -69,7 +92,7 @@ terdekat ke depan dari waktu sekarang** — tidak ada pilihan bulan manual.
 |---|---|
 | `ui/awalbulan/AwalBulanActivity.kt` + `activity_awal_bulan.xml` | UI: koordinat (auto GPS/manual), ketinggian, tombol Hitung Ulang & Download PDF; kartu ringkasan (label bulan Hijriyah, tanggal ghurub, status badge) + 3 kartu metrik (`item_hilal_result_card.xml`: tinggi hilal mar'i, elongasi, mukuts) + accordion rincian perhitungan |
 | `viewmodel/hilal/HilalViewModel.kt` | `LiveData<HilalResult> calculationResult`; jembatan Activity -> `EphemerisCalculator`/`HilalPdfService` |
-| `model/HilalModels.kt` | `HilalInput` (lat, lng, heightMeters) dan `HilalResult` (label, status, tinggi hilal, elongasi, mukuts, `breakdownSections`, `calculationLog`) |
+| `model/HilalModels.kt` | `HilalInput` (lat, lng, heightMeters, `monthOffset` — lihat section 3) dan `HilalResult` (label, status, tinggi hilal, elongasi, mukuts, `breakdownSections`, `calculationLog`) |
 | `utils/EphemerisCalculator.kt` | Mesin hisab real — lihat section 5 |
 | `utils/HijriDateUtil.kt` | Konversi Masehi->Hijriyah tabular (Kuwaiti algorithm) untuk label tampilan — dipakai untuk "bulan Hijriyah yang dicek" di sini (`nextMonthLabel()`) **dan** tanggal Hijriyah hari ini di kartu Sholat Berikutnya `MainActivity` (`fullDateLabel()`, sejak 2026-08-30) |
 | `ui/awalbulan/LaporanHisabActivity.kt` + `activity_laporan_hisab.xml` | Per 2026-09-06: halaman viewer laporan hisab (pengganti download-langsung) — kartu navy+emas meratakan `breakdownSections` jadi tabel bernomor (`item_laporan_table_row.xml`), tombol "Unduh PDF" tunggal di bawah — lihat section 6c |
@@ -95,7 +118,10 @@ apa pun di skenario scroll/expand manapun.
 ## 5. Mesin hisab (`EphemerisCalculator`)
 
 1. **Ijtima' (konjungsi)**: `searchMoonQuarter`/`nextMoonQuarter` dari waktu
-   sekarang sampai ketemu quarter `0` (new moon) berikutnya.
+   sekarang sampai ketemu quarter `0` (new moon) berikutnya (baseline, offset
+   0), lalu digeser sejumlah `HilalInput.monthOffset` lewat rantai new-moon
+   yang sama (`findIjtimaAtOffset()`, section 3) kalau user sedang melihat
+   bulan lain.
 2. **Ghurub markaz**: `searchRiseSet(Body.Sun, ..., Direction.Set, ...)` di
    tengah malam lokal tanggal ijtima'. Kalau ijtima' terjadi setelah ghurub
    hari itu, geser ke ghurub keesokan harinya.
@@ -123,7 +149,7 @@ kitab + rangkuman riset di halaman Notion "Ad-Durul Aniq" (Ruang Perpustakaan
 | File | Peran |
 |---|---|
 | `AdDurrulAniqTables.kt` | Tabel Ijtima' (Majmu'ah/Mabsuthah/Bulan, halaman 156-158 kitab) + konstanta Ta'dilul 'Alamah (T1-T8) + konstanta ta'dil Hilal (S1-S2, M1-M9, B1-B4, r1-r4) + tabel konversi Julian->Masehi |
-| `AdDurrulAniqIjtimaCalculator.kt` | Hisab Ijtima' (konjungsi) dari tabel di atas + `findNearestFuture()` (cari ijtima' terdekat ke depan dari sekarang, pola sama dgn `EphemerisCalculator`) |
+| `AdDurrulAniqIjtimaCalculator.kt` | Hisab Ijtima' (konjungsi) dari tabel di atas + `findNearestFuture()` (cari ijtima' terdekat ke depan dari sekarang, pola sama dgn `EphemerisCalculator`) + `findAtOffset()` (per 2026-09-14, geser N bulan dari baseline `findNearestFuture` — lihat section 3) |
 | `AdDurrulAniqHilalCalculator.kt` | Hisab Ghurub + posisi Matahari/Bulan (deklinasi, asensiorekta, azimuth, tinggi, elongasi, illuminasi) |
 | `AdDurrulAniqCalculator.kt` | Entry point `calculate(HilalInput): HilalResult` — satukan Ijtima'+Ghurub+Hilal+kriteria, dipanggil `HilalViewModel` |
 

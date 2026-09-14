@@ -14,14 +14,18 @@ class HilalViewModel : ViewModel() {
     private val _calculationResult = MutableLiveData<HilalResult>()
     val calculationResult: LiveData<HilalResult> = _calculationResult
 
-    /** [method] salah satu [SessionManager.HISAB_AWAL_BULAN_ASTRONOMY_ENGINE]/[SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ]. */
+    /**
+     * [method] salah satu [SessionManager.HISAB_AWAL_BULAN_ASTRONOMY_ENGINE]/[SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ].
+     * [monthOffset] 0 = bulan terdekat ke depan dari sekarang (default), + = maju N bulan, - = mundur N bulan.
+     */
     fun calculateHilal(
         lat: Double,
         lng: Double,
         heightMeters: Double,
-        method: String = SessionManager.HISAB_AWAL_BULAN_ASTRONOMY_ENGINE
+        method: String = SessionManager.HISAB_AWAL_BULAN_ASTRONOMY_ENGINE,
+        monthOffset: Int = 0
     ) {
-        val input = HilalInput(lat, lng, heightMeters)
+        val input = HilalInput(lat, lng, heightMeters, monthOffset)
         _calculationResult.value = if (method == SessionManager.HISAB_AWAL_BULAN_DURRUL_ANIQ) {
             AdDurrulAniqCalculator.calculate(input)
         } else {

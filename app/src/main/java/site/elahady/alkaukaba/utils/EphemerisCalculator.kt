@@ -41,12 +41,9 @@ object EphemerisCalculator {
         val observer = Observer(input.latitude, input.longitude, input.heightMeters)
         val now = Time.fromMillisecondsSince1970(System.currentTimeMillis())
 
-        // 1. Ijtima' (konjungsi/new moon) terdekat ke depan dari sekarang
-        var mq = searchMoonQuarter(now)
-        while (mq.quarter != 0) {
-            mq = nextMoonQuarter(mq)
-        }
-        val ijtima = mq.time
+        // 1. Ijtima' (konjungsi/new moon) sesuai monthOffset: 0 = terdekat ke depan dari sekarang
+        //    (perilaku lama), + = maju N bulan, - = mundur N bulan.
+        val ijtima = findIjtimaAtOffset(now, input.monthOffset)
 
         // 2. Ghurub markaz: ghurub di tanggal yang sama dengan ijtima'; kalau
         // ijtima' terjadi setelah ghurub hari itu, geser ke ghurub keesokan hari.
@@ -193,6 +190,35 @@ object EphemerisCalculator {
             sb.append("\n")
         }
         return sb.toString()
+    }
+
+    /**
+     * Ijtima' ke-[monthOffset] relatif ke ijtima' terdekat ke depan dari [now] (offset 0 = perilaku
+     * lama). Jalan lewat rantai new-moon sungguhan (bukan estimasi +-29.53 hari/bulan) supaya presisi
+     * terjaga walau offset besar -- margin awal `32 hari x (|offset|+2)` selalu lebih dari cukup
+     * synodic month (~29.53 hari) untuk menjamin ada >= |offset| ijtima' sebelum baseline.
+     */
+    private fun findIjtimaAtOffset(now: Time, monthOffset: Int): Time {
+        val marginSynodicMonths = abs(monthOffset) + 2
+        var mq = searchMoonQuarter(now.addDays(-32.0 * marginSynodicMonths))
+        while (mq.quarter != 0) mq = nextMoonQuarter(mq)
+
+        val chain = mutableListOf(mq.time)
+        while (chain.last() < now) {
+            mq = nextMoonQuarter(mq)
+            while (mq.quarter != 0) mq = nextMoonQuarter(mq)
+            chain.add(mq.time)
+        }
+
+        val baselineIndex = chain.lastIndex
+        var targetIndex = baselineIndex + monthOffset
+        while (targetIndex > chain.lastIndex) {
+            mq = nextMoonQuarter(mq)
+            while (mq.quarter != 0) mq = nextMoonQuarter(mq)
+            chain.add(mq.time)
+        }
+        require(targetIndex >= 0) { "monthOffset $monthOffset terlalu jauh ke belakang" }
+        return chain[targetIndex]
     }
 
     private fun localMidnightOf(time: Time): Time {

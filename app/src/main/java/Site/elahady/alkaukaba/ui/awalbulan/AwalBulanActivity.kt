@@ -42,6 +42,9 @@ class AwalBulanActivity : AppCompatActivity() {
     private var currentLat = -6.2088
     private var currentLng = 106.8456
 
+    // 0 = bulan terdekat ke depan dari sekarang (default), + = maju N bulan, - = mundur N bulan.
+    private var currentMonthOffset = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAwalBulanBinding.inflate(layoutInflater)
@@ -70,6 +73,27 @@ class AwalBulanActivity : AppCompatActivity() {
         }
         binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
         binding.btnCalculate.setOnClickListener { runCalculation() }
+
+        binding.btnBulanPrev.setOnClickListener {
+            currentMonthOffset--
+            updateBulanNavUI()
+            runCalculation()
+        }
+        binding.btnBulanNext.setOnClickListener {
+            currentMonthOffset++
+            updateBulanNavUI()
+            runCalculation()
+        }
+        binding.tvBulanOffsetReset.setOnClickListener {
+            currentMonthOffset = 0
+            updateBulanNavUI()
+            runCalculation()
+        }
+    }
+
+    // Link "Kembali ke Bulan Berjalan" cuma relevan begitu user sudah geser dari bulan default (offset 0).
+    private fun updateBulanNavUI() {
+        binding.tvBulanOffsetReset.visibility = if (currentMonthOffset != 0) View.VISIBLE else View.GONE
     }
 
     private fun setupObservers() {
@@ -227,7 +251,14 @@ class AwalBulanActivity : AppCompatActivity() {
 
     private fun runCalculation() {
         val height = binding.etKetinggian.text.toString().toDoubleOrNull() ?: 0.0
-        viewModel.calculateHilal(currentLat, currentLng, height, sessionManager.getHisabAwalBulanMethod())
+        try {
+            viewModel.calculateHilal(
+                currentLat, currentLng, height,
+                sessionManager.getHisabAwalBulanMethod(), currentMonthOffset
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, "Gagal menghitung bulan ini (${e.message})", Toast.LENGTH_SHORT).show()
+        }
     }
 
     companion object {

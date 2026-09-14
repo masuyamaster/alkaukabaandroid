@@ -76,12 +76,11 @@ object AdDurrulAniqIjtimaCalculator {
     }
 
     /**
-     * Cari ijtima' (yang mengakhiri suatu bulan Hijriyah) terdekat SETELAH [nowMillis].
-     * Estimasi tahun/bulan Hijriyah awal dihitung kasar (formula rasio kalender),
-     * lalu digeser mundur beberapa bulan sebagai margin aman, baru dicari maju
-     * bulan-demi-bulan sampai ketemu ijtima' pertama yang > sekarang.
+     * Estimasi tahun/bulan Hijriyah (formula rasio kalender) lalu dicari maju bulan-demi-bulan
+     * sampai ketemu ijtima' pertama yang > [nowMillis] -- dipakai [findNearestFuture] (offset 0)
+     * maupun [findAtOffset] sebagai baseline sebelum digeser.
      */
-    fun findNearestFuture(nowMillis: Long): IjtimaResult {
+    private fun findBaselineYearMonth(nowMillis: Long): Pair<Int, Int> {
         val nowCal = GregorianCalendar(TimeZone.getTimeZone("UTC")).apply { timeInMillis = nowMillis }
         val gYear = nowCal.get(Calendar.YEAR)
         val gDayOfYear = nowCal.get(Calendar.DAY_OF_YEAR)
@@ -103,7 +102,36 @@ object AdDurrulAniqIjtimaCalculator {
             result = calculate(hijriYear, hijriMonth)
             guard++
         }
-        return result
+        return hijriYear to hijriMonth
+    }
+
+    /** Cari ijtima' (yang mengakhiri suatu bulan Hijriyah) terdekat SETELAH [nowMillis]. */
+    fun findNearestFuture(nowMillis: Long): IjtimaResult {
+        val (hijriYear, hijriMonth) = findBaselineYearMonth(nowMillis)
+        return calculate(hijriYear, hijriMonth)
+    }
+
+    /**
+     * Ijtima' ke-[monthOffset] relatif ke ijtima' terdekat ke depan dari [nowMillis]
+     * (offset 0 = sama dengan [findNearestFuture], + = maju N bulan, - = mundur N bulan).
+     * Beda dari `EphemerisCalculator`: di sini [calculate] sudah diindeks langsung per
+     * (tahun, bulan) Hijriyah, jadi pergeseran cukup aritmetika kalender -- tidak perlu
+     * jalan rantai bulan-demi-bulan manual.
+     */
+    fun findAtOffset(nowMillis: Long, monthOffset: Int): IjtimaResult {
+        var (hijriYear, hijriMonth) = findBaselineYearMonth(nowMillis)
+        if (monthOffset > 0) {
+            repeat(monthOffset) {
+                hijriMonth++
+                if (hijriMonth > 12) { hijriMonth = 1; hijriYear++ }
+            }
+        } else if (monthOffset < 0) {
+            repeat(-monthOffset) {
+                hijriMonth--
+                if (hijriMonth < 1) { hijriMonth = 12; hijriYear-- }
+            }
+        }
+        return calculate(hijriYear, hijriMonth)
     }
 
     private val HARI_MINGGUAN = arrayOf("Sabtu", "Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at")
