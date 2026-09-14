@@ -11,4 +11,7 @@
     <string name="infoLokasi">Lokasi tidak diketahui</string>
     <string name="loading">Loading…</string>
     <string name="timepray">Prayer Times</string>
+
+    <string name="quran_play_ayat">Putar audio ayat</string>
+    <string name="quran_pause_ayat">Jeda audio ayat</string>
 </resources>

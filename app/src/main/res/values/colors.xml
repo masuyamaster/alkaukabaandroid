@@ -76,4 +76,8 @@
     <color name="divider_soft">#EEF1F4</color>
     <color name="input_inline_bg">#F1F5F9</color>
 
+    <!-- Al-Qur'an Digital & Audio (2026-09) -->
+    <color name="card_gold_tint">#FDF8ED</color>
+    <color name="bg_gold_light">#FDF3DD</color>
+
 </resources>
