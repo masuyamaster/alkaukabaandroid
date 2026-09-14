@@ -13,6 +13,41 @@
         layout="@layout/view_toolbar_default" />
 
     <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_toggle_container"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/tvModePerSurat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_toggle_pill_active"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="8dp"
+            android:text="Per Surat"
+            android:textColor="@color/text_selected"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvModePerJuz"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="8dp"
+            android:text="Per Juz"
+            android:textColor="@color/text_unselected"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -87,6 +122,16 @@
             android:visibility="gone"
             tools:listitem="@layout/item_ayat_search_result"
             tools:itemCount="4" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvJuz"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="16dp"
+            android:visibility="gone"
+            tools:listitem="@layout/item_juz"
+            tools:itemCount="6" />
 
         <TextView
             android:id="@+id/tvSearchEmptyState"

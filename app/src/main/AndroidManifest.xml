@@ -93,6 +93,9 @@
             android:name="site.elahady.alkaukaba.ui.quran.DetailSurahActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.quran.DetailJuzActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.doa.DaftarKategoriDoaActivity"
             android:exported="false" />
         <activity

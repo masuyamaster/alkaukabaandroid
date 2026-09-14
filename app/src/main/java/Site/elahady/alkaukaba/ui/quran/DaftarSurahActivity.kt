@@ -1,12 +1,16 @@
 package site.elahady.alkaukaba.ui.quran
 
+import site.elahady.alkaukaba.R
+import site.elahady.alkaukaba.adapter.JuzAdapter
 import site.elahady.alkaukaba.adapter.SearchResultAdapter
 import site.elahady.alkaukaba.adapter.SearchResultItem
 import site.elahady.alkaukaba.adapter.SurahAdapter
 import site.elahady.alkaukaba.databinding.ActivityDaftarSurahBinding
 import site.elahady.alkaukaba.model.AyatSearchMatch
+import site.elahady.alkaukaba.model.JuzBoundaries
 import site.elahady.alkaukaba.model.Surah
 import site.elahady.alkaukaba.utils.Resource
+import androidx.core.content.ContextCompat
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.viewmodel.quran.DaftarSurahViewModel
@@ -23,15 +27,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 
 class DaftarSurahActivity : AppCompatActivity() {
 
+    private enum class BrowseMode { SURAT, JUZ }
+
     private lateinit var binding: ActivityDaftarSurahBinding
     private lateinit var viewModel: DaftarSurahViewModel
     private lateinit var adapter: SurahAdapter
     private lateinit var searchAdapter: SearchResultAdapter
+    private lateinit var juzAdapter: JuzAdapter
 
     private var allSurah: List<Surah> = emptyList()
     private var currentQuery: String = ""
     private var latestAyatResult: List<AyatSearchMatch> = emptyList()
     private var isAyatSearchLoading: Boolean = false
+    private var browseMode = BrowseMode.SURAT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +57,10 @@ class DaftarSurahActivity : AppCompatActivity() {
 
         setupRecyclerView()
         setupSearchResultRecyclerView()
+        setupJuzRecyclerView()
         setupObserver()
         setupSearchInput()
+        setupBrowseModeToggle()
 
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.fetchSurahList()
@@ -61,6 +71,67 @@ class DaftarSurahActivity : AppCompatActivity() {
         adapter = SurahAdapter { surah -> openSurah(surah.nomor) }
         binding.rvSurah.layoutManager = LinearLayoutManager(this)
         binding.rvSurah.adapter = adapter
+    }
+
+    private fun setupJuzRecyclerView() {
+        juzAdapter = JuzAdapter { juz -> openJuz(juz.nomor) }
+        binding.rvJuz.layoutManager = LinearLayoutManager(this)
+        binding.rvJuz.adapter = juzAdapter
+    }
+
+    /** Selector "Per Surat"/"Per Juz" di atas layar. Mode Juz sengaja menyembunyikan kotak
+     * pencarian - pencarian surat/ayat yang ada sekarang berbasis nomor surah, tidak punya
+     * makna yang jelas dalam konteks per-Juz, jadi daripada dipaksakan lebih baik disembunyikan
+     * dulu untuk mode ini. */
+    private fun setupBrowseModeToggle() {
+        binding.tvModePerSurat.setOnClickListener { switchBrowseMode(BrowseMode.SURAT) }
+        binding.tvModePerJuz.setOnClickListener { switchBrowseMode(BrowseMode.JUZ) }
+    }
+
+    private fun switchBrowseMode(mode: BrowseMode) {
+        if (browseMode == mode) return
+        browseMode = mode
+
+        val activePill = if (mode == BrowseMode.SURAT) binding.tvModePerSurat else binding.tvModePerJuz
+        val inactivePill = if (mode == BrowseMode.SURAT) binding.tvModePerJuz else binding.tvModePerSurat
+        activePill.setBackgroundResource(R.drawable.bg_toggle_pill_active)
+        activePill.setTextColor(ContextCompat.getColor(this, R.color.text_selected))
+        inactivePill.background = null
+        inactivePill.setTextColor(ContextCompat.getColor(this, R.color.text_unselected))
+
+        when (mode) {
+            BrowseMode.SURAT -> {
+                binding.layoutSearch.visibility = View.VISIBLE
+                binding.rvJuz.visibility = View.GONE
+                onQueryChanged(currentQuery) // pulihkan tampilan daftar surat/hasil pencarian
+            }
+            BrowseMode.JUZ -> {
+                binding.layoutSearch.visibility = View.GONE
+                binding.swipeRefresh.visibility = View.GONE
+                binding.rvSearchResults.visibility = View.GONE
+                binding.tvSearchEmptyState.visibility = View.GONE
+                binding.progressBar.visibility = View.GONE
+                binding.tvEmptyState.visibility = View.GONE
+                binding.rvJuz.visibility = View.VISIBLE
+                buildJuzSummaries()
+            }
+        }
+    }
+
+    private fun buildJuzSummaries() {
+        if (allSurah.isEmpty()) return
+        val summaries = (1..30).mapNotNull { nomorJuz ->
+            JuzBoundaries.buildSummary(nomorJuz) { nomorSurah ->
+                allSurah.find { it.nomor == nomorSurah }?.namaLatin ?: "Surat $nomorSurah"
+            }
+        }
+        juzAdapter.setData(summaries)
+    }
+
+    private fun openJuz(nomorJuz: Int) {
+        val intent = Intent(this, DetailJuzActivity::class.java)
+        intent.putExtra(DetailJuzActivity.EXTRA_NOMOR_JUZ, nomorJuz)
+        startActivity(intent)
     }
 
     private fun setupSearchResultRecyclerView() {
@@ -164,6 +235,7 @@ class DaftarSurahActivity : AppCompatActivity() {
                     allSurah = resource.data ?: emptyList()
                     adapter.setData(allSurah)
                     if (currentQuery.isNotBlank()) renderSearchResults()
+                    if (browseMode == BrowseMode.JUZ) buildJuzSummaries()
                 }
                 is Resource.Error -> {
                     binding.progressBar.visibility = View.GONE

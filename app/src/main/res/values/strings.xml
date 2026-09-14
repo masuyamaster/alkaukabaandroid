@@ -14,4 +14,7 @@
 
     <string name="quran_play_ayat">Putar audio ayat</string>
     <string name="quran_pause_ayat">Jeda audio ayat</string>
+    <string name="quran_play_surah">Putar audio surah penuh</string>
+    <string name="quran_play_surah_label">Putar Surah</string>
+    <string name="quran_pause_surah_label">Jeda Surah</string>
 </resources>

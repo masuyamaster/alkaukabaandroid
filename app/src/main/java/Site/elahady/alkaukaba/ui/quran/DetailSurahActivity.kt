@@ -40,11 +40,13 @@ class DetailSurahActivity : AppCompatActivity() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var playingAyatNomor: Int? = null
+    private var isFullSurahPlaying = false
     private var isDeskripsiExpanded = false
     private var highlightAyatNomor: Int = -1
     private var highlightApplied = false
     private var readingMode = ReadingMode.TERJEMAHAN
     private var currentAyatList: List<Ayat> = emptyList()
+    private var currentAudioFull: Map<String, String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +67,7 @@ class DetailSurahActivity : AppCompatActivity() {
         setupObserver()
         setupDeskripsiToggle()
         setupModeToggle()
+        setupPlaySurahButton()
 
         viewModel.fetchSurahDetail(nomorSurah)
     }
@@ -81,6 +84,10 @@ class DetailSurahActivity : AppCompatActivity() {
             binding.tvDeskripsi.maxLines = if (isDeskripsiExpanded) Int.MAX_VALUE else 2
             binding.tvToggleDeskripsi.text = if (isDeskripsiExpanded) "Sembunyikan" else "Baca selengkapnya"
         }
+    }
+
+    private fun setupPlaySurahButton() {
+        binding.btnPlaySurah.setOnClickListener { onPlaySurahClicked() }
     }
 
     private fun setupModeToggle() {
@@ -145,6 +152,7 @@ class DetailSurahActivity : AppCompatActivity() {
         binding.tvJumlahAyat.text = "${detail.jumlahAyat} Ayat"
         binding.tvDeskripsi.text = android.text.Html.fromHtml(detail.deskripsi, android.text.Html.FROM_HTML_MODE_COMPACT)
         currentAyatList = detail.ayat
+        currentAudioFull = detail.audioFull
         adapter.setData(detail.ayat)
         if (readingMode == ReadingMode.MUSHAF) {
             renderMushafText()
@@ -200,11 +208,54 @@ class DetailSurahActivity : AppCompatActivity() {
         }
     }
 
+    /** Sengaja satu MediaPlayer dipakai gantian untuk audio per-ayat maupun full-surah -
+     * keduanya tidak pernah diputar bersamaan, jadi mulai salah satu otomatis menghentikan
+     * yang lain lewat pemanggilan [stopPlayback] ini. */
+    private fun onPlaySurahClicked() {
+        val wasPlayingFullSurah = isFullSurahPlaying
+        stopPlayback()
+        if (wasPlayingFullSurah) return // tap ulang saat sedang diputar = stop saja
+
+        val audioUrl = currentAudioFull?.get(DEFAULT_QORI_KEY)
+        if (audioUrl.isNullOrBlank()) {
+            Toast.makeText(this, "Audio surah ini tidak tersedia", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isFullSurahPlaying = true
+        updatePlaySurahButtonUi()
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(audioUrl)
+            setOnPreparedListener { start() }
+            setOnCompletionListener { stopPlayback() }
+            setOnErrorListener { _, _, _ ->
+                Toast.makeText(this@DetailSurahActivity, "Gagal memutar audio surah", Toast.LENGTH_SHORT).show()
+                stopPlayback()
+                true
+            }
+            try {
+                prepareAsync()
+            } catch (e: Exception) {
+                Toast.makeText(this@DetailSurahActivity, "Gagal memutar audio surah", Toast.LENGTH_SHORT).show()
+                stopPlayback()
+            }
+        }
+    }
+
+    private fun updatePlaySurahButtonUi() {
+        binding.ivPlaySurahIcon.setImageResource(if (isFullSurahPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        binding.tvPlaySurahLabel.text = getString(
+            if (isFullSurahPlaying) R.string.quran_pause_surah_label else R.string.quran_play_surah_label
+        )
+    }
+
     private fun stopPlayback() {
         mediaPlayer?.release()
         mediaPlayer = null
         playingAyatNomor = null
         adapter.setPlayingAyat(null)
+        isFullSurahPlaying = false
+        updatePlaySurahButtonUi()
     }
 
     override fun onDestroy() {

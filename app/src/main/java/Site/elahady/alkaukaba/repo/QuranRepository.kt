@@ -3,6 +3,9 @@ package site.elahady.alkaukaba.repo
 import site.elahady.alkaukaba.api.AlQuranCloudRetrofitClient
 import site.elahady.alkaukaba.api.QuranRetrofitClient
 import site.elahady.alkaukaba.model.AyatSearchMatch
+import site.elahady.alkaukaba.model.JuzAyat
+import site.elahady.alkaukaba.model.JuzBoundaries
+import site.elahady.alkaukaba.model.JuzDetail
 import site.elahady.alkaukaba.model.Surah
 import site.elahady.alkaukaba.model.SurahDetail
 import site.elahady.alkaukaba.utils.Resource
@@ -68,6 +71,30 @@ object QuranRepository {
      * (mis. "Al-Faatiha") beda dengan equran.id (mis. "Al-Fatihah"). Null kalau daftar surah
      * belum pernah dimuat (mestinya sudah, karena layar daftar surah memuatnya duluan). */
     fun getCachedSurahName(nomor: Int): String? = surahListCache?.find { it.nomor == nomor }?.namaLatin
+
+    /** Susun ayat satu Juz dari data per-surah equran.id yang sudah ada (lewat [getSurahDetail],
+     * jadi ikut ter-cache) - disaring pakai [JuzBoundaries], bukan dari API/endpoint Juz
+     * terpisah (equran.id tidak punya). Kalau Juz merentang beberapa surah, tiap surah di-fetch
+     * satu per satu lalu digabung sesuai urutan ruasnya. */
+    suspend fun getJuzDetail(nomorJuz: Int): Resource<JuzDetail> {
+        val segments = JuzBoundaries.segments[nomorJuz]
+            ?: return Resource.Error("Data juz tidak ditemukan")
+
+        val ayatList = mutableListOf<JuzAyat>()
+        for (segment in segments) {
+            val result = getSurahDetail(segment.surahNumber)
+            val detail = (result as? Resource.Success)?.data
+                ?: return Resource.Error(result.message ?: "Gagal memuat data juz")
+
+            detail.ayat
+                .filter { it.nomorAyat in segment.startAyat..segment.endAyat }
+                .forEachIndexed { index, ayat ->
+                    ayatList.add(JuzAyat(ayat, segment.surahNumber, detail.namaLatin, isFirstOfSurah = index == 0))
+                }
+        }
+
+        return Resource.Success(JuzDetail(nomorJuz, ayatList))
+    }
 
     suspend fun searchAyat(keyword: String): Resource<List<AyatSearchMatch>> {
         return try {
