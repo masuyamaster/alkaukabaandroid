@@ -18,9 +18,9 @@ interface DoaApi {
 }
 
 object DoaRetrofitClient {
-    // Backend sendiri (alkaukabawebserver, endpoint /api/doa-categories*), base URL sama
-    // dengan AuthClient. Untuk testing lokal: ganti ke "http://127.0.0.1:8000/" +
-    // `adb reverse tcp:8000 tcp:8000` + `php artisan serve` di alkaukabawebserver
+    // Backend alkaukabaweb (endpoint /api/doa-categories*), base URL sama dengan
+    // AuthClient. Untuk testing lokal: ganti ke "http://127.0.0.1:8000/" +
+    // `adb reverse tcp:8000 tcp:8000` + `php artisan serve` di alkaukabaweb
     // (lihat CLAUDE.md bagian "Konfigurasi API backend").
     private const val BASE_URL = "https://alkaukaba.com/"
 
