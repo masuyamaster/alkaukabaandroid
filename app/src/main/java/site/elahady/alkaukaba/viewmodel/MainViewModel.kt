@@ -311,6 +311,19 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
 
                 val uiList = mutableListOf<DayUIModel>()
 
+                // Judul Hijriyah mengikuti tanggal yang SEDANG DIPILIH (bukan selalu tanggal 1),
+                // soalnya 1 bulan Masehi hampir selalu memuat 2 bulan Hijriyah - kalau tanggal
+                // terpilih ada di sisi bulan Hijriyah berikutnya, judul harus ikut situ, bukan
+                // tetap nampilin bulan Hijriyah di awal bulan Masehi. Prev/next (tanpa pilih
+                // tanggal spesifik di bulan ini) tetap default ke tanggal 1.
+                val titleDayIndex = if (
+                    selectedDate.get(Calendar.YEAR) == year && selectedDate.get(Calendar.MONTH) + 1 == month
+                ) {
+                    selectedDate.get(Calendar.DAY_OF_MONTH) - 1
+                } else {
+                    0
+                }
+
                 // -- LOGIC TANGGAL & JUDUL HIJRIAH --
                 // Sumber kebenaran tanggal 1 Hijriyah dipindah dari API pihak ketiga ke mesin
                 // hisab yang sama dengan fitur Awal Bulan (lihat HijriCalendarEngine), supaya
@@ -325,10 +338,12 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                 }
 
                 if (hijriDaysForMonth != null) {
-                    _hijriTitle.postValue(hijriDaysForMonth[0].label)
+                    _hijriTitle.postValue(hijriDaysForMonth[titleDayIndex].label)
                 } else {
                     // Fallback tabular offline kalau perhitungan astronomi gagal (mis. lokasi ekstrem)
-                    val (monthName, hijriYear) = HijriDateUtil.monthYearAt(processingCal)
+                    val titleCal = processingCal.clone() as Calendar
+                    titleCal.set(Calendar.DAY_OF_MONTH, titleDayIndex + 1)
+                    val (monthName, hijriYear) = HijriDateUtil.monthYearAt(titleCal)
                     _hijriTitle.postValue("$monthName $hijriYear H")
                 }
                 // -------------------------
