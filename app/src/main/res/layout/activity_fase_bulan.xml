@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_home_warm"
+    android:background="@color/black"
     tools:context=".ui.fasebulan.FaseBulanActivity">
 
     <include
@@ -93,7 +93,7 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:text="Detail Astronomis"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -289,7 +289,7 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:text="Fase Mendatang"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
