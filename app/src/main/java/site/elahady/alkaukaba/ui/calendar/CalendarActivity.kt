@@ -3,8 +3,10 @@ package site.elahady.alkaukaba.ui.calendar
 import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.HolidayItem
+import site.elahady.alkaukaba.api.NationalHolidayRetrofitClient
 import site.elahady.alkaukaba.api.RetrofitClient
 import site.elahady.alkaukaba.databinding.ActivityCalendarBinding
+import site.elahady.alkaukaba.utils.HijriHolidayTranslator
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.Editable
@@ -179,7 +181,9 @@ class CalendarActivity : AppCompatActivity() {
                                 try {
                                     val dateObj = apiDateFormat.parse(data.date.readable)
                                     if (dateObj != null) {
-                                        val holidayNames = data.date.hijri.holidays.joinToString(", ")
+                                        val holidayNames = HijriHolidayTranslator.translateJoined(
+                                            data.date.hijri.holidays.joinToString(", ")
+                                        )
                                         val hijriString = "${data.date.hijri.day} ${data.date.hijri.month.en} ${data.date.hijri.year} H"
                                         HolidayItem(
                                             tanggal = outputDateFormat.format(dateObj),
@@ -192,6 +196,28 @@ class CalendarActivity : AppCompatActivity() {
                             }
                         allHolidays.addAll(monthlyHolidays)
                     }
+                }
+
+                // Hari libur nasional Indonesia (non-Islam: Natal, Tahun Baru Masehi, dll)
+                // dari Nager.Date, di luar hari besar Islam yang sudah dari Aladhan di atas.
+                try {
+                    val nationalResponse = NationalHolidayRetrofitClient.instance.getPublicHolidays(currentYear)
+                    if (nationalResponse.isSuccessful && nationalResponse.body() != null) {
+                        val nationalHolidays = nationalResponse.body()!!
+                            .filter { it.date >= todayStr }
+                            .map { item ->
+                                HolidayItem(
+                                    tanggal = item.date,
+                                    tanggalHijriah = "Hari Libur Nasional",
+                                    keterangan = item.localName,
+                                    is_cuti = true
+                                )
+                            }
+                        allHolidays.addAll(nationalHolidays)
+                    }
+                } catch (e: Exception) {
+                    // Sumber sekunder — kalau gagal, hari besar Islam tetap tampil
+                    e.printStackTrace()
                 }
 
                 withContext(Dispatchers.Main) {

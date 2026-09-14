@@ -101,30 +101,65 @@ search box + filter tanggal. Grid bulanan (visual kalender 7 kolom) **hanya**
 ada di widget beranda `MainActivity` (`rvWeeklyCalendar` + `CalendarAdapter`),
 tidak ada di `CalendarActivity`.
 
-### Dead code: `HolidayApiService.kt` tidak dipakai
+### Terjemahan nama hari besar Hijriah (`HijriHolidayTranslator`)
 
-`api/HolidayApiService.kt` (interface `HolidayApi`, object
-`HolidayRetrofitClient`, base URL `https://api-harilibur.vercel.app/` — API
-hari libur nasional Indonesia pihak ketiga) **tidak direferensikan di mana
-pun** selain di filenya sendiri. Baik grid kalender maupun daftar hari besar
-sama sekali tidak memakai endpoint ini — keduanya lewat Aladhan via
-`PrayerRepository.getIslamicHolidays()`. Class `HolidayItem` yang benar-benar
-dipakai (`CalendarAdapter`, `HolidayAdapter`, `MainViewModel`,
-`CalendarActivity`) juga **didefinisikan di file yang sama**
-(`HolidayApiService.kt`), jadi jangan salah kira: `HolidayItem` dipakai luas,
-tapi `HolidayApi`/`HolidayRetrofitClient` di file yang sama tidak.
+Nama hari besar dari `hijri.holidays` (Aladhan) berbahasa Inggris apa adanya,
+termasuk banyak entri "Urs of Shaykh X" (haul wafat ulama tarekat) yang
+variasi namanya sangat banyak. `utils/HijriHolidayTranslator.kt`
+menerjemahkannya sebelum ditampilkan, dipanggil dari tiga tempat yang
+sebelumnya masing-masing melakukan `joinToString(", ")` mentah:
+`MainViewModel.fetchPrayerData()` (toast `holidayAlert`),
+`MainViewModel.fetchUpcomingIslamicHolidays()` (preview beranda), dan
+`CalendarActivity.fetchYearlyHolidays()` (list lengkap). Dua lapis aturan:
+
+- `exactTranslations`: map manual presisi untuk hari besar Islam umum (Idul
+  Fitri, Idul Adha, Maulid Nabi, Isra Mi'raj, Tahun Baru Islam, Asyura, dll).
+- `titleReplacements`: pattern replace umum ("Urs of" → "Haul", "Shaykh" →
+  "Syaikh", "Mawlānā"/"Mawlana" → "Maulana") — nama diri ulama dibiarkan apa
+  adanya karena daftarnya terlalu panjang untuk di-hardcode satu per satu.
+
+Nama yang tidak cocok dengan aturan mana pun dikembalikan apa adanya (fallback
+aman, tidak ada data yang hilang).
+
+### Hari libur nasional Indonesia (Nager.Date, bukan lagi dead code)
+
+`api/HolidayApiService.kt` sebelumnya berisi dead code (`HolidayApi`,
+`HolidayRetrofitClient`, base URL `https://api-harilibur.vercel.app/`) yang
+tidak dipakai di mana pun — API itu juga sudah tidak aktif (balas "Payment
+required / DEPLOYMENT_DISABLED" saat dicek). Dead code itu sudah dihapus;
+file ini sekarang hanya berisi `HolidayItem` (data class yang tetap dipakai
+luas oleh `CalendarAdapter`, `HolidayAdapter`, `MainViewModel`,
+`CalendarActivity`).
+
+Sebagai gantinya, `api/NationalHolidayApiService.kt` (interface
+`NationalHolidayApi`, object `NationalHolidayRetrofitClient`, base URL
+`https://date.nager.at/`) dipakai di `CalendarActivity.fetchYearlyHolidays()`
+untuk menambah hari libur nasional non-Islam (Tahun Baru Masehi, Wafat Isa
+Almasih, Paskah, Hari Buruh, Kenaikan Isa Almasih, Hari Lahir Pancasila, HUT
+RI, Natal) ke `allHolidays`, digabung dengan hari besar Islam dari Aladhan
+sebelum di-sort. `localName` dari Nager.Date sudah dalam Bahasa Indonesia,
+jadi tidak perlu translasi tambahan. Cakupannya terbatas ke hari libur
+tetap/global saja — **tidak** termasuk cuti bersama maupun hari libur daerah,
+dan hari besar Islam (Idul Fitri, dll) tetap dari Aladhan seperti biasa
+(tidak dobel karena Nager.Date tidak menyertakannya). Fetch ini dibungkus
+`try/catch` terpisah — kalau gagal (API down dsb.), hari besar Islam tetap
+tampil normal. Panggilan ini **hanya** ada di `CalendarActivity`, belum di
+preview beranda (`MainViewModel.fetchUpcomingIslamicHolidays()`) maupun
+`checkNationalHoliday()` (lihat known issue terkait di bawah, belum berubah).
 
 File yang terlibat:
 
 | File | Peran |
 |---|---|
 | `MainActivity.kt` | Host widget kalender bulanan (`rvWeeklyCalendar`) & preview hari besar (`rvHolidayPreview`) di beranda; trigger `initCalendar`/`fetchUpcomingIslamicHolidays` saat lokasi didapat; navigasi ke `CalendarActivity` |
-| `viewmodel/MainViewModel.kt` | State beranda: `calendarData`/`hijriTitle`/`monthYearTitle` (grid), `holidayPreview` (list 3 item), `holidayAlert` (toast hari ini); logic `fetchMonthlyCalendar()` & `fetchUpcomingIslamicHolidays()` |
+| `viewmodel/MainViewModel.kt` | State beranda: `calendarData`/`hijriTitle`/`monthYearTitle` (grid), `holidayPreview` (list 3 item), `holidayAlert` (toast hari ini); logic `fetchMonthlyCalendar()` & `fetchUpcomingIslamicHolidays()`; menerjemahkan nama hari besar lewat `HijriHolidayTranslator` |
 | `repo/PrayerRepository.kt` (`getIslamicHolidays`) | Jembatan tunggal ke Aladhan `api.getCalendar(lat, lng, method, month, year, methodSettings)` — dipakai oleh grid kalender, preview hari besar, dan `CalendarActivity` |
 | `adapter/CalendarAdapter.kt` | Adapter grid 7 kolom (`DayUIModel`: tanggal Masehi, tanggal Hijriah, flag hari ini/hari besar/slot kosong) — dipakai di `MainActivity` saja |
 | `adapter/HolidayAdapter.kt` | Adapter list card hari besar (`HolidayItem`: tanggal, tanggal Hijriah, keterangan) — dipakai di `MainActivity` (preview) dan `CalendarActivity` (list lengkap) |
-| `ui/calendar/CalendarActivity.kt` | Halaman "lihat semua hari besar": ambil data bulan berjalan s.d. Desember, search + filter rentang tanggal |
-| `api/HolidayApiService.kt` | Berisi `HolidayItem` (data class, dipakai luas) **dan** `HolidayApi`/`HolidayRetrofitClient` (dead code, tidak dipakai — lihat di atas) |
+| `ui/calendar/CalendarActivity.kt` | Halaman "lihat semua hari besar": ambil data bulan berjalan s.d. Desember dari Aladhan + hari libur nasional dari Nager.Date, search + filter rentang tanggal, terjemahkan nama lewat `HijriHolidayTranslator` |
+| `api/HolidayApiService.kt` | Berisi `HolidayItem` (data class, dipakai luas). Dead code `HolidayApi`/`HolidayRetrofitClient` sudah dihapus |
+| `api/NationalHolidayApiService.kt` | `NationalHolidayApi`/`NationalHolidayRetrofitClient` ke Nager.Date (`date.nager.at`) untuk hari libur nasional Indonesia |
+| `utils/HijriHolidayTranslator.kt` | Terjemahan nama hari besar Hijriah Inggris → Indonesia (exact map + pattern replace) |
 | `res/layout/activity_calendar.xml` | Layout `CalendarActivity`: header, search box, date range filter, `RecyclerView` list — tanpa grid |
 
 Alur data (grid kalender beranda): `MainActivity.fetchDataByCoordinate()` →
@@ -199,21 +234,26 @@ sekali. Verifikasi saat ini manual:
       kalender. Perbaikan: sertakan extra lat/lng juga di listener
       `btnSeeAllHolidays`, idealnya pakai helper `openCalendarPage()` yang
       sudah ada supaya tidak duplikasi.
-- [ ] **`api/HolidayApiService.kt` berisi dead code.** `HolidayApi` +
-      `HolidayRetrofitClient` (API pihak ketiga `api-harilibur.vercel.app`
-      untuk hari libur nasional Indonesia) tidak dipakai di mana pun — semua
-      alur kalender/hari besar sudah lewat Aladhan via
-      `PrayerRepository.getIslamicHolidays()`. Kemungkinan sisa eksperimen
-      sebelum pindah ke sumber data Aladhan. Perlu diputuskan: hapus, atau
-      pakai beneran untuk melengkapi hari libur nasional non-Islam (`17-08`,
-      `01-01`) yang saat ini masih hardcode 2 entri di
-      `MainViewModel.checkNationalHoliday()`.
+- [x] ~~**`api/HolidayApiService.kt` berisi dead code.**~~ Sudah diganti:
+      dead code `HolidayApi`/`HolidayRetrofitClient` (API mati
+      `api-harilibur.vercel.app`) dihapus, diganti
+      `api/NationalHolidayApiService.kt` ke Nager.Date (`date.nager.at`,
+      gratis tanpa key) — dipakai di `CalendarActivity.fetchYearlyHolidays()`
+      untuk hari libur nasional non-Islam. **Belum** dipakai di
+      `checkNationalHoliday()` (lihat poin di bawah) maupun preview beranda.
 - [ ] **`checkNationalHoliday()` cuma hardcode 2 hari libur nasional**
       (Kemerdekaan RI, Tahun Baru Masehi) sebagai fallback toast hari besar
       kalau hari ini bukan hari besar Hijriah. Tidak mencakup hari libur
-      nasional lain (Natal, Waisak, dll) — kalau mau lengkap, ini titik yang
-      relevan untuk hubungkan ke `HolidayApiService` (lihat poin di atas) atau
-      sumber data lain.
+      nasional lain (Natal, Waisak, dll) — sekarang `CalendarActivity` sudah
+      punya sumber datanya (`NationalHolidayRetrofitClient`, lihat di atas),
+      tinggal disambungkan ke sini juga kalau mau toast harian konsisten
+      dengan list lengkap.
+- [ ] **Cakupan Nager.Date terbatas ke hari libur tetap/global** — dicek
+      manual untuk 2025 & 2026, cuma 8 entri (Tahun Baru Masehi, Wafat Isa
+      Almasih, Paskah, Hari Buruh, Kenaikan Isa Almasih, Hari Lahir Pancasila,
+      HUT RI, Natal). **Tidak** termasuk Nyepi, Waisak, Imlek, cuti bersama,
+      maupun hari libur daerah/adat. Kalau butuh cakupan resmi penuh (SKB 3
+      Menteri), perlu sumber data lain.
 - [ ] **`CalendarActivity` hanya mengambil hari besar s.d. Desember tahun
       berjalan** (`fetchYearlyHolidays()`, loop `currentMonth..12`). Kalau
       dibuka di bulan Desember dan sudah tidak ada hari besar tersisa tahun
