@@ -3,6 +3,7 @@ package site.elahady.alkaukaba.adapter
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ItemAyatBinding
 import site.elahady.alkaukaba.model.Ayat
+import site.elahady.alkaukaba.utils.applyDisplayPrefs
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -48,6 +49,7 @@ class AyatAdapter(private val onPlayClick: (Ayat) -> Unit) : RecyclerView.Adapte
     inner class ViewHolder(private val binding: ItemAyatBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: Ayat) {
             val context = binding.root.context
+            applyDisplayPrefs(binding, context)
             binding.tvNomorAyat.text = item.nomorAyat.toString()
             binding.tvTeksArab.text = item.teksArab
             binding.tvTeksLatin.text = item.teksLatin

@@ -17,4 +17,8 @@
     <string name="quran_play_surah">Putar audio surah penuh</string>
     <string name="quran_play_surah_label">Putar Surah</string>
     <string name="quran_pause_surah_label">Jeda Surah</string>
+    <string name="quran_play_juz">Putar audio satu juz penuh</string>
+    <string name="quran_play_juz_label">Putar Juz</string>
+    <string name="quran_pause_juz_label">Jeda Juz</string>
+    <string name="quran_display_settings">Pengaturan tampilan baca</string>
 </resources>

@@ -7,6 +7,7 @@ import site.elahady.alkaukaba.model.JuzAyat
 import site.elahady.alkaukaba.model.JuzDetail
 import site.elahady.alkaukaba.repo.DEFAULT_QORI_KEY
 import site.elahady.alkaukaba.utils.MushafTextBuilder
+import site.elahady.alkaukaba.utils.QuranDisplayPrefs
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -22,10 +23,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 
 /** Sama seperti [DetailSurahActivity] (kartu per-ayat + toggle mode Terjemahan/Mushaf + audio
- * per-ayat), tapi menampilkan satu Juz yang bisa merentang beberapa surah - lihat
- * [site.elahady.alkaukaba.model.JuzBoundaries]. Sengaja tidak ada tombol "Putar Surah" seperti
- * di layar surah (tidak ada audio full-Juz dari equran.id, dan menggabung banyak file audio
- * per-surah jadi satu playback berurutan di luar scope saat ini). */
+ * per-ayat + pengaturan ukuran huruf/spasi), tapi menampilkan satu Juz yang bisa merentang
+ * beberapa surah - lihat [site.elahady.alkaukaba.model.JuzBoundaries]. Tombol "Putar Juz"
+ * beda mekanisme dari "Putar Surah" di [DetailSurahActivity] (yang pakai satu file audioFull) -
+ * di sini diimplementasi sebagai playlist berantai per-ayat, lihat [playJuzAyatAt]. */
 class DetailJuzActivity : AppCompatActivity() {
 
     private enum class ReadingMode { TERJEMAHAN, MUSHAF }
@@ -40,6 +41,7 @@ class DetailJuzActivity : AppCompatActivity() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var playingKey: Pair<Int, Int>? = null
+    private var isJuzPlaying = false
     private var readingMode = ReadingMode.TERJEMAHAN
     private var currentAyatList: List<JuzAyat> = emptyList()
 
@@ -53,6 +55,7 @@ class DetailJuzActivity : AppCompatActivity() {
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         binding.includeToolbar.btnBack.setOnClickListener { finish() }
+        setupDisplaySettingsButton()
 
         val nomorJuz = intent.getIntExtra(EXTRA_NOMOR_JUZ, 1)
         binding.includeToolbar.tvToolbarTitle.text = "Juz $nomorJuz"
@@ -63,6 +66,7 @@ class DetailJuzActivity : AppCompatActivity() {
         setupRecyclerView()
         setupObserver()
         setupModeToggle()
+        setupPlayJuzButton()
 
         viewModel.fetchJuzDetail(nomorJuz)
     }
@@ -71,6 +75,26 @@ class DetailJuzActivity : AppCompatActivity() {
         adapter = JuzAyatAdapter { juzAyat -> onPlayAyatClicked(juzAyat) }
         binding.rvJuzAyat.layoutManager = LinearLayoutManager(this)
         binding.rvJuzAyat.adapter = adapter
+    }
+
+    private fun setupPlayJuzButton() {
+        binding.btnPlayJuz.setOnClickListener { onPlayJuzClicked() }
+    }
+
+    /** Tombol aksi toolbar khusus layar ini (bukan di layar Konfigurasi global) buat atur
+     * ukuran huruf & spasi kartu ayat - lihat [QuranDisplayPrefs]/[QuranDisplaySettingsSheet]. */
+    private fun setupDisplaySettingsButton() {
+        binding.includeToolbar.btnToolbarAction.apply {
+            visibility = View.VISIBLE
+            setImageResource(R.drawable.ic_settings)
+            contentDescription = getString(R.string.quran_display_settings)
+            setOnClickListener {
+                QuranDisplaySettingsSheet.show(this@DetailJuzActivity) {
+                    adapter.notifyDataSetChanged()
+                    if (readingMode == ReadingMode.MUSHAF) renderMushafText()
+                }
+            }
+        }
     }
 
     private fun setupModeToggle() {
@@ -97,6 +121,10 @@ class DetailJuzActivity : AppCompatActivity() {
     }
 
     private fun renderMushafText() {
+        val textSize = QuranDisplayPrefs.getTextSizeLevel(this)
+        val spacing = QuranDisplayPrefs.getSpacingLevel(this)
+        binding.tvMushaf.textSize = textSize.mushafSp
+        binding.tvMushaf.setLineSpacing(0f, spacing.mushafLineSpacing)
         binding.tvMushaf.text = MushafTextBuilder.build(
             currentAyatList.map { it.ayat },
             circleColor = ContextCompat.getColor(this, R.color.gold_accent),
@@ -175,11 +203,74 @@ class DetailJuzActivity : AppCompatActivity() {
         }
     }
 
+    /** equran.id cuma punya audio per-ayat & audio full-surah (bukan per-Juz), dan audio
+     * full-surah tidak bisa dipakai untuk Juz karena batasnya sering jatuh di tengah surah
+     * (mis. Juz 1 cuma sampai Al-Baqarah ayat 141 dari 286 ayat). Jadi "Putar Juz" diimplementasi
+     * sebagai playlist berantai: putar ayat pertama, begitu kelar (onCompletion) otomatis lanjut
+     * ke ayat berikutnya dalam [currentAyatList], sampai ayat terakhir baru berhenti. */
+    private fun onPlayJuzClicked() {
+        val wasPlayingJuz = isJuzPlaying
+        stopPlayback()
+        if (wasPlayingJuz) return // tap ulang saat sedang diputar = stop saja
+
+        if (currentAyatList.isEmpty()) {
+            Toast.makeText(this, "Tidak ada ayat untuk diputar", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isJuzPlaying = true
+        updatePlayJuzButtonUi()
+        playJuzAyatAt(0)
+    }
+
+    private fun playJuzAyatAt(index: Int) {
+        if (index >= currentAyatList.size) {
+            stopPlayback()
+            return
+        }
+
+        val juzAyat = currentAyatList[index]
+        val audioUrl = juzAyat.ayat.audio[DEFAULT_QORI_KEY]
+        if (audioUrl.isNullOrBlank()) {
+            playJuzAyatAt(index + 1) // lewati ayat yang audionya tidak tersedia
+            return
+        }
+
+        mediaPlayer?.release()
+        playingKey = juzAyat.surahNomor to juzAyat.ayat.nomorAyat
+        adapter.setPlayingAyat(juzAyat.surahNomor, juzAyat.ayat.nomorAyat)
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(audioUrl)
+            setOnPreparedListener { start() }
+            setOnCompletionListener { playJuzAyatAt(index + 1) }
+            setOnErrorListener { _, _, _ ->
+                Toast.makeText(this@DetailJuzActivity, "Gagal memutar audio juz", Toast.LENGTH_SHORT).show()
+                stopPlayback()
+                true
+            }
+            try {
+                prepareAsync()
+            } catch (e: Exception) {
+                Toast.makeText(this@DetailJuzActivity, "Gagal memutar audio juz", Toast.LENGTH_SHORT).show()
+                stopPlayback()
+            }
+        }
+    }
+
+    private fun updatePlayJuzButtonUi() {
+        binding.ivPlayJuzIcon.setImageResource(if (isJuzPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        binding.tvPlayJuzLabel.text = getString(
+            if (isJuzPlaying) R.string.quran_pause_juz_label else R.string.quran_play_juz_label
+        )
+    }
+
     private fun stopPlayback() {
         mediaPlayer?.release()
         mediaPlayer = null
         playingKey = null
         adapter.setPlayingAyat(null, null)
+        isJuzPlaying = false
+        updatePlayJuzButtonUi()
     }
 
     override fun onDestroy() {

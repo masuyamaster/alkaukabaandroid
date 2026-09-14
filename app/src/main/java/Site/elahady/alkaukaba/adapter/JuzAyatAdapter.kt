@@ -4,6 +4,7 @@ import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ItemAyatBinding
 import site.elahady.alkaukaba.databinding.ItemJuzSurahHeaderBinding
 import site.elahady.alkaukaba.model.JuzAyat
+import site.elahady.alkaukaba.utils.applyDisplayPrefs
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -80,6 +81,7 @@ class JuzAyatAdapter(private val onPlayClick: (JuzAyat) -> Unit) :
             is JuzListItem.AyatRow -> {
                 val binding = (holder as AyatViewHolder).binding
                 val context = binding.root.context
+                applyDisplayPrefs(binding, context)
                 val juzAyat = item.juzAyat
                 binding.tvNomorAyat.text = juzAyat.ayat.nomorAyat.toString()
                 binding.tvTeksArab.text = juzAyat.ayat.teksArab

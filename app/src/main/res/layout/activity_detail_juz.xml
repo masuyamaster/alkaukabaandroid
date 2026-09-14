@@ -72,6 +72,39 @@
                     android:textSize="13sp"
                     tools:text="Al-Fatihah 1:1 - Al-Baqarah 2:141" />
 
+                <LinearLayout
+                    android:id="@+id/btnPlayJuz"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_pill_outline_gold"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="7dp">
+
+                    <ImageView
+                        android:id="@+id/ivPlayJuzIcon"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_play"
+                        app:tint="@color/gold_accent_soft"
+                        android:contentDescription="@string/quran_play_juz" />
+
+                    <TextView
+                        android:id="@+id/tvPlayJuzLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/quran_play_juz_label"
+                        android:textColor="@color/gold_accent_soft"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout
@@ -135,7 +168,8 @@
                     android:backgroundTint="@color/card_white"
                     android:elevation="1dp"
                     android:fontFamily="serif"
-                    android:gravity="end"
+                    android:gravity="start"
+                    android:layoutDirection="rtl"
                     android:justificationMode="inter_word"
                     android:lineSpacingMultiplier="2.1"
                     android:padding="20dp"

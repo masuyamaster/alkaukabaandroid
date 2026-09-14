@@ -7,6 +7,7 @@ import site.elahady.alkaukaba.model.Ayat
 import site.elahady.alkaukaba.model.SurahDetail
 import site.elahady.alkaukaba.repo.DEFAULT_QORI_KEY
 import site.elahady.alkaukaba.utils.MushafTextBuilder
+import site.elahady.alkaukaba.utils.QuranDisplayPrefs
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -58,6 +59,7 @@ class DetailSurahActivity : AppCompatActivity() {
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
         binding.includeToolbar.btnBack.setOnClickListener { finish() }
+        setupDisplaySettingsButton()
 
         val nomorSurah = intent.getIntExtra(EXTRA_NOMOR_SURAH, 1)
         highlightAyatNomor = intent.getIntExtra(EXTRA_HIGHLIGHT_AYAT, -1)
@@ -90,6 +92,22 @@ class DetailSurahActivity : AppCompatActivity() {
         binding.btnPlaySurah.setOnClickListener { onPlaySurahClicked() }
     }
 
+    /** Tombol aksi toolbar khusus layar ini (bukan di layar Konfigurasi global) buat atur
+     * ukuran huruf & spasi kartu ayat - lihat [QuranDisplayPrefs]/[QuranDisplaySettingsSheet]. */
+    private fun setupDisplaySettingsButton() {
+        binding.includeToolbar.btnToolbarAction.apply {
+            visibility = View.VISIBLE
+            setImageResource(R.drawable.ic_settings)
+            contentDescription = getString(R.string.quran_display_settings)
+            setOnClickListener {
+                QuranDisplaySettingsSheet.show(this@DetailSurahActivity) {
+                    adapter.notifyDataSetChanged()
+                    if (readingMode == ReadingMode.MUSHAF) renderMushafText()
+                }
+            }
+        }
+    }
+
     private fun setupModeToggle() {
         binding.tvModeTerjemahan.setOnClickListener { switchMode(ReadingMode.TERJEMAHAN) }
         binding.tvModeMushaf.setOnClickListener { switchMode(ReadingMode.MUSHAF) }
@@ -114,6 +132,10 @@ class DetailSurahActivity : AppCompatActivity() {
     }
 
     private fun renderMushafText() {
+        val textSize = QuranDisplayPrefs.getTextSizeLevel(this)
+        val spacing = QuranDisplayPrefs.getSpacingLevel(this)
+        binding.tvMushaf.textSize = textSize.mushafSp
+        binding.tvMushaf.setLineSpacing(0f, spacing.mushafLineSpacing)
         binding.tvMushaf.text = MushafTextBuilder.build(
             currentAyatList,
             circleColor = ContextCompat.getColor(this, R.color.gold_accent),
