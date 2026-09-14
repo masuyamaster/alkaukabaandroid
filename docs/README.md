@@ -105,3 +105,4 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Al-Qur'an Digital & Audio | [features/al-quran.md](features/al-quran.md) | Terdokumentasi |
 | Kumpulan Doa & Dzikir (Al-Mathurat/Hisnul Muslim) | [features/doa-dzikir.md](features/doa-dzikir.md) | Terdokumentasi (backend belum di-deploy produksi) |
 | Kalkulator Scientific | [features/kalkulator-scientific.md](features/kalkulator-scientific.md) | Terdokumentasi |
+| Ayat/Hadits Harian (Kutipan Harian) | [features/kutipan-harian.md](features/kutipan-harian.md) | Terdokumentasi (belum diverifikasi visual di emulator) |

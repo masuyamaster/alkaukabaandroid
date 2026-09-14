@@ -1,5 +1,6 @@
 package site.elahady.alkaukaba
 
+import site.elahady.alkaukaba.repo.DailyQuoteRepository
 import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.CalendarAdapter
 import site.elahady.alkaukaba.adapter.HolidayAdapter
@@ -50,6 +51,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -110,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         setupMonthlyCalendar()
         setupCalendarNavigation()
         setupMoonPhaseCard()
+        setupDailyQuote()
 
         // Setup Swipe Refresh
         binding.swipeRefresh.setOnRefreshListener {
@@ -176,6 +179,40 @@ class MainActivity : AppCompatActivity() {
         val dateFormatFull = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
         binding.tvDateNow.text = dateFormatFull.format(Date())
         binding.tvDateHijri.text = HijriDateUtil.fullDateLabel(Calendar.getInstance())
+    }
+
+    /**
+     * Kartu "Ayat/Hadits Hari Ini" di bawah kalender - fitur prioritas rendah,
+     * jadi kalau gagal diambil (offline/API eksternal down), sembunyikan
+     * kartunya saja daripada tampilkan pesan error di halaman utama.
+     */
+    private fun setupDailyQuote() {
+        lifecycleScope.launch {
+            when (val resource = DailyQuoteRepository.getToday()) {
+                is Resource.Success -> {
+                    binding.progressDailyQuote.visibility = View.GONE
+                    val quote = resource.data ?: return@launch
+
+                    binding.tvDailyQuoteArabic.text = quote.arabic
+                    binding.tvDailyQuoteArabic.visibility = View.VISIBLE
+
+                    if (!quote.latin.isNullOrBlank()) {
+                        binding.tvDailyQuoteLatin.text = quote.latin
+                        binding.tvDailyQuoteLatin.visibility = View.VISIBLE
+                    }
+
+                    binding.tvDailyQuoteTranslation.text = quote.translation
+                    binding.tvDailyQuoteTranslation.visibility = View.VISIBLE
+
+                    binding.tvDailyQuoteSource.text = quote.source
+                    binding.tvDailyQuoteSource.visibility = View.VISIBLE
+                }
+                is Resource.Error -> {
+                    binding.cardDailyQuote.visibility = View.GONE
+                }
+                is Resource.Loading -> Unit
+            }
+        }
     }
 
     private fun checkLocationPermission() {
