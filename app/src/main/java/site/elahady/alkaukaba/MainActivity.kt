@@ -10,6 +10,7 @@ import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
+import site.elahady.alkaukaba.ui.doa.DaftarKategoriDoaActivity
 import site.elahady.alkaukaba.ui.quran.DaftarSurahActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
@@ -309,6 +310,9 @@ class MainActivity : AppCompatActivity() {
         }
         binding.btQuran.setOnClickListener {
             startActivity(Intent(this, DaftarSurahActivity::class.java))
+        }
+        binding.btDoaDzikir.setOnClickListener {
+            startActivity(Intent(this, DaftarKategoriDoaActivity::class.java))
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }
