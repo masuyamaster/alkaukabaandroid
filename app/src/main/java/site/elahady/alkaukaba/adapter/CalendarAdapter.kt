@@ -16,7 +16,8 @@ data class DayUIModel(
     val isHoliday: Boolean,
     val isToday: Boolean,
     val isEmpty: Boolean,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    val pasaran: String = ""
 )
 
 class CalendarAdapter(
@@ -35,6 +36,7 @@ class CalendarAdapter(
         val container: View = itemView.findViewById(R.id.containerDay)
         val tvDateNum: TextView = itemView.findViewById(R.id.tvDateNum)
         val tvHijriNum: TextView = itemView.findViewById(R.id.tvHijriNum)
+        val tvPasaran: TextView = itemView.findViewById(R.id.tvPasaran)
         val bgToday: View = itemView.findViewById(R.id.bgToday)
         val bgSelected: View = itemView.findViewById(R.id.bgSelected)
         val dotHoliday: View = itemView.findViewById(R.id.dotHoliday)
@@ -51,6 +53,7 @@ class CalendarAdapter(
 
             tvDateNum.text = item.dayValue
             tvHijriNum.text = item.hijriDay
+            tvPasaran.text = item.pasaran
             tvDateNum.setTextColor(itemView.context.getColor(android.R.color.white))
 
             bgToday.visibility = if (item.isToday) View.VISIBLE else View.GONE

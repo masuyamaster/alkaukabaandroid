@@ -51,6 +51,15 @@
         android:textSize="9sp"
         tools:text="1" />
 
+    <TextView
+        android:id="@+id/tvPasaran"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:textColor="#99FFFFFF"
+        android:textSize="7sp"
+        tools:text="Legi" />
+
     <View
         android:id="@+id/dotHoliday"
         android:layout_width="4dp"

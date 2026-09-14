@@ -7,6 +7,7 @@ import site.elahady.alkaukaba.api.Timings
 import site.elahady.alkaukaba.utils.HijriCalendarEngine
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.HijriHolidayTranslator
+import site.elahady.alkaukaba.utils.JavaneseCalendarUtil
 import site.elahady.alkaukaba.utils.Resource
 import android.location.Geocoder
 import io.github.cosinekitty.astronomy.Observer
@@ -373,6 +374,7 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                     val hasHoliday = matchData?.date?.hijri?.holidays?.isNotEmpty() == true
                     val isToday = dateStr == todayStr
                     val isSelected = dateStr == selectedDateStr
+                    val pasaran = JavaneseCalendarUtil.pasaranFor(processingCal)
 
                     uiList.add(DayUIModel(
                         date = date,
@@ -381,7 +383,8 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
                         isHoliday = hasHoliday,
                         isToday = isToday,
                         isEmpty = false,
-                        isSelected = isSelected
+                        isSelected = isSelected,
+                        pasaran = pasaran
                     ))
                 }
 
