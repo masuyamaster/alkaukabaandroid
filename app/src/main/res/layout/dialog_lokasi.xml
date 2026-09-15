@@ -17,7 +17,7 @@
             android:text="Sumber Lokasi"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <RadioGroup
@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="Otomatis (GPS)\nAmbil lokasi terkini setiap kali fitur butuh lokasi"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:text="Manual\nPakai koordinat tetap, cocok untuk markaz tertentu"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
         </RadioGroup>

@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@android:color/white"
+    android:background="@color/toolbarColor"
     android:elevation="4dp"
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp">
@@ -19,7 +19,7 @@
         android:padding="10dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_arrow_back"
-        app:tint="#374151"
+        app:tint="@color/textToolbarColor"
         android:contentDescription="Kembali" />
 
     <TextView
@@ -30,7 +30,7 @@
         android:layout_marginStart="16dp"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="#111827"
+        android:textColor="@color/textToolbarColor"
         android:maxLines="1"
         android:ellipsize="end"
         tools:text="Judul Halaman" />
@@ -40,7 +40,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginStart="12dp"
-        app:tint="#374151"
+        app:tint="@color/textToolbarColor"
         android:visibility="gone"
         android:contentDescription="@null" />
 

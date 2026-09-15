@@ -17,7 +17,7 @@
             android:text="Sumber Perhitungan Arah Kiblat"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <RadioGroup
@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="Aladhan (Kompas API)\nSudut &amp; gambar kompas dari Aladhan, butuh koneksi internet"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:text="Rumus Manual (Al Hasib)\nDihitung lokal dari koordinat pakai rumus segitiga bola PCNU Lamongan, tanpa internet"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
         </RadioGroup>

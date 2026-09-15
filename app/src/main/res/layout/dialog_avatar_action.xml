@@ -15,7 +15,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="18dp"
         android:background="@drawable/bg_pill_navy_light"
-        android:backgroundTint="#E5E7EB" />
+        android:backgroundTint="@color/divider_soft" />
 
     <TextView
         android:layout_width="wrap_content"

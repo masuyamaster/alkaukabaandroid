@@ -17,7 +17,7 @@
             android:text="Metode Hisab Awal Bulan"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <RadioGroup
@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="Astronomy Engine\nEphemeris modern (io.github.cosinekitty.astronomy), kriteria Neo-MABIMS"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:text="Ad-Durrul Aniq\nKitab hisab klasik (Ahmad Ghozali Muhammad Fathulloh), kriteria Neo-MABIMS"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
         </RadioGroup>

@@ -17,7 +17,7 @@
             android:text="Metode Perhitungan Waktu Sholat"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <RadioGroup

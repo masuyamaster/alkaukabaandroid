@@ -8,7 +8,7 @@
     android:layout_marginHorizontal="4dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/white">
+    app:cardBackgroundColor="@color/card_white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:layout_marginEnd="16dp"
             android:fontFamily="sans-serif-medium"
             android:text="Judul Perhitungan"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@+id/tvDetailLink"
@@ -36,7 +36,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="16dp"
             android:text="00:00:00 WIB"
-            android:textColor="#757575"
+            android:textColor="@color/text_secondary"
             android:textSize="14sp"
             app:layout_constraintEnd_toStartOf="@+id/tvDetailLink"
             app:layout_constraintStart_toStartOf="parent"
@@ -49,7 +49,7 @@
             android:layout_marginTop="2dp"
             android:layout_marginEnd="16dp"
             android:text="Keterangan Tambahan"
-            android:textColor="#9E9E9E"
+            android:textColor="@color/text_hint"
             android:textSize="12sp"
             android:visibility="visible"
             app:layout_constraintEnd_toStartOf="@+id/tvDetailLink"

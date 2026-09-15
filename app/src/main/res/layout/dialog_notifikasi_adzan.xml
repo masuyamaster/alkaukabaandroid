@@ -17,7 +17,7 @@
             android:text="Suara Notifikasi Adzan"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <RadioGroup
@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:text="Adzan Penuh\nRekaman azan Marrakesh, Maroko (CC0)"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:text="Beep Pelan\nNada notifikasi singkat, cocok untuk situasi seperti di kantor"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
 
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:text="Senyap\nTanpa suara, hanya notifikasi visual"
                 android:textSize="14sp"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"/>
         </RadioGroup>
