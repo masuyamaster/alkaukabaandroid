@@ -23,38 +23,38 @@
 
     <style name="CalcKeyNumber" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_number</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="CalcKeyOp" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_op</item>
-        <item name="android:textColor">@color/icon_purple</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="CalcKeyFunction" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_function</item>
-        <item name="android:textColor">@color/icon_teal</item>
+        <item name="android:textColor">@color/white</item>
         <item name="android:textSize">15sp</item>
     </style>
 
     <style name="CalcKeyConst" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_const</item>
-        <item name="android:textColor">@color/icon_orange</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="CalcKeyAction" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_action</item>
-        <item name="android:textColor">@color/pill_red_text</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="CalcKeyParen" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_paren</item>
-        <item name="android:textColor">@color/icon_blue</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="CalcKeyMode" parent="CalcKeyBase">
         <item name="android:background">@drawable/bg_calc_key_mode</item>
-        <item name="android:textColor">@color/icon_yellow</item>
+        <item name="android:textColor">@color/white</item>
         <item name="android:textSize">14sp</item>
     </style>
 </resources>

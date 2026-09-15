@@ -7,7 +7,6 @@ import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import java.util.Locale
 import kotlin.math.abs
@@ -137,8 +136,7 @@ class KalkulatorActivity : AppCompatActivity() {
     /** Modifier sekali-pakai ala Casio: aktif untuk satu tombol berikutnya, lalu otomatis nonaktif. */
     private fun setShiftActive(active: Boolean) {
         shiftActive = active
-        binding.btnShift.setBackgroundResource(if (active) R.drawable.bg_button_gold else R.drawable.bg_calc_key_mode)
-        binding.btnShift.setTextColor(ContextCompat.getColor(this, if (active) R.color.white else R.color.icon_yellow))
+        binding.btnShift.setBackgroundResource(if (active) R.drawable.bg_calc_key_equals else R.drawable.bg_calc_key_mode)
         binding.btnSqrt.text = if (active) "x²" else "√"
         binding.btnCube.text = if (active) "∛" else "x³"
         binding.btnPower.text = if (active) "x⁻¹" else "^"

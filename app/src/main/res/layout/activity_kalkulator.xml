@@ -315,7 +315,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:background="@drawable/bg_button_gold"
+                android:background="@drawable/bg_calc_key_equals"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
