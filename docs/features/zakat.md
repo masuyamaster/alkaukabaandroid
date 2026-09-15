@@ -76,10 +76,12 @@ Keputusan berikut diambil lewat diskusi dengan user sebelum implementasi
   bulanan.
 
 ### 7. Testing
-- **Belum ada test otomatis** untuk `ZakatCalculator` - ini gap yang jelas,
-  padahal fungsinya murni (gampang di-unit-test tanpa mock). TODO ke depan:
-  tambah unit test `ZakatCalculatorTest` mengikuti pola di
-  `docs/strategi-unit-test.md`.
+- `ZakatCalculatorTest` (`app/src/test/.../utils/ZakatCalculatorTest.kt`) -
+  unit test murni (tanpa Android/API/DB) untuk `ZakatCalculator`: fitrah
+  (2.5 kg/jiwa), mal (nisab 85gr, hutang mengurangi harta bersih, harta
+  bersih tidak boleh negatif, batas tepat di nisab), profesi (akumulasi
+  tahunan 2.5%). Tidak menguji `GoldPriceRepository`/`ZakatViewModel` (butuh
+  network/LiveData, di luar scope unit test murni untuk sekarang).
 - Verifikasi manual yang sudah dilakukan (2026-09-15, emulator Pixel 4 XL API
   36): build `installDebug` sukses, menu ikon "Kalkulator Zakat" muncul benar
   di baris 3 main menu, tab Fitrah diisi (4 jiwa, harga beras Rp13.000) ->
@@ -92,7 +94,6 @@ Keputusan berikut diambil lewat diskusi dengan user sebelum implementasi
   total.
 
 ### 8. Known issues & TODOs
-- Tidak ada test otomatis (lihat §7).
 - Harga beras (zakat fitrah) & tidak ada override manual untuk harga emas
   kalau API `logam-mulia-api` down - user harus tunggu/retry, tidak bisa input
   manual sebagai fallback. Kalau ke depan API ini sering down, pertimbangkan
