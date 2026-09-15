@@ -70,14 +70,14 @@
                 tools:text="148 ayat" />
         </LinearLayout>
 
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+        <TextView
+            android:id="@+id/tvNamaArabJuz"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:rotation="180"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@color/text_hint"
-            tools:ignore="ContentDescription" />
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            tools:text="الفاتحة" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

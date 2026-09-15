@@ -81,13 +81,14 @@ object JuzBoundaries {
      * lewat callback [namaLatinOf] (bukan hardcode di sini) karena nama Latin surah sumbernya
      * tetap dari cache [site.elahady.alkaukaba.repo.QuranRepository], satu sumber kebenaran
      * yang sama dipakai di seluruh layar lain. */
-    fun buildSummary(nomorJuz: Int, namaLatinOf: (Int) -> String): JuzSummary? {
+    fun buildSummary(nomorJuz: Int, namaLatinOf: (Int) -> String, namaArabOf: (Int) -> String): JuzSummary? {
         val juzSegments = segments[nomorJuz] ?: return null
         val jumlahAyat = juzSegments.sumOf { it.endAyat - it.startAyat + 1 }
         return JuzSummary(
             nomor = nomorJuz,
             startSurahNamaLatin = namaLatinOf(juzSegments.first().surahNumber),
             endSurahNamaLatin = namaLatinOf(juzSegments.last().surahNumber),
+            startSurahNamaArab = namaArabOf(juzSegments.first().surahNumber),
             jumlahAyat = jumlahAyat
         )
     }
@@ -97,6 +98,7 @@ data class JuzSummary(
     val nomor: Int,
     val startSurahNamaLatin: String,
     val endSurahNamaLatin: String,
+    val startSurahNamaArab: String,
     val jumlahAyat: Int
 )
 

@@ -26,6 +26,7 @@ class JuzAdapter(private val onClick: (JuzSummary) -> Unit) : RecyclerView.Adapt
                 "${item.startSurahNamaLatin} - ${item.endSurahNamaLatin}"
             }
             binding.tvJumlahAyatJuz.text = "${item.jumlahAyat} ayat"
+            binding.tvNamaArabJuz.text = item.startSurahNamaArab
             binding.root.setOnClickListener { onClick(item) }
         }
     }

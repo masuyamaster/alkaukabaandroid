@@ -121,9 +121,11 @@ class DaftarSurahActivity : AppCompatActivity() {
     private fun buildJuzSummaries() {
         if (allSurah.isEmpty()) return
         val summaries = (1..30).mapNotNull { nomorJuz ->
-            JuzBoundaries.buildSummary(nomorJuz) { nomorSurah ->
-                allSurah.find { it.nomor == nomorSurah }?.namaLatin ?: "Surat $nomorSurah"
-            }
+            JuzBoundaries.buildSummary(
+                nomorJuz,
+                namaLatinOf = { nomorSurah -> allSurah.find { it.nomor == nomorSurah }?.namaLatin ?: "Surat $nomorSurah" },
+                namaArabOf = { nomorSurah -> allSurah.find { it.nomor == nomorSurah }?.nama.orEmpty() }
+            )
         }
         juzAdapter.setData(summaries)
     }
