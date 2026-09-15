@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Override warna untuk Tema Gelap. Nama warna sengaja sama persis dengan values/colors.xml
+     supaya semua layout yang sudah pakai @color/nama otomatis ikut gelap tanpa diubah satu-satu -
+     lihat plan "Dark Mode (Tema Gelap)". Warna yang sudah gelap-by-design (login, hero waktu
+     sholat, dsb) sengaja TIDAK di-override di sini karena sudah sesuai tanpa perlu berubah. -->
+<resources>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FFBB86FC</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF03DAC5</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="toolbarColor">#1E293B</color>
+    <color name="textToolbarColor">#E2E8F0</color>
+
+    <color name="bg_background">#0F172A</color>
+    <color name="header_start">#5A6B88</color>
+    <color name="header_end">#3B4A63</color>
+    <color name="accent_yellow">#FBBF24</color>
+    <color name="navy_dongker">#1E3A5F</color>
+
+    <color name="card_white">#1E293B</color>
+    <color name="text_primary">#E2E8F0</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_hint">#64748B</color>
+
+    <color name="bg_teal_light">#134E4A</color>
+    <color name="icon_teal">#2DD4BF</color>
+    <color name="bg_purple_light">#3B2A57</color>
+    <color name="icon_purple">#C084FC</color>
+    <color name="bg_yellow_light">#453B12</color>
+    <color name="icon_yellow">#FACC15</color>
+    <color name="bg_blue_light">#1E3A63</color>
+    <color name="icon_blue">#60A5FA</color>
+    <color name="bg_orange_light">#4A2E12</color>
+    <color name="icon_orange">#FB923C</color>
+    <color name="bg_green_light">#14432A</color>
+    <color name="icon_green">#4ADE80</color>
+
+    <color name="calendar_bg">#3D4863</color>
+
+    <color name="login_bg_deep">#10192A</color>
+    <color name="navy_gradient_top">#1D2A45</color>
+    <color name="gold_accent">#E8BA5C</color>
+    <color name="gold_accent_soft">#F0C878</color>
+    <color name="text_on_dark">#F6F2E9</color>
+
+    <!-- Home screen redesign (2026-09) -->
+    <color name="bg_home_warm">#201B12</color>
+    <color name="date_pill_bg">#3A2F1A</color>
+    <color name="date_pill_text">#E0B368</color>
+    <color name="text_label_gold">#D6A354</color>
+
+    <!-- Kompas: arah matahari & bayangan (2026-09) -->
+    <color name="sun_direction">#F59E0B</color>
+    <color name="shadow_direction">#9FADC7</color>
+
+
+    <color name="color_primary">#34384A</color>
+    <color name="color_secondary">#898FAA</color>
+
+    <color name="toggle_bg_container">#2A2F45</color>
+    <color name="toggle_bg_selected">#898FAA</color>
+    <color name="text_selected">#FFFFFF</color>
+    <color name="text_unselected">#C7CBDA</color>
+
+    <color name="waktu_sholat_dark_bg">#111827</color>
+    <color name="waktu_sholat_date_muted">#9CA3AF</color>
+    <color name="waktu_sholat_pill_text">#D1D5DB</color>
+    <color name="waktu_sholat_icon_muted">#6B7280</color>
+    <color name="waktu_sholat_icon_bg_inactive">#263449</color>
+    <color name="waktu_sholat_row_active_bg">#1E3A5F</color>
+    <color name="waktu_sholat_row_active_border">#2A3B52</color>
+    <color name="waktu_sholat_name_inactive">#9CA3AF</color>
+
+    <color name="hero_card_bg">#1E2340</color>
+    <color name="pill_green_bg">#14432A</color>
+    <color name="pill_green_text">#4ADE80</color>
+    <color name="pill_red_bg">#4C1D1D</color>
+    <color name="pill_red_text">#F87171</color>
+    <color name="divider_soft">#2A3441</color>
+    <color name="input_inline_bg">#1C2836</color>
+
+    <!-- Al-Qur'an Digital & Audio (2026-09) -->
+    <color name="card_gold_tint">#3A2F1C</color>
+    <color name="bg_gold_light">#4A3B1E</color>
+
+    <!-- Kalkulator Scientific (2026-09) -->
+    <color name="bg_indigo_light">#2E2A5C</color>
+    <color name="icon_indigo">#818CF8</color>
+
+</resources>

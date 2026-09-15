@@ -183,7 +183,7 @@ class WaktuSholatActivity : AppCompatActivity() {
         val colorIconMuted = ContextCompat.getColor(this, R.color.waktu_sholat_icon_muted)
         val colorWhite = ContextCompat.getColor(this, android.R.color.white)
         val colorTransparent = ContextCompat.getColor(this, R.color.transparent)
-        val colorNameInactive = android.graphics.Color.parseColor("#374151")
+        val colorNameInactive = ContextCompat.getColor(this, R.color.waktu_sholat_name_inactive)
 
         state.items.forEachIndexed { index, entry ->
             val row = rows[index]
