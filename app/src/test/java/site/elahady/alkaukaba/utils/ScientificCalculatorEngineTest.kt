@@ -48,6 +48,19 @@ class ScientificCalculatorEngineTest {
     }
 
     @Test
+    fun `cbrt (fungsi baru) dan pola teks postfix-prefix yang dipakai tombol SHIFT (x kuadrat, x kubik, x pangkat -1)`() {
+        assertEquals(2.0, ScientificCalculatorEngine.evaluate("cbrt(8)", deg), 1e-9)
+        assertEquals(-2.0, ScientificCalculatorEngine.evaluate("cbrt(-8)", deg), 1e-9)
+        assertEquals(25.0, ScientificCalculatorEngine.evaluate("5^2", deg), 1e-9)
+        assertEquals(125.0, ScientificCalculatorEngine.evaluate("5^3", deg), 1e-9)
+        assertEquals(0.2, ScientificCalculatorEngine.evaluate("5^(-1)", deg), 1e-9)
+        // 10^x dan e^x belum ada tombolnya (di luar scope sesi ini), tapi pola teks yang sama
+        // ("10^(" / "e^(") sudah bisa di-parse tanpa perlu ubah engine kalau nanti ditambah.
+        assertEquals(100.0, ScientificCalculatorEngine.evaluate("10^(2)", deg), 1e-9)
+        assertEquals(Math.E, ScientificCalculatorEngine.evaluate("e^(1)", deg), 1e-9)
+    }
+
+    @Test
     fun `ekspresi kompleks dengan fungsi dan parentheses bersarang`() {
         // sin(30) + 2*(3-1)^2 = 0.5 + 8 = 8.5
         assertEquals(8.5, ScientificCalculatorEngine.evaluate("sin(30)+2*(3-1)^2", deg), 1e-9)

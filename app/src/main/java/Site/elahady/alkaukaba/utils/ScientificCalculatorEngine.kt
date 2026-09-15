@@ -30,7 +30,7 @@ object ScientificCalculatorEngine {
     class ExpressionError(message: String) : Exception(message)
 
     private val FUNCTIONS = setOf(
-        "asin", "acos", "atan", "sin", "cos", "tan", "ln", "log", "sqrt", "abs"
+        "asin", "acos", "atan", "sin", "cos", "tan", "ln", "log", "sqrt", "cbrt", "abs"
     )
 
     fun evaluate(input: String, angleMode: AngleMode): Double {
@@ -202,6 +202,7 @@ object ScientificCalculatorEngine {
                     if (arg < 0) throw ExpressionError("Akar dari bilangan negatif")
                     sqrt(arg)
                 }
+                "cbrt" -> Math.cbrt(arg)
                 "abs" -> abs(arg)
                 else -> throw ExpressionError("Fungsi tidak dikenal: $name")
             }

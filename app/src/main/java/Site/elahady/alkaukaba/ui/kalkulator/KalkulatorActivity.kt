@@ -1,11 +1,13 @@
 package site.elahady.alkaukaba.ui.kalkulator
 
+import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityKalkulatorBinding
 import site.elahady.alkaukaba.utils.ScientificCalculatorEngine
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import java.util.Locale
 import kotlin.math.abs
@@ -16,12 +18,20 @@ import kotlin.math.abs
  * evaluasi ekspresi dilakukan oleh [ScientificCalculatorEngine] (recursive-
  * descent tangan-sendiri, tidak ada dependency evaluator ekspresi eksternal
  * di project ini).
+ *
+ * Tombol mengikuti pola SHIFT ala kalkulator Casio fx-570ES: [btnShift] adalah
+ * modifier sekali-pakai (aktif untuk satu penekanan tombol berikutnya, lalu
+ * otomatis nonaktif) yang membuka fungsi kedua pada tombol yang mendukungnya
+ * (√↔x², x³↔∛, ^↔x⁻¹, M+↔M-, RCL↔MC).
  */
 class KalkulatorActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityKalkulatorBinding
     private val expression = StringBuilder()
     private var angleMode = ScientificCalculatorEngine.AngleMode.DEGREE
+    private var shiftActive = false
+    private var memory = 0.0
+    private var lastAnswer = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,34 +57,68 @@ class KalkulatorActivity : AppCompatActivity() {
             binding.btn9 to "9", binding.btnDot to ".",
             binding.btnPlus to "+", binding.btnMinus to "−",
             binding.btnMultiply to "×", binding.btnDivide to "÷",
-            binding.btnPower to "^", binding.btnPercent to "%",
+            binding.btnPercent to "%",
             binding.btnOpenParen to "(", binding.btnCloseParen to ")",
             binding.btnPi to "π", binding.btnEuler to "e"
         )
         literalKeys.forEach { (view, text) ->
-            view.setOnClickListener { appendToExpression(text) }
+            view.setOnClickListener {
+                resetShiftIfActive()
+                appendToExpression(text)
+            }
         }
 
         val functionKeys = listOf(
             binding.btnSin to "sin(", binding.btnCos to "cos(",
             binding.btnTan to "tan(", binding.btnLn to "ln(",
-            binding.btnLog to "log(", binding.btnSqrt to "√("
+            binding.btnLog to "log("
         )
         functionKeys.forEach { (view, text) ->
-            view.setOnClickListener { appendToExpression(text) }
+            view.setOnClickListener {
+                resetShiftIfActive()
+                appendToExpression(text)
+            }
+        }
+
+        binding.btnSqrt.setOnClickListener {
+            val shifted = consumeShift()
+            appendToExpression(if (shifted) "^2" else "√(")
+        }
+        binding.btnCube.setOnClickListener {
+            val shifted = consumeShift()
+            appendToExpression(if (shifted) "cbrt(" else "^3")
+        }
+        binding.btnPower.setOnClickListener {
+            val shifted = consumeShift()
+            appendToExpression(if (shifted) "^(-1)" else "^")
+        }
+        binding.btnMemoryAdd.setOnClickListener {
+            val shifted = consumeShift()
+            adjustMemory(if (shifted) -1.0 else 1.0)
+        }
+        binding.btnMemoryRecall.setOnClickListener {
+            val shifted = consumeShift()
+            if (shifted) memory = 0.0 else appendToExpression(formatResult(memory))
+        }
+        binding.btnAns.setOnClickListener {
+            resetShiftIfActive()
+            appendToExpression(formatResult(lastAnswer))
         }
 
         binding.btnClear.setOnClickListener {
+            resetShiftIfActive()
             expression.clear()
             updateDisplay()
         }
         binding.btnBackspace.setOnClickListener {
+            resetShiftIfActive()
             if (expression.isNotEmpty()) {
                 expression.deleteCharAt(expression.length - 1)
                 updateDisplay()
             }
         }
         binding.btnModeAngle.setOnClickListener {
+            resetShiftIfActive()
             angleMode = if (angleMode == ScientificCalculatorEngine.AngleMode.DEGREE) {
                 ScientificCalculatorEngine.AngleMode.RADIAN
             } else {
@@ -83,12 +127,56 @@ class KalkulatorActivity : AppCompatActivity() {
             binding.btnModeAngle.text = if (angleMode == ScientificCalculatorEngine.AngleMode.DEGREE) "DEG" else "RAD"
             updateDisplay()
         }
-        binding.btnEquals.setOnClickListener { evaluateExpression() }
+        binding.btnShift.setOnClickListener { setShiftActive(!shiftActive) }
+        binding.btnEquals.setOnClickListener {
+            resetShiftIfActive()
+            evaluateExpression()
+        }
+    }
+
+    /** Modifier sekali-pakai ala Casio: aktif untuk satu tombol berikutnya, lalu otomatis nonaktif. */
+    private fun setShiftActive(active: Boolean) {
+        shiftActive = active
+        binding.btnShift.setBackgroundResource(if (active) R.drawable.bg_button_gold else R.drawable.bg_calc_key_mode)
+        binding.btnShift.setTextColor(ContextCompat.getColor(this, if (active) R.color.white else R.color.icon_yellow))
+        binding.btnSqrt.text = if (active) "x²" else "√"
+        binding.btnCube.text = if (active) "∛" else "x³"
+        binding.btnPower.text = if (active) "x⁻¹" else "^"
+        binding.btnMemoryAdd.text = if (active) "M−" else "M+"
+        binding.btnMemoryRecall.text = if (active) "MC" else "RCL"
+    }
+
+    /** Tombol tanpa fungsi shift tetap harus membatalkan SHIFT yang sedang aktif (perilaku Casio). */
+    private fun resetShiftIfActive() {
+        if (shiftActive) setShiftActive(false)
+    }
+
+    /** Tombol dengan fungsi shift: baca status sebelum dinonaktifkan, lalu pakai untuk memilih aksi. */
+    private fun consumeShift(): Boolean {
+        val wasActive = shiftActive
+        if (wasActive) setShiftActive(false)
+        return wasActive
     }
 
     private fun appendToExpression(text: String) {
         expression.append(text)
         updateDisplay()
+    }
+
+    /** Nilai ekspresi saat ini untuk M+/M-; jika display kosong pakai [lastAnswer], jika ekspresi
+     * belum lengkap (gagal di-evaluate) kembalikan null supaya memori tidak berubah. */
+    private fun currentDisplayValue(): Double? {
+        if (expression.isEmpty()) return lastAnswer
+        return try {
+            ScientificCalculatorEngine.evaluate(expression.toString(), angleMode)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun adjustMemory(sign: Double) {
+        val value = currentDisplayValue() ?: return
+        memory += sign * value
     }
 
     /** Live-preview hasil sambil mengetik; ekspresi belum lengkap (mis. "2+" atau "sin(")
@@ -109,7 +197,9 @@ class KalkulatorActivity : AppCompatActivity() {
     private fun evaluateExpression() {
         if (expression.isEmpty()) return
         try {
-            val formatted = formatResult(ScientificCalculatorEngine.evaluate(expression.toString(), angleMode))
+            val result = ScientificCalculatorEngine.evaluate(expression.toString(), angleMode)
+            lastAnswer = result
+            val formatted = formatResult(result)
             binding.tvResult.text = formatted
             expression.clear()
             expression.append(formatted)
