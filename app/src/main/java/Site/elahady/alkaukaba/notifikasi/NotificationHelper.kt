@@ -20,9 +20,11 @@ object NotificationHelper {
     const val CHANNEL_ADZAN_PLAYBACK = "adzan_playback"
     const val CHANNEL_BEEP = "adzan_beep"
     const val CHANNEL_SILENT = "adzan_silent"
+    const val CHANNEL_PRE_ADZAN_REMINDER = "pre_adzan_reminder"
 
     private const val NOTIF_ID_BEEP = 2001
     private const val NOTIF_ID_SILENT = 2002
+    private const val NOTIF_ID_PRE_ADZAN_REMINDER = 2003
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -54,26 +56,46 @@ object NotificationHelper {
             setSound(null, null)
         }
 
-        manager.createNotificationChannels(listOf(playbackChannel, beepChannel, silentChannel))
+        val preAdzanReminderChannel = NotificationChannel(
+            CHANNEL_PRE_ADZAN_REMINDER, "Pengingat Pra-Adzan", NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Pengingat beberapa menit sebelum waktu sholat tiba, tanpa suara adzan"
+            setSound(null, null)
+            enableVibration(true)
+        }
+
+        manager.createNotificationChannels(
+            listOf(playbackChannel, beepChannel, silentChannel, preAdzanReminderChannel)
+        )
     }
 
     fun postBeepNotification(context: Context, prayerName: String) {
-        post(context, CHANNEL_BEEP, prayerName, NOTIF_ID_BEEP)
+        post(context, CHANNEL_BEEP, "Waktu $prayerName telah tiba", "Saatnya menunaikan sholat $prayerName", NOTIF_ID_BEEP)
     }
 
     fun postSilentNotification(context: Context, prayerName: String) {
-        post(context, CHANNEL_SILENT, prayerName, NOTIF_ID_SILENT)
+        post(context, CHANNEL_SILENT, "Waktu $prayerName telah tiba", "Saatnya menunaikan sholat $prayerName", NOTIF_ID_SILENT)
     }
 
-    private fun post(context: Context, channelId: String, prayerName: String, notificationId: Int) {
+    /** Dipanggil [PreAdzanReminderReceiver] beberapa menit sebelum waktu sholat tiba. */
+    fun postPreAdzanReminderNotification(context: Context, prayerName: String, minutes: Int) {
+        post(
+            context, CHANNEL_PRE_ADZAN_REMINDER,
+            "$minutes menit lagi waktu $prayerName",
+            "Bersiap-siap untuk menunaikan sholat $prayerName",
+            NOTIF_ID_PRE_ADZAN_REMINDER
+        )
+    }
+
+    private fun post(context: Context, channelId: String, title: String, text: String, notificationId: Int) {
         val contentIntent = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Waktu $prayerName telah tiba")
-            .setContentText("Saatnya menunaikan sholat $prayerName")
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
             .build()

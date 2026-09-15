@@ -1,7 +1,7 @@
 # Notifikasi Adzan
 
 ### 1. Ringkasan (Overview)
-- **Nama fitur**: Notifikasi Adzan + Personalisasi Suara
+- **Nama fitur**: Notifikasi Adzan + Personalisasi Suara + Pengingat Pra-Adzan
 - **Deskripsi singkat**: Mengirim notifikasi otomatis (dengan opsi suara) tepat
   saat masuk waktu Subuh/Dzuhur/Ashar/Maghrib/Isya, tanpa perlu app dibuka.
   User bisa memilih apakah notifikasinya berupa adzan penuh, beep pelan (mis.
@@ -9,6 +9,15 @@
   dibangun (2026-09-05), app **tidak punya mekanisme notifikasi apa pun** —
   ini fondasi pertamanya, bukan sekadar penambahan opsi ke sistem yang sudah
   ada.
+- **Pengingat Pra-Adzan** (ditambahkan 2026-09-15, ide awal dari Notion "🚀
+  Pengembangan Al-Kaukaba" → "Pengingat Pra-Waktu Sholat (Pre-Adzan
+  Reminder)"): opsi tambahan, terpisah dari & independen terhadap notifikasi
+  adzan di atas — sekali diaktifkan, user dapat notifikasi biasa (getar, tanpa
+  suara adzan) beberapa menit (5/10/15/30, pilihan user) sebelum tiap dari 5
+  waktu sholat wajib tiba, supaya bisa bersiap-siap lebih awal. Nonaktif by
+  default (opt-in), dan satu toggle berlaku untuk semua 5 waktu sekaligus
+  (belum ada opsi per-waktu-sholat, sama seperti keterbatasan notifikasi
+  adzan utama — lihat section 7).
 
 ### 2. Entry point & prasyarat
 - **Trigger notifikasi**: bukan dari UI, tapi dari `AlarmManager` yang
@@ -19,7 +28,9 @@
   (`app/src/main/java/Site/elahady/alkaukaba/ui/konfigurasi/KonfigurasiActivity.kt`,
   fungsi `showAdzanSoundSheet()`) — lihat juga
   [konfigurasi.md](konfigurasi.md) untuk pola BottomSheetDialog yang dipakai
-  ulang di sini.
+  ulang di sini. Row "Pengingat Sebelum Waktu Sholat" (fungsi
+  `showPreAdzanReminderSheet()`) memakai pola yang sama, ditambah satu
+  `SwitchCompat` on/off yang menampilkan/menyembunyikan pilihan durasi.
 - **Prasyarat runtime**:
   - `POST_NOTIFICATIONS` (Android 13+) — diminta lewat
     `ensureNotificationPrerequisites()` saat user membuka section ini.
@@ -35,10 +46,18 @@
 ### 3. Titik masuk logika & navigasi
 - `AdzanScheduler.scheduleFromTimings(context, timings: TimingPrayers)` — titik
   masuk utama kalau developer lain mau memicu ulang penjadwalan alarm secara
-  manual (mis. setelah user ganti lokasi di Konfigurasi).
+  manual (mis. setelah user ganti lokasi di Konfigurasi). Fungsi ini sekaligus
+  yang menjadwalkan alarm reminder pra-adzan (baca `SessionManager` di awal
+  panggilan untuk tahu enabled/durasi, bukan di titik lain).
+- `KonfigurasiActivity.rescheduleAdzanAlarms()` — dipanggil setelah user
+  menyimpan setting pengingat pra-adzan, supaya perubahan langsung kepakai
+  (enqueue `AdzanRefreshWorker` sekali secara immediate, pola sama dengan yang
+  dipakai `BootReceiver`) — tidak perlu menunggu app dibuka ulang atau job
+  harian jam 00:05.
 - `NotificationHelper.createChannels(context)` — daftar `NotificationChannel`
-  yang ada (`adzan_playback`, `adzan_beep`, `adzan_silent`); tambah channel baru
-  di sini kalau suatu saat ada mode suara baru.
+  yang ada (`adzan_playback`, `adzan_beep`, `adzan_silent`,
+  `pre_adzan_reminder`); tambah channel baru di sini kalau suatu saat ada mode
+  suara baru.
 - Tidak ada navigasi antar-Activity di fitur ini — semuanya background
   (Receiver/Service/Worker) sampai user tap notifikasi, yang membuka
   `MainActivity` (lihat `contentIntent`/`buildNotification` di
@@ -55,17 +74,31 @@ kecuali `AlKaukabaApplication.kt` (root package):
 | `AdzanScheduler.kt` | Pasang `AlarmManager.setExactAndAllowWhileIdle` per waktu sholat, `PendingIntent` ke `AdzanAlarmReceiver` |
 | `AdzanAlarmReceiver.kt` | Diterima tepat saat alarm bunyi — baca `SessionManager.getAdzanSoundMode()` lalu branch ke Service/NotificationHelper |
 | `AdzanPlaybackService.kt` | Foreground service (`mediaPlayback`) — `MediaPlayer` play `res/raw/adzan_marrakesh.mp3` untuk mode Adzan Penuh, ada tombol Stop di notifikasi |
-| `NotificationHelper.kt` | Definisi `NotificationChannel` + post notifikasi untuk mode Beep/Senyap |
-| `BootReceiver.kt` | `BOOT_COMPLETED`/`MY_PACKAGE_REPLACED` — jadwalkan ulang alarm (hilang saat reboot) |
+| `NotificationHelper.kt` | Definisi `NotificationChannel` + post notifikasi untuk mode Beep/Senyap/Pengingat Pra-Adzan |
+| `PreAdzanReminderReceiver.kt` | Diterima `reminderMinutes` sebelum waktu sholat — cek `SessionManager.isPreAdzanReminderEnabled()` lalu post notifikasi via `NotificationHelper.postPreAdzanReminderNotification()` |
+| `BootReceiver.kt` | `BOOT_COMPLETED`/`MY_PACKAGE_REPLACED` — jadwalkan ulang alarm (hilang saat reboot), termasuk alarm reminder |
 
-Alur data: `AlKaukabaApplication` (jadwal awal) atau `BootReceiver` (reboot) →
-`WorkManager` → `AdzanRefreshWorker` → `PrayerRepository` (Aladhan API,
-**reuse langsung**, tidak ada layer baru) → `AdzanScheduler` → `AlarmManager` →
-`AdzanAlarmReceiver` → `AdzanPlaybackService` / `NotificationHelper`.
+Alur data (adzan): `AlKaukabaApplication` (jadwal awal) atau `BootReceiver`
+(reboot) → `WorkManager` → `AdzanRefreshWorker` → `PrayerRepository` (Aladhan
+API, **reuse langsung**, tidak ada layer baru) → `AdzanScheduler` →
+`AlarmManager` → `AdzanAlarmReceiver` → `AdzanPlaybackService` /
+`NotificationHelper`.
+
+Alur data (pengingat pra-adzan): sama seperti di atas sampai `AdzanScheduler`,
+lalu untuk tiap waktu sholat — kalau `SessionManager.isPreAdzanReminderEnabled()`
+true — dijadwalkan alarm kedua di `(waktu sholat - getPreAdzanReminderMinutes())`
+menuju `PreAdzanReminderReceiver` (bukan `AdzanAlarmReceiver`), dengan
+`requestCode` PendingIntent terpisah (5101-5105, lihat
+`AdzanScheduler.PRE_ADZAN_REMINDER_REQUEST_CODES`) supaya tidak menimpa alarm
+adzan yang sudah ada (4101-4105). `PreAdzanReminderReceiver` membaca ulang
+status enabled saat alarm bunyi (pola sama seperti `AdzanAlarmReceiver` baca
+mode suara saat bunyi) — kalau user sempat menonaktifkan fitur ini di antara
+waktu penjadwalan dan waktu alarm bunyi, notifikasi tidak jadi muncul.
 
 Setting user: `KonfigurasiActivity` ↔ `SessionManager` (key
-`ADZAN_SOUND_MODE`, sama seperti key lain di kelas itu — SharedPreferences
-biasa, bukan DataStore).
+`ADZAN_SOUND_MODE` untuk suara adzan; `PRE_ADZAN_REMINDER_ENABLED` &
+`PRE_ADZAN_REMINDER_MINUTES` untuk pengingat pra-adzan — sama seperti key lain
+di kelas itu, SharedPreferences biasa, bukan DataStore).
 
 ### 5. Dependencies & tech stack khusus
 - `androidx.work:work-runtime-ktx:2.8.1` (baru ditambahkan). **Bukan 2.9.0**:
@@ -95,6 +128,21 @@ biasa, bukan DataStore).
   (`adb shell am broadcast -a android.intent.action.BOOT_COMPLETED -n
   site.elahady.alkaukaba/.notifikasi.BootReceiver` atau reboot device
   sungguhan) untuk pastikan `BootReceiver` jalan.
+- Pengingat pra-adzan (2026-09-15): sama seperti di atas, belum ada test
+  otomatis. Verifikasi manual yang sudah dilakukan: `compileDebugKotlin` dan
+  `assembleDebug` — BUILD SUCCESSFUL. **Belum dilakukan** (perlu sebelum
+  rilis): test broadcast manual ke `PreAdzanReminderReceiver`, mis.
+  ```
+  adb shell am broadcast \
+    --es prayer_name "Dzuhur" \
+    -n site.elahady.alkaukaba/.notifikasi.PreAdzanReminderReceiver
+  ```
+  — aktifkan dulu fitur ini di Konfigurasi (kalau nonaktif, receiver akan
+  early-return tanpa notifikasi apa pun — perilaku yang benar, bukan bug), lalu
+  cek label subtitle row berubah jadi "Aktif, N menit sebelum waktu sholat";
+  cek juga alur end-to-end (bukan broadcast manual) dengan ganti durasi lalu
+  pastikan `rescheduleAdzanAlarms()` benar-benar memasang ulang alarm di waktu
+  yang baru (lihat lewat `adb shell dumpsys alarm | grep alkaukaba`).
 
 ### 7. Known issues & TODOs
 - Hanya **1 pilihan "Adzan Penuh"** (rekaman CC0 "EveningCallToPrayer
@@ -116,5 +164,22 @@ biasa, bukan DataStore).
   ada alarm sama sekali.
 - Belum ada UI untuk menonaktifkan notifikasi per-waktu-sholat (mis. matikan
   cuma untuk Dzuhur) — saat ini semua-atau-tidak-sama-sekali per mode suara.
+  Pengingat pra-adzan (di bawah) punya keterbatasan yang sama secara sengaja
+  (lihat keputusan desain di Notion, task selesai 2026-09-15).
 - Belum di-commit ke git per 2026-09-05 (lihat status di Notion "🚀
   Pengembangan Al-Kaukaba" → entry "Personalisasi Notifikasi Adzan").
+- **Pengingat pra-adzan tidak punya toggle per-waktu-sholat** — satu switch
+  on/off berlaku untuk semua 5 waktu sekaligus (keputusan desain sadar, sesuai
+  diskusi task Notion "Pengingat Pra-Waktu Sholat", bukan keterbatasan teknis
+  yang belum sempat dikerjakan). Kalau nanti dibutuhkan per-waktu, tambahkan
+  key baru per prayer di `SessionManager` dan baca di
+  `AdzanScheduler.scheduleFromTimings()` saat memutuskan jadwal reminder mana
+  yang dipasang.
+- **Belum ada opsi memilih menit custom** di luar 4 pilihan (5/10/15/30) —
+  cukup untuk kebutuhan awal, tapi kalau ada permintaan angka lain
+  pertimbangkan ganti jadi `NumberPicker`/`EditText` daripada terus menambah
+  `RadioButton` di `dialog_pengingat_pra_adzan.xml`.
+- Reminder pra-adzan **ikut kena keterbatasan yang sama dengan notifikasi
+  adzan utama** di atas: tidak ada fallback offline (kalau `AdzanRefreshWorker`
+  gagal fetch, reminder hari itu juga tidak terpasang) dan rentan battery
+  optimization OEM.

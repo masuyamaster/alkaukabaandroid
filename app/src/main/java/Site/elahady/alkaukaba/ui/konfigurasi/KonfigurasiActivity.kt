@@ -21,11 +21,16 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import site.elahady.alkaukaba.notifikasi.AdzanRefreshWorker
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
@@ -79,12 +84,14 @@ class KonfigurasiActivity : AppCompatActivity() {
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
         binding.rowNotifikasiAdzan.setOnClickListener { showAdzanSoundSheet() }
         binding.rowHisabMethod.setOnClickListener { showHisabMethodSheet() }
+        binding.rowPreAdzanReminder.setOnClickListener { showPreAdzanReminderSheet() }
 
         updateCurrentLocationLabel()
         updateCurrentQiblaSourceLabel()
         updateCurrentMethodLabel()
         updateCurrentAdzanSoundLabel()
         updateCurrentHisabMethodLabel()
+        updateCurrentPreAdzanReminderLabel()
     }
 
     // --- Lokasi ---
@@ -389,5 +396,74 @@ class KonfigurasiActivity : AppCompatActivity() {
                 })
             }
         }
+    }
+
+    // --- Pengingat Pra-Adzan ---
+
+    private fun updateCurrentPreAdzanReminderLabel() {
+        binding.tvCurrentPreAdzanReminder.text = if (sessionManager.isPreAdzanReminderEnabled()) {
+            "Aktif, ${sessionManager.getPreAdzanReminderMinutes()} menit sebelum waktu sholat"
+        } else {
+            "Nonaktif"
+        }
+    }
+
+    private fun showPreAdzanReminderSheet() {
+        ensureNotificationPrerequisites()
+
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_pengingat_pra_adzan, null)
+        bottomSheetDialog.setContentView(view)
+
+        val switchEnabled = view.findViewById<SwitchCompat>(R.id.switchPreAdzanReminder)
+        val layoutMinutes = view.findViewById<View>(R.id.layoutPreAdzanReminderMinutes)
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupPreAdzanReminderMinutes)
+        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSavePreAdzanReminder)
+
+        val minutesToRadioId = mapOf(
+            5 to R.id.radioReminder5,
+            10 to R.id.radioReminder10,
+            15 to R.id.radioReminder15,
+            30 to R.id.radioReminder30
+        )
+
+        switchEnabled.isChecked = sessionManager.isPreAdzanReminderEnabled()
+        layoutMinutes.visibility = if (switchEnabled.isChecked) View.VISIBLE else View.GONE
+        radioGroup.check(
+            minutesToRadioId[sessionManager.getPreAdzanReminderMinutes()]
+                ?: R.id.radioReminder10
+        )
+
+        switchEnabled.setOnCheckedChangeListener { _, isChecked ->
+            layoutMinutes.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
+        btnSave.setOnClickListener {
+            val minutes = when (radioGroup.checkedRadioButtonId) {
+                R.id.radioReminder5 -> 5
+                R.id.radioReminder15 -> 15
+                R.id.radioReminder30 -> 30
+                else -> 10
+            }
+            sessionManager.setPreAdzanReminderEnabled(switchEnabled.isChecked)
+            sessionManager.setPreAdzanReminderMinutes(minutes)
+            updateCurrentPreAdzanReminderLabel()
+            rescheduleAdzanAlarms()
+            Toast.makeText(this, "Pengingat pra-adzan disimpan", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
+    }
+
+    /** Refresh alarm segera (bukan menunggu buka-app berikutnya atau job harian jam 00:05)
+     *  supaya perubahan setting pengingat pra-adzan langsung kepakai — pola sama seperti
+     *  [site.elahady.alkaukaba.notifikasi.BootReceiver]. */
+    private fun rescheduleAdzanAlarms() {
+        WorkManager.getInstance(this).enqueueUniqueWork(
+            AdzanRefreshWorker.UNIQUE_WORK_NAME_IMMEDIATE,
+            ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<AdzanRefreshWorker>().build()
+        )
     }
 }

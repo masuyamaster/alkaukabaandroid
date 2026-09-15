@@ -110,6 +110,10 @@
             android:exported="false" />
 
         <receiver
+            android:name="site.elahady.alkaukaba.notifikasi.PreAdzanReminderReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name="site.elahady.alkaukaba.notifikasi.BootReceiver"
             android:exported="false">
             <intent-filter>

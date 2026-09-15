@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import site.elahady.alkaukaba.api.TimingPrayers
+import site.elahady.alkaukaba.utils.SessionManager
 import java.util.Calendar
 
 /** Pasang alarm exact untuk 5 waktu sholat wajib berdasarkan [TimingPrayers] hari ini. */
@@ -23,6 +24,16 @@ object AdzanScheduler {
         "Isya" to 4105
     )
 
+    // requestCode terpisah untuk alarm pengingat pra-adzan, supaya tidak bentrok dengan
+    // PRAYER_REQUEST_CODES di atas (alarm adzan & reminder berjalan independen).
+    private val PRE_ADZAN_REMINDER_REQUEST_CODES = mapOf(
+        "Subuh" to 5101,
+        "Dzuhur" to 5102,
+        "Ashar" to 5103,
+        "Maghrib" to 5104,
+        "Isya" to 5105
+    )
+
     fun scheduleFromTimings(context: Context, timings: TimingPrayers) {
         val prayers = linkedMapOf(
             "Subuh" to timings.subuh,
@@ -33,19 +44,43 @@ object AdzanScheduler {
         )
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val now = Calendar.getInstance()
+        val sessionManager = SessionManager(context)
+        val reminderEnabled = sessionManager.isPreAdzanReminderEnabled()
+        val reminderMinutes = sessionManager.getPreAdzanReminderMinutes()
 
         prayers.forEach { (name, hhmm) ->
             val time = parseToCalendarToday(hhmm) ?: return@forEach
             // Waktu yang sudah lewat hari ini dilewati - refresh berikutnya (dini hari) akan
             // menjadwalkan lagi untuk besok.
-            if (time.before(now)) return@forEach
-            scheduleAlarm(context, alarmManager, name, time)
+            if (!time.before(now)) {
+                scheduleAlarm(context, alarmManager, AdzanAlarmReceiver::class.java, PRAYER_REQUEST_CODES, name, time)
+            }
+
+            if (reminderEnabled) {
+                val reminderTime = (time.clone() as Calendar).apply { add(Calendar.MINUTE, -reminderMinutes) }
+                // Reminder dilewati kalau titik waktunya sendiri sudah lewat hari ini, meski
+                // waktu sholatnya sendiri belum (mis. reminder dijadwalkan setelah aplikasi
+                // dibuka di antara jam reminder dan jam sholat).
+                if (!reminderTime.before(now)) {
+                    scheduleAlarm(
+                        context, alarmManager, PreAdzanReminderReceiver::class.java,
+                        PRE_ADZAN_REMINDER_REQUEST_CODES, name, reminderTime
+                    )
+                }
+            }
         }
     }
 
-    private fun scheduleAlarm(context: Context, alarmManager: AlarmManager, prayerName: String, time: Calendar) {
-        val requestCode = PRAYER_REQUEST_CODES[prayerName] ?: return
-        val intent = Intent(context, AdzanAlarmReceiver::class.java).apply {
+    private fun scheduleAlarm(
+        context: Context,
+        alarmManager: AlarmManager,
+        receiverClass: Class<out android.content.BroadcastReceiver>,
+        requestCodes: Map<String, Int>,
+        prayerName: String,
+        time: Calendar
+    ) {
+        val requestCode = requestCodes[prayerName] ?: return
+        val intent = Intent(context, receiverClass).apply {
             putExtra(EXTRA_PRAYER_NAME, prayerName)
         }
         val pendingIntent = PendingIntent.getBroadcast(

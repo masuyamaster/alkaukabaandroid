@@ -32,6 +32,10 @@ class SessionManager(context: Context) {
         private const val KEY_HISAB_AWAL_BULAN_METHOD = "HISAB_AWAL_BULAN_METHOD"
         const val HISAB_AWAL_BULAN_ASTRONOMY_ENGINE = "ASTRONOMY_ENGINE"
         const val HISAB_AWAL_BULAN_DURRUL_ANIQ = "DURRUL_ANIQ"
+
+        private const val KEY_PRE_ADZAN_REMINDER_ENABLED = "PRE_ADZAN_REMINDER_ENABLED"
+        private const val KEY_PRE_ADZAN_REMINDER_MINUTES = "PRE_ADZAN_REMINDER_MINUTES"
+        const val DEFAULT_PRE_ADZAN_REMINDER_MINUTES = 10
     }
 
     /**
@@ -103,6 +107,21 @@ class SessionManager(context: Context) {
 
     fun getHisabAwalBulanMethod(): String =
         prefs.getString(KEY_HISAB_AWAL_BULAN_METHOD, HISAB_AWAL_BULAN_ASTRONOMY_ENGINE) ?: HISAB_AWAL_BULAN_ASTRONOMY_ENGINE
+
+    /** Pengingat pra-adzan (mis. "10 menit lagi Dzuhur") — nonaktif by default (opt-in),
+     *  berlaku untuk semua 5 waktu sholat wajib sekaligus (bukan per-waktu). */
+    fun setPreAdzanReminderEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PRE_ADZAN_REMINDER_ENABLED, enabled).apply()
+    }
+
+    fun isPreAdzanReminderEnabled(): Boolean = prefs.getBoolean(KEY_PRE_ADZAN_REMINDER_ENABLED, false)
+
+    fun setPreAdzanReminderMinutes(minutes: Int) {
+        prefs.edit().putInt(KEY_PRE_ADZAN_REMINDER_MINUTES, minutes).apply()
+    }
+
+    fun getPreAdzanReminderMinutes(): Int =
+        prefs.getInt(KEY_PRE_ADZAN_REMINDER_MINUTES, DEFAULT_PRE_ADZAN_REMINDER_MINUTES)
 
     fun setLogin(isLoggedIn: Boolean) {
         val editor = prefs.edit()
