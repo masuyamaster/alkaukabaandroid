@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/card_white"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_button"
+            android:backgroundTint="@color/bg_sky_light"
+            android:padding="8dp"
+            android:src="@drawable/ic_menu_mosque"
+            app:tint="@color/icon_sky"
+            android:contentDescription="@null" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvNamaMasjid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                tools:text="Masjid Agung Al-Kaukaba" />
+
+            <TextView
+                android:id="@+id/tvAlamatMasjid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone"
+                tools:text="Jl. Merdeka, Lamongan"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/tvJarakMasjid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_pill_sky"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
+                android:textColor="@color/icon_sky"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="450 m" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="8dp"
+            android:rotation="180"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/text_hint"
+            android:contentDescription="@null" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

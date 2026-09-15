@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardHargaEmas"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/bg_emerald_light"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Harga Emas Antam Hari Ini"
+                android:textColor="@color/icon_emerald"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04" />
+
+            <TextView
+                android:id="@+id/tvHargaEmas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:text="Memuat harga emas..."
+                tools:text="Rp 2.560.000 / gram" />
+
+            <TextView
+                android:id="@+id/tvNisabEmas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Nisab 85 gr: Rp 217.600.000"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressHargaEmas"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:indeterminateTint="@color/icon_emerald" />
+
+        <TextView
+            android:id="@+id/btnRetryHargaEmas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⟳ Coba Lagi"
+            android:textColor="@color/icon_emerald"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

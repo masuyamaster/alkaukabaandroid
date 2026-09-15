@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
+    tools:context=".ui.tasbih.TasbihActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/tvTarget"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_card_rounded"
+            android:backgroundTint="@color/date_pill_bg"
+            android:foreground="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="18dp"
+            android:paddingVertical="8dp"
+            android:text="Target: 33x"
+            android:textColor="@color/date_pill_text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvTargetHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Ketuk untuk ganti target"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTarget" />
+
+        <TextView
+            android:id="@+id/tvRounds"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Putaran ke-0"
+            android:textColor="@color/text_label_gold"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTargetHint" />
+
+        <FrameLayout
+            android:id="@+id/circleTapArea"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_circle_button"
+            android:backgroundTint="@color/card_white"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvRounds">
+
+            <TextView
+                android:id="@+id/tvCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="0"
+                android:textColor="@color/text_primary"
+                android:textSize="64sp"
+                android:textStyle="bold" />
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Ketuk lingkaran untuk menghitung"
+            android:textColor="@color/text_hint"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/circleTapArea" />
+
+        <TextView
+            android:id="@+id/btnUndo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_card_rounded"
+            android:backgroundTint="@color/card_white"
+            android:foreground="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="10dp"
+            android:text="− Batalkan Hitungan Terakhir"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvHint" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>

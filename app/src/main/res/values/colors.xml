@@ -87,4 +87,16 @@
     <color name="bg_indigo_light">#E0E7FF</color>
     <color name="icon_indigo">#4F46E5</color>
 
+    <!-- Masjid Terdekat (2026-09) -->
+    <color name="bg_sky_light">#E0F2FE</color>
+    <color name="icon_sky">#0284C7</color>
+
+    <!-- Tasbih Digital (2026-09) -->
+    <color name="bg_rose_light">#FFE4E6</color>
+    <color name="icon_rose">#E11D48</color>
+
+    <!-- Kalkulator Zakat (2026-09) -->
+    <color name="bg_emerald_light">#D1FAE5</color>
+    <color name="icon_emerald">#059669</color>
+
 </resources>

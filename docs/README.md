@@ -106,3 +106,6 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Kumpulan Doa & Dzikir (Al-Mathurat/Hisnul Muslim) | [features/doa-dzikir.md](features/doa-dzikir.md) | Terdokumentasi (backend belum di-deploy produksi) |
 | Kalkulator Scientific | [features/kalkulator-scientific.md](features/kalkulator-scientific.md) | Terdokumentasi |
 | Ayat/Hadits Harian (Kutipan Harian) | [features/kutipan-harian.md](features/kutipan-harian.md) | Terdokumentasi (belum diverifikasi visual di emulator) |
+| Kalkulator Zakat (Fitrah/Mal/Profesi) | [features/zakat.md](features/zakat.md) | Terdokumentasi (tab Profesi & hasil hitung Mal belum diverifikasi visual, lihat §7) |
+| Masjid Terdekat | [features/masjid-terdekat.md](features/masjid-terdekat.md) | Terdokumentasi (perlu re-verifikasi end-to-end di emulator, lihat Known issues) |
+| Tasbih Digital | [features/tasbih-digital.md](features/tasbih-digital.md) | Terdokumentasi (belum diverifikasi visual di emulator) |
