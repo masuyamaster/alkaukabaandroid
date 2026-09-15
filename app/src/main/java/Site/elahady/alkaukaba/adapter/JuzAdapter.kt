@@ -3,6 +3,7 @@ package site.elahady.alkaukaba.adapter
 import site.elahady.alkaukaba.databinding.ItemJuzBinding
 import site.elahady.alkaukaba.model.JuzSummary
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
@@ -26,7 +27,16 @@ class JuzAdapter(private val onClick: (JuzSummary) -> Unit) : RecyclerView.Adapt
                 "${item.startSurahNamaLatin} - ${item.endSurahNamaLatin}"
             }
             binding.tvJumlahAyatJuz.text = "${item.jumlahAyat} ayat"
-            binding.tvNamaArabJuz.text = item.startSurahNamaArab
+            // Nama Arab cuma ditampilkan kalau satu Juz murni satu surah (mis. Juz 2 = Al-Baqarah
+            // saja) - kalau Juz merentang dua surah (mis. Juz 1 = Al-Fatihah - Al-Baqarah),
+            // menampilkan nama Arab surah awal saja bikin kesan tidak sesuai dengan rentang yang
+            // tertulis di tvRentangJuz, jadi disembunyikan saja.
+            if (item.startSurahNamaLatin == item.endSurahNamaLatin) {
+                binding.tvNamaArabJuz.text = item.startSurahNamaArab
+                binding.tvNamaArabJuz.visibility = View.VISIBLE
+            } else {
+                binding.tvNamaArabJuz.visibility = View.GONE
+            }
             binding.root.setOnClickListener { onClick(item) }
         }
     }
