@@ -3,7 +3,6 @@ package site.elahady.alkaukaba.adapter
 import site.elahady.alkaukaba.databinding.ItemJuzBinding
 import site.elahady.alkaukaba.model.JuzSummary
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
@@ -27,15 +26,16 @@ class JuzAdapter(private val onClick: (JuzSummary) -> Unit) : RecyclerView.Adapt
                 "${item.startSurahNamaLatin} - ${item.endSurahNamaLatin}"
             }
             binding.tvJumlahAyatJuz.text = "${item.jumlahAyat} ayat"
-            // Nama Arab cuma ditampilkan kalau satu Juz murni satu surah (mis. Juz 2 = Al-Baqarah
-            // saja) - kalau Juz merentang dua surah (mis. Juz 1 = Al-Fatihah - Al-Baqarah),
-            // menampilkan nama Arab surah awal saja bikin kesan tidak sesuai dengan rentang yang
-            // tertulis di tvRentangJuz, jadi disembunyikan saja.
+            // Kalau Juz merentang dua surah (mis. Juz 1 = Al-Fatihah - Al-Baqarah), tampilkan
+            // kedua nama Arabnya ditumpuk dua baris (font lebih kecil supaya muat) senada dengan
+            // tvRentangJuz yang juga menulis kedua nama - nampilin cuma nama surah awal saja
+            // kesannya tidak sesuai dengan rentang yang tertulis di situ.
             if (item.startSurahNamaLatin == item.endSurahNamaLatin) {
                 binding.tvNamaArabJuz.text = item.startSurahNamaArab
-                binding.tvNamaArabJuz.visibility = View.VISIBLE
+                binding.tvNamaArabJuz.textSize = 20f
             } else {
-                binding.tvNamaArabJuz.visibility = View.GONE
+                binding.tvNamaArabJuz.text = "${item.startSurahNamaArab}\n${item.endSurahNamaArab}"
+                binding.tvNamaArabJuz.textSize = 15f
             }
             binding.root.setOnClickListener { onClick(item) }
         }

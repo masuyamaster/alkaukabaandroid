@@ -89,6 +89,7 @@ object JuzBoundaries {
             startSurahNamaLatin = namaLatinOf(juzSegments.first().surahNumber),
             endSurahNamaLatin = namaLatinOf(juzSegments.last().surahNumber),
             startSurahNamaArab = namaArabOf(juzSegments.first().surahNumber),
+            endSurahNamaArab = namaArabOf(juzSegments.last().surahNumber),
             jumlahAyat = jumlahAyat
         )
     }
@@ -99,6 +100,7 @@ data class JuzSummary(
     val startSurahNamaLatin: String,
     val endSurahNamaLatin: String,
     val startSurahNamaArab: String,
+    val endSurahNamaArab: String,
     val jumlahAyat: Int
 )
 
