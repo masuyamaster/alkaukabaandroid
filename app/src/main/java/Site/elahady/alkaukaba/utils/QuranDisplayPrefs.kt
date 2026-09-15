@@ -36,7 +36,7 @@ object QuranDisplayPrefs {
         val arabicLineSpacing: Float,
         val mushafLineSpacing: Float
     ) {
-        RAPAT("Rapat", 8f, 6f, 1.25f, 1.8f),
+        RAPAT("Rapat", 8f, 6f, 1.25f, 0.9f),
         SEDANG("Sedang", 12f, 8f, 1.4f, 2.1f),
         LAPANG("Lapang", 18f, 14f, 1.7f, 2.4f),
     }
