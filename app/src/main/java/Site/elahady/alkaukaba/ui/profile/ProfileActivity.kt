@@ -87,6 +87,7 @@ class ProfileActivity : AppCompatActivity() {
         binding.btnEditProfile.setOnClickListener { showEditProfileSheet() }
         binding.ivAvatar.setOnClickListener { showAvatarActionSheet() }
         binding.ivAvatarBadge.setOnClickListener { showAvatarActionSheet() }
+        binding.rowTheme.setOnClickListener { ThemeSettingsSheet.show(this) }
         binding.rowHelp.setOnClickListener { showHelpDialog() }
         binding.rowPrivacy.setOnClickListener { showPrivacyDialog() }
         binding.rowChangePassword.setOnClickListener { showChangePasswordSheet() }

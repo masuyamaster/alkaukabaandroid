@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import site.elahady.alkaukaba.notifikasi.AdzanRefreshWorker
 import site.elahady.alkaukaba.notifikasi.NotificationHelper
+import site.elahady.alkaukaba.utils.ThemePrefs
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -15,6 +16,9 @@ class AlKaukabaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Harus dipanggil sebelum activity manapun dibuat, supaya tidak ada kedipan tema
+        // salah sesaat sebelum preferensi ter-apply.
+        ThemePrefs.applySavedMode(this)
         NotificationHelper.createChannels(this)
 
         val workManager = WorkManager.getInstance(this)
