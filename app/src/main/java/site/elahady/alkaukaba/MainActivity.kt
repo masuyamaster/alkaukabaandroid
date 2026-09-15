@@ -11,13 +11,11 @@ import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
 import site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity
-import site.elahady.alkaukaba.ui.masjidterdekat.MasjidTerdekatActivity
+import site.elahady.alkaukaba.ui.menu.SemuaMenuActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
 import site.elahady.alkaukaba.ui.doa.DaftarKategoriDoaActivity
 import site.elahady.alkaukaba.ui.quran.DaftarSurahActivity
-import site.elahady.alkaukaba.ui.tasbih.TasbihActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
-import site.elahady.alkaukaba.ui.zakat.ZakatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
@@ -360,14 +358,8 @@ class MainActivity : AppCompatActivity() {
         binding.btDoaDzikir.setOnClickListener {
             startActivity(Intent(this, DaftarKategoriDoaActivity::class.java))
         }
-        binding.btMasjidTerdekat.setOnClickListener {
-            startActivity(Intent(this, MasjidTerdekatActivity::class.java))
-        }
-        binding.btTasbih.setOnClickListener {
-            startActivity(Intent(this, TasbihActivity::class.java))
-        }
-        binding.btZakat.setOnClickListener {
-            startActivity(Intent(this, ZakatActivity::class.java))
+        binding.btnSeeAllMenu.setOnClickListener {
+            startActivity(Intent(this, SemuaMenuActivity::class.java))
         }
         binding.tvLabelCalendar.setOnClickListener { openCalendarPage() }
         binding.tvLabelDetailCalendar.setOnClickListener { openCalendarPage() }

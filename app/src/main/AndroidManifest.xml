@@ -114,6 +114,9 @@
         <activity
             android:name="site.elahady.alkaukaba.ui.zakat.ZakatActivity"
             android:exported="false" />
+        <activity
+            android:name="site.elahady.alkaukaba.ui.menu.SemuaMenuActivity"
+            android:exported="false" />
 
         <receiver
             android:name="site.elahady.alkaukaba.notifikasi.AdzanAlarmReceiver"
