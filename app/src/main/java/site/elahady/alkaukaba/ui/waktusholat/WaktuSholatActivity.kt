@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 
 class WaktuSholatActivity : AppCompatActivity() {
 
@@ -71,6 +72,7 @@ class WaktuSholatActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.scrollContent.applySystemBarInsetsPadding(applyBottom = true)
 

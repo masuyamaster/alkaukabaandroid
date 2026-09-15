@@ -13,6 +13,7 @@ import site.elahady.alkaukaba.utils.Resource
 import androidx.core.content.ContextCompat
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.viewmodel.quran.DaftarSurahViewModel
 import android.content.Intent
 import android.os.Bundle
@@ -47,6 +48,7 @@ class DaftarSurahActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 

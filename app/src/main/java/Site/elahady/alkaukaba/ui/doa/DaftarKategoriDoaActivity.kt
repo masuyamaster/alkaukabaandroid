@@ -13,6 +13,7 @@ import site.elahady.alkaukaba.model.DoaCategory
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.viewmodel.doa.DaftarKategoriDoaViewModel
 
 class DaftarKategoriDoaActivity : AppCompatActivity() {
@@ -27,6 +28,7 @@ class DaftarKategoriDoaActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 

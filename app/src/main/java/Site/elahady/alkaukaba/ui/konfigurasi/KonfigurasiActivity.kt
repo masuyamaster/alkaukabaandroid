@@ -28,6 +28,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 
 class KonfigurasiActivity : AppCompatActivity() {
 
@@ -64,6 +65,7 @@ class KonfigurasiActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 

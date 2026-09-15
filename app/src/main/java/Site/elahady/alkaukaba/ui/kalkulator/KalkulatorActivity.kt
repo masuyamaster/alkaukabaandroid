@@ -5,6 +5,7 @@ import site.elahady.alkaukaba.databinding.ActivityKalkulatorBinding
 import site.elahady.alkaukaba.utils.ScientificCalculatorEngine
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -38,6 +39,7 @@ class KalkulatorActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 

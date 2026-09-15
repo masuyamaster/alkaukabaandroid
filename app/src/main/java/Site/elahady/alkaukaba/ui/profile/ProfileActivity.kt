@@ -40,6 +40,7 @@ import site.elahady.alkaukaba.utils.ImageUtils
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import java.io.File
 
 class ProfileActivity : AppCompatActivity() {
@@ -72,6 +73,7 @@ class ProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.scrollContent.applySystemBarInsetsPadding(applyBottom = true)
 

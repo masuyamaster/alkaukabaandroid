@@ -1,8 +1,12 @@
 package site.elahady.alkaukaba.utils
 
+import android.app.Activity
+import android.content.res.Configuration
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 
 // Aplikasi ini pakai WindowCompat.setDecorFitsSystemWindows(window, false) di semua activity
@@ -44,3 +48,17 @@ fun View.applyTopSystemBarInsetAsMargin() {
     }
     ViewCompat.requestApplyInsets(this)
 }
+
+// Status bar transparan (lihat komentar di atas) butuh warna ikon yang kontras secara eksplisit -
+// tanpa ini ikon status bar jatuh ke default platform yang tidak ikut bereaksi ke Tema Gelap.
+// Dipakai di activity yang latar atasnya ikut berubah terang/gelap sesuai tema (mayoritas
+// activity di app ini). Activity yang latar atasnya SELALU gelap terlepas dari tema (mis. Login,
+// Splashscreen) sengaja tidak pakai helper ini - mereka set isAppearanceLightStatusBars = false
+// secara manual di kode masing-masing.
+fun Window.applyStatusBarIconsForTheme() {
+    val isNightMode = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+        Configuration.UI_MODE_NIGHT_YES
+    WindowCompat.getInsetsController(this, decorView).isAppearanceLightStatusBars = !isNightMode
+}
+
+fun Activity.applyStatusBarIconsForTheme() = window.applyStatusBarIconsForTheme()

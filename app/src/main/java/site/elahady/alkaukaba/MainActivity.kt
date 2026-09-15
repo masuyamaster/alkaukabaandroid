@@ -18,6 +18,7 @@ import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.utils.HijriCalendarEngine
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.ImageUtils
@@ -98,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.mainContent.applySystemBarInsetsPadding(applyBottom = true)
 
         setupViewModel()

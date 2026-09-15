@@ -56,6 +56,7 @@ import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,6 +78,7 @@ class FaseBulanActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
@@ -125,6 +127,7 @@ class FaseBulanActivity : AppCompatActivity() {
             WindowCompat.setDecorFitsSystemWindows(w, false)
             w.statusBarColor = Color.TRANSPARENT
             w.navigationBarColor = Color.TRANSPARENT
+            w.applyStatusBarIconsForTheme()
         }
         dialog.show()
         // Disembunyikan setelah show() & lewat post{} supaya dijalankan setelah view benar-benar

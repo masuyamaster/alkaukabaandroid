@@ -11,6 +11,7 @@ import site.elahady.alkaukaba.utils.QuranDisplayPrefs
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
+import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.viewmodel.quran.DetailJuzViewModel
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -51,6 +52,7 @@ class DetailJuzActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
+        applyStatusBarIconsForTheme()
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
