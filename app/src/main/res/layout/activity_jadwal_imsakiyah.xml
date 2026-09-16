@@ -87,7 +87,8 @@
             android:layout_marginBottom="16dp"
             android:orientation="horizontal"
             android:background="@drawable/bg_card_rounded"
-            android:backgroundTint="@color/white">
+            android:backgroundTint="@color/white"
+            android:clipToOutline="true">
 
             <!-- Kolom tanggal freeze - di luar HorizontalScrollView supaya tidak ikut geser -->
             <LinearLayout
