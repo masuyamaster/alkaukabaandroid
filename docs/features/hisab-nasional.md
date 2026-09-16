@@ -77,8 +77,14 @@ kemungkinan perlu didiskusikan ulang dengan user.
    dikirim sebagai satu list lewat LiveData.
 4. Kartu navy di atas menampilkan label bulan Hijriyah yang dicek + kalimat
    kesimpulan ("X dari Y titik markaz memenuhi kriteria...") + badge status.
-5. Di bawahnya, `RecyclerView` menampilkan kartu per-markaz (nama+provinsi,
-   ghurub, tinggi hilal, elongasi, badge Memenuhi/Belum Memenuhi).
+5. Di bawahnya, `RecyclerView` menampilkan kartu per-markaz: nama+provinsi,
+   ghurub, badge Memenuhi/Belum Memenuhi, lalu 2 grup data — "Matahari saat
+   Ghurub" (tinggi/irtifa' + azimuth) dan "Hilal (Bulan) saat Ghurub"
+   (tinggi/irtifa' + azimuth + elongasi). Semua field ini sudah dihitung
+   `EphemerisCalculator` sejak awal (`HilalResult.tinggiMatahari` /
+   `azimuthMatahari` / `azimuthHilal`) — per 2026-09-16 baru ditampilkan di
+   kartu markaz (sebelumnya cuma tinggi hilal & elongasi), atas permintaan
+   user yang mau lihat data matahari & azimuth kedua benda langit juga.
 6. `btnBack` toolbar -> `finish()`.
 
 **PilihMarkazActivity:**

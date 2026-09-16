@@ -23,7 +23,10 @@ class MarkazHisabAdapter : RecyclerView.Adapter<MarkazHisabAdapter.ViewHolder>()
             val context = binding.root.context
             binding.tvMarkazName.text = "📍 ${item.markaz.nama}, ${item.markaz.provinsi}"
             binding.tvGhurub.text = item.hasil.ghurubTime.substringAfter(", ")
+            binding.tvTinggiMatahari.text = "%.2f°".format(item.hasil.tinggiMatahari)
+            binding.tvAzimuthMatahari.text = "%.2f°".format(item.hasil.azimuthMatahari)
             binding.tvTinggiHilal.text = "%.2f°".format(item.hasil.tinggiHilal)
+            binding.tvAzimuthHilal.text = "%.2f°".format(item.hasil.azimuthHilal)
             binding.tvElongasi.text = "%.2f°".format(item.hasil.elongasi)
 
             if (item.hasil.hilalMemenuhiKriteria) {
