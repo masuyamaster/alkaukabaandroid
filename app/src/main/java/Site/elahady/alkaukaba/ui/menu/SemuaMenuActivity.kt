@@ -55,7 +55,7 @@ class SemuaMenuActivity : AppCompatActivity() {
         MenuItem(R.drawable.ic_menu_hilal, "Awal\nBulan", R.color.bg_yellow_light, R.color.icon_yellow, AwalBulanActivity::class.java),
         MenuItem(R.drawable.ic_menu_moon, "Gerhana", R.color.bg_blue_light, R.color.icon_blue, GerhanaActivity::class.java),
         MenuItem(R.drawable.ic_menu_star, "Okultasi", R.color.bg_orange_light, R.color.icon_orange, OkultasiActivity::class.java),
-        MenuItem(R.drawable.ic_menu_document, "Hisab Awal\nBulan Nasional", R.color.bg_cyan_light, R.color.icon_cyan, HisabNasionalActivity::class.java),
+        MenuItem(R.drawable.ic_menu_hisab_nasional, "Hisab Awal\nBulan Nasional", R.color.bg_cyan_light, R.color.icon_cyan, HisabNasionalActivity::class.java),
         MenuItem(R.drawable.ic_menu_calculator, "Kalkulator", R.color.bg_indigo_light, R.color.icon_indigo, KalkulatorActivity::class.java),
         MenuItem(R.drawable.ic_menu_quran, "Al-Qur'an", R.color.bg_gold_light, R.color.text_label_gold, DaftarSurahActivity::class.java),
         MenuItem(R.drawable.ic_menu_tasbih, "Doa &\nDzikir", R.color.bg_green_light, R.color.icon_green, DaftarKategoriDoaActivity::class.java),

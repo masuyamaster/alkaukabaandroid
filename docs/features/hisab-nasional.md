@@ -31,8 +31,12 @@ kemungkinan perlu didiskusikan ulang dengan user.
   Bulan Nasional" — sengaja diletakkan tepat setelah "Okultasi" sesuai
   permintaan user saat ticket dibuat, warna baru `bg_cyan_light`/`icon_cyan`
   (ditambahkan khusus fitur ini karena semua 11 pasangan warna kartu menu
-  yang ada sudah terpakai masing-masing tepat sekali). Icon reuse
-  `ic_menu_document` (belum ada icon dedicated "peta/globe" di project).
+  yang ada sudah terpakai masing-masing tepat sekali). Icon custom
+  `ic_menu_hisab_nasional.xml` (awalnya reuse `ic_menu_document`, diganti
+  setelah user komplain tidak merepresentasikan fitur) — gabungan hilal/
+  bulan sabit (evenOdd dua lingkaran, pola sama dengan `ic_menu_hilal`) di
+  atas + garis horizontal dengan 3 titik di bawahnya, mewakili "perhitungan
+  + akumulasi dari beberapa markaz" sesuai permintaan user.
 - **Juga ditambahkan ke quick-access home** (`activity_main.xml`/
   `MainActivity.kt`, `bt_hisab_nasional`) — awalnya cuma ditaruh di "Semua
   Menu", tapi user eksplisit minta muncul juga di home tepat setelah

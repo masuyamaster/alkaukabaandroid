@@ -446,7 +446,7 @@
                     android:background="@drawable/bg_circle_button"
                     android:backgroundTint="@color/bg_cyan_light"
                     android:padding="14dp"
-                    android:src="@drawable/ic_menu_document"
+                    android:src="@drawable/ic_menu_hisab_nasional"
                     app:tint="@color/icon_cyan" />
 
                 <TextView
