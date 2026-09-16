@@ -8,6 +8,9 @@ Hijriyah penuh, satu baris per hari. Menjawab kebutuhan umum "jadwal
 imsakiyah Ramadhan", tapi tidak dikunci ke bulan Ramadhan saja — user bisa
 geser ke bulan Hijriyah manapun lewat navigasi ◀/▶.
 
+Kolom tanggal (kolom pertama) **freeze** — tetap diam di kiri layar saat
+kolom-kolom waktu sholat digeser horizontal (lihat section 4).
+
 ## 2. Entry point & prasyarat
 
 - Layar: `JadwalImsakiyahActivity` (layout `activity_jadwal_imsakiyah.xml`).
@@ -43,7 +46,8 @@ geser ke bulan Hijriyah manapun lewat navigasi ◀/▶.
 |---|---|
 | `ui/jadwalimsakiyah/JadwalImsakiyahActivity.kt` + `activity_jadwal_imsakiyah.xml` | UI: toolbar, baris navigasi bulan (◀ label ▶), tabel (di-build programatic ke `layoutImsakiyahTable`). Resolusi lokasi (GPS/manual/fallback) dicopy dari `WaktuSholatActivity`. |
 | `viewmodel/jadwalimsakiyah/JadwalImsakiyahViewModel.kt` + `JadwalImsakiyahViewModelFactory.kt` | `LiveData<ImsakiyahUiState>` (monthLabel, columnLabels, rows), `isLoading`, `errorMessage`. `ImsakiyahRow(hijriDay, gregorianLabel, times)`. |
-| `res/layout/item_imsakiyah_row.xml` | 1 baris tabel (9 `TextView`: Tgl + 8 kolom waktu), diinflate berulang untuk header (bold + tint amber) dan tiap hari (background selang-seling). |
+| `res/layout/item_imsakiyah_day_cell.xml` | 1 sel kolom tanggal **freeze** (`TextView` tunggal, 56dp x 52dp), diinflate berulang ke `layoutImsakiyahDayColumn` — di luar `HorizontalScrollView` supaya tidak ikut geser. |
+| `res/layout/item_imsakiyah_row.xml` | 1 baris 8 kolom waktu (tanpa kolom tanggal lagi sejak freeze-column), diinflate berulang ke `layoutImsakiyahTable` di dalam `HorizontalScrollView`, untuk header (bold + tint amber) dan tiap hari (background selang-seling). Row height di-fixed 52dp di kedua layout (`item_imsakiyah_day_cell.xml` & `item_imsakiyah_row.xml`) supaya baris tanggal & baris waktu tetap sejajar saat scroll vertikal. |
 | `utils/HijriCalendarEngine.kt` | + `HijriMonthRange` + `monthRangeForOffset()` (public, baru) + `previousSegment()` (private, baru) — logic inti tetap yang lama (`findSegmentContaining`/`nextSegment`/dst), tidak diubah. |
 | `api/PrayersApiService.kt` | `Timings` (dipakai response `/v1/calendar`) ditambah field opsional `imsak`/`sunrise`/`lastThird` (additive, field lama tidak berubah) — sebelumnya cuma `Fajr/Dhuhr/Asr/Maghrib/Isha`. |
 | `repo/PrayerRepository.kt` | Tidak berubah — reuse `getIslamicHolidays(lat, lng, month, year)` yang sudah ada (dipanggil 1-2x, dedup per bulan Masehi yang dilewati rentang bulan Hijriyah). |
@@ -56,11 +60,31 @@ rentang itu -> `PrayerRepository.getIslamicHolidays()` per pasangan (1-2
 panggilan network, BUKAN loop per-hari 29/30x) -> gabung hasil, cocokkan per
 tanggal (pola sama `MainViewModel.fetchMonthlyCalendar()`: parse
 `PrayerData.date.readable` format `dd MMM yyyy` EN, banding string
-`yyyy-MM-dd`) -> `ImsakiyahUiState` -> Activity flatten ke
-`layoutImsakiyahTable` (`ScrollView` vertikal > `HorizontalScrollView` >
-`LinearLayout` — pola sama `LaporanHisabActivity`, bukan `RecyclerView`,
-supaya header ikut scroll horizontal bareng semua baris data tanpa perlu
-sinkronisasi 2 scroll view terpisah).
+`yyyy-MM-dd`) -> `ImsakiyahUiState` -> Activity flatten ke dua container
+terpisah (`renderTable()`), bukan satu (lihat revisi "kolom tanggal freeze"
+di bawah).
+
+**Struktur layout tabel (`activity_jadwal_imsakiyah.xml`)** — kolom tanggal
+freeze, sisanya scroll:
+
+```
+ScrollView (vertikal, weight=1)
+  LinearLayout horizontal, background=bg_card_rounded, clipToOutline=true  <- "kartu"
+    LinearLayout id=layoutImsakiyahDayColumn (vertikal)   <- FREEZE, di luar HorizontalScrollView
+    View (divider 1dp)
+    HorizontalScrollView
+      LinearLayout id=layoutImsakiyahTable (vertikal)     <- 8 kolom waktu, ikut geser
+```
+
+Karena kolom tanggal & tabel waktu adalah dua `LinearLayout` vertikal
+terpisah yang jadi children horizontal dari kartu yang sama, keduanya tetap
+scroll vertikal bersamaan (satu `ScrollView` membungkus semuanya) — tapi
+cuma `layoutImsakiyahTable` yang dibungkus `HorizontalScrollView`, jadi
+geser horizontal hanya menggerakkan kolom 2 dst. `JadwalImsakiyahActivity.
+buildDayCell()`/`buildHeaderRow()`/`buildDataRow()` mengisi kedua container
+ini secara paralel per baris (index yang sama -> warna selang-seling yang
+sama), bukan lagi satu `buildHeaderRow()`/`buildDataRow()` yang mengisi
+kolom tanggal+waktu sekaligus seperti versi awal.
 
 Dhuha dihitung dari `Sunrise + 15 menit` (`DHUHA_OFFSET_MINUTES`), sama
 persis seperti `PrayerTimesViewModel`. Kalau hari tertentu tidak ada data
@@ -83,11 +107,25 @@ JVM, lihat `docs/features/bulan-hijriyah.md` §7).
 debug, home -> tombol "Jadwal Imsakiyah" (setelah "Hisab Nasional", slot
 "Doa & Dzikir" sudah tidak ada) -> tabel tampil (header "Tgl" + 8 kolom
 waktu, tint amber), scroll vertical (30 baris) & horizontal (kolom) jalan
-lancar tanpa lag, header ikut scroll horizontal bareng data. Tombol ▶ ganti
-bulan dari "Rabiul Akhir 1448 H" ke "Jumadil Awal 1448 H", data reload benar
-(nilai waktu turun konsisten hari-ke-hari, wajar secara musim). "Semua Menu"
-dicek juga: "Jadwal Imsakiyah" muncul tepat setelah "Hisab Awal Bulan
-Nasional", "Doa & Dzikir" masih ada & masih bisa dibuka.
+lancar tanpa lag. Tombol ▶ ganti bulan dari "Rabiul Akhir 1448 H" ke
+"Jumadil Awal 1448 H", data reload benar (nilai waktu turun konsisten
+hari-ke-hari, wajar secara musim). "Semua Menu" dicek juga: "Jadwal
+Imsakiyah" muncul tepat setelah "Hisab Awal Bulan Nasional", "Doa & Dzikir"
+masih ada & masih bisa dibuka.
+
+**Revisi setelah verifikasi visual pertama** (2026-09-16, sama hari):
+1. User minta kolom tanggal di-freeze (awalnya seluruh tabel termasuk
+   kolom tanggal ikut geser horizontal jadi satu blok) — direstrukturisasi
+   jadi 2 container terpisah (lihat section 4). Diverifikasi ulang: kolom
+   "Tgl" diam saat swipe horizontal, baris tetap sejajar kiri-kanan saat
+   swipe vertikal.
+2. User laporkan "background tanggalnya overlapping layout" — kolom
+   tanggal freeze (background flat per-sel, tanpa rounded corner) menonjol
+   melewati sudut rounded kartu (`bg_card_rounded`, radius 24dp) di
+   pojok kiri-atas, kelihatan seperti notch putih memotong header amber.
+   Fix: `android:clipToOutline="true"` di kartu wrapper supaya semua
+   children (termasuk kolom freeze) ke-clip ke outline rounded-nya. Sudah
+   diverifikasi ulang via screenshot — sudut bersih, tidak ada notch.
 
 ## 7. Known issues & TODOs
 
