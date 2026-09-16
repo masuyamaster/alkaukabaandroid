@@ -73,15 +73,36 @@ independen dari lokasi observer (ijtima' adalah peristiwa global, dan
 `EphemerisCalculator.formatLocalTime` memformat pakai timezone device, jadi
 sama persis nilainya di titik grid manapun).
 
-## 4. Poligon benua (`WorldMapView.CONTINENTS`)
+## 4. Garis pantai dunia (`WorldMapView.loadLandPolygons()`)
 
-**Sangat disederhanakan** — dibuat manual dari perkiraan bentuk kasar tiap
-benua (segelintir titik lat/lng per benua), **bukan** hasil digitasi data
-GeoJSON/batas pantai sungguhan. Cukup untuk memberi konteks visual "kira-kira
-di mana", tidak untuk keperluan yang butuh akurasi geografis. Kalau nanti
-mau diperhalus, opsinya: cari/bundle data GeoJSON batas negara/benua yang
-disederhanakan (perlu sumber data + kemungkinan parsing tambahan), bukan
-sekadar nambah titik manual lagi.
+**Per 2026-09-17**: diganti dari poligon tangan-gambar (v1) ke data garis
+pantai sungguhan — Natural Earth "ne_110m_land" (domain publik, resolusi
+110m, https://github.com/nvkelso/natural-earth-vector), diunduh lalu
+diminifikasi (script sekali-pakai, tidak disimpan di repo):
+
+- Strip semua field selain `geometry.coordinates` (`properties`, `bbox`,
+  `crs`, `name` dibuang).
+- Koordinat dibulatkan 2 desimal (~1km, lebih dari cukup untuk peta seukuran
+  layar HP) + dedup titik berurutan yang jadi sama setelah dibulatkan.
+- Hasil: array polygon → array ring (ring pertama = outer, sisanya = lubang,
+  cuma 1 dari 127 polygon yang punya lubang) → array flat `[lng,lat,lng,lat,...]`.
+- Ukuran turun dari 138KB (GeoJSON asli) jadi 66KB
+  (`app/src/main/assets/world_land_110m.json`), 127 polygon, ~5100 titik
+  total.
+
+Di-parse sekali (lazy, `org.json.JSONArray`) di `WorldMapView`, digambar
+sebagai satu `Path` per polygon dengan `FillType.EVEN_ODD` (subpath per ring
+— otomatis benar untuk lubang, tidak perlu logic winding-order manual).
+Satu-satunya polygon yang datanya melintasi bujur ±180 (Antartika, garis
+lintang -90 di kedua ujung) aman digambar apa adanya karena titik
+sambungannya sama-sama di baris piksel paling bawah peta — tidak ada
+polygon lain yang melintasi meridian ±180 di data 110m ini (sudah dicek
+manual sebelum implementasi).
+
+**Sebelum 2026-09-17 (v1, sudah diganti)**: poligon dibuat manual dari
+perkiraan bentuk kasar tiap benua (segelintir titik lat/lng per benua),
+bukan hasil digitasi data sungguhan — makanya bentuknya terlihat kacau
+(feedback user setelah lihat hasil B.1/B.2 tanggal yang sama).
 
 ## 5. Testing
 
@@ -126,11 +147,9 @@ dihentikan sesuai aturan anti-spam-screenshot) — user diminta cek manual.
 
 ## 6. Known limitations
 
-- [ ] **Bentuk benua sangat kasar** (section 4) — jangan dipakai sebagai
-      referensi geografis, cuma indikasi lokasi kasar. Rencana perbaikan:
-      ganti poligon tangan-gambar dengan data GeoJSON/TopoJSON batas dunia
-      resolusi rendah (mis. "world-atlas" 110m) — independen dari
-      perbaikan grid di 6a, belum dikerjakan.
+- [x] ~~Bentuk benua sangat kasar~~ — **selesai 2026-09-17**, lihat section 4.
+      Bentuk sekarang dari data garis pantai sungguhan (Natural Earth 110m),
+      bukan lagi poligon tangan-gambar.
 - [ ] **Bukan reproduksi HilalMap** — grid 5°x5° (2016 titik, dinaikkan dari
       15° per 2026-09-17, lihat 6a) masih lebih renggang dari referensi
       (ribuan titik), dan kriteria Neo-MABIMS 2 kategori (bukan Odeh 2006,
@@ -181,13 +200,20 @@ sudah dikerjakan sebagian:
 3. **Interpolasi antar titik grid** (opsional, belum dikerjakan) — supaya
    transisi warna terlihat gradasi halus, bukan kotak-kotak tegas. Belum
    ada rencana teknis konkret.
+4. **Ganti poligon benua ke data GeoJSON asli** (selesai, sama hari) — lihat
+   section 4 untuk detail sumber data & proses minifikasi.
 
 Verifikasi: `EphemerisCalculatorTest` full suite tetap pass; full unit test
 suite project (`testDebugUnitTest`) punya 4 failure pre-existing & tidak
 terkait (`OccultationCalculatorTest` — golden test waktu-nyata Venus-Bulan,
 `KiblatViewModelTest` x3 — `NotImplementedError`), dikonfirmasi lewat
 `git stash` (gagal sama persis di kode sebelum perubahan ini). Build &
-install debug APK ke emulator sukses tanpa error; verifikasi visual/waktu
-nyata di device tidak berhasil diotomasi penuh (`uiautomator` tap gagal
-konsisten navigasi ke layar ini pada percobaan kedua) — user diminta cek
-manual.
+install debug APK ke emulator sukses tanpa error tiap iterasi (termasuk
+setelah ganti poligon benua — logcat dicek, tidak ada crash/FATAL). Asset
+`world_land_110m.json` dikonfirmasi ikut ter-bundle di APK
+(`unzip -l app-debug.apk`). Verifikasi visual langsung di device **tidak
+berhasil diotomasi** — `uiautomator`/`input tap` gagal konsisten
+menavigasi ke layar ini pada beberapa percobaan (state Activity di
+belakang tidak seperti yang diharapkan dari dump sebelumnya), dihentikan
+sesuai aturan anti-spam-screenshot di CLAUDE.md — **user perlu cek manual**
+apakah bentuk benua & grid 5° sudah terlihat benar di layar.

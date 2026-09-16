@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginBottom="4dp"
-                android:text="🗺️ Grid kasar (15°x15°) di seluruh dunia, kriteria Neo-MABIMS — bentuk benua disederhanakan, bukan peta geografis presisi"
+                android:text="🗺️ Grid kasar (5°x5°) di seluruh dunia, kriteria Neo-MABIMS — bentuk benua disederhanakan, bukan peta geografis presisi"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 

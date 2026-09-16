@@ -8,13 +8,15 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
+import org.json.JSONArray
 
 /**
- * Peta dunia equirectangular super-sederhana (bentuk benua berupa poligon kasar
- * tangan-gambar, BUKAN data batas negara/garis pantai akurat) + overlay grid warna
- * hasil hisab per sel dari WorldVisibilityCalculator. Tujuannya cuma memberi konteks
- * visual "di mana" tiap sel grid berada, bukan peta geografis presisi — lihat
- * docs/features/peta-visibilitas.md soal keputusan desain ini.
+ * Peta dunia equirectangular sederhana (bentuk benua dari data garis pantai
+ * sungguhan resolusi rendah, lihat [loadLandPolygons], BUKAN peta geografis
+ * presisi/batas negara) + overlay grid warna hasil hisab per sel dari
+ * WorldVisibilityCalculator. Tujuannya cuma memberi konteks visual "di mana"
+ * tiap sel grid berada — lihat docs/features/peta-visibilitas.md soal
+ * keputusan desain ini.
  */
 class WorldMapView @JvmOverloads constructor(
     context: Context,
@@ -28,49 +30,34 @@ class WorldMapView @JvmOverloads constructor(
         private const val CELL_HALF_LAT = 2.5
         private const val CELL_HALF_LNG = 2.5
 
-        // Poligon benua sangat disederhanakan (lat, lng) per titik — dibuat manual,
-        // sekadar cukup dikenali bentuknya, bukan hasil digitasi peta sungguhan.
-        private val CONTINENTS: List<List<DoubleArray>> = listOf(
-            // Amerika Utara
-            listOf(
-                doubleArrayOf(72.0, -155.0), doubleArrayOf(72.0, -75.0), doubleArrayOf(60.0, -52.0),
-                doubleArrayOf(45.0, -60.0), doubleArrayOf(25.0, -80.0), doubleArrayOf(15.0, -95.0),
-                doubleArrayOf(18.0, -105.0), doubleArrayOf(32.0, -117.0), doubleArrayOf(49.0, -125.0),
-                doubleArrayOf(60.0, -140.0)
-            ),
-            // Amerika Selatan
-            listOf(
-                doubleArrayOf(12.0, -72.0), doubleArrayOf(10.0, -62.0), doubleArrayOf(-5.0, -35.0),
-                doubleArrayOf(-20.0, -40.0), doubleArrayOf(-35.0, -58.0), doubleArrayOf(-55.0, -68.0),
-                doubleArrayOf(-50.0, -73.0), doubleArrayOf(-30.0, -71.0), doubleArrayOf(-12.0, -77.0)
-            ),
-            // Eropa
-            listOf(
-                doubleArrayOf(71.0, 25.0), doubleArrayOf(60.0, 60.0), doubleArrayOf(45.0, 45.0),
-                doubleArrayOf(36.0, 25.0), doubleArrayOf(36.0, -9.0), doubleArrayOf(43.0, -9.0),
-                doubleArrayOf(50.0, 0.0), doubleArrayOf(60.0, 5.0)
-            ),
-            // Afrika
-            listOf(
-                doubleArrayOf(37.0, -6.0), doubleArrayOf(32.0, 32.0), doubleArrayOf(12.0, 43.0),
-                doubleArrayOf(-1.0, 42.0), doubleArrayOf(-26.0, 33.0), doubleArrayOf(-35.0, 20.0),
-                doubleArrayOf(-34.0, 18.0), doubleArrayOf(-20.0, 12.0), doubleArrayOf(4.0, 9.0),
-                doubleArrayOf(15.0, -17.0), doubleArrayOf(28.0, -16.0)
-            ),
-            // Asia
-            listOf(
-                doubleArrayOf(77.0, 60.0), doubleArrayOf(77.0, 180.0), doubleArrayOf(60.0, 180.0),
-                doubleArrayOf(50.0, 140.0), doubleArrayOf(35.0, 130.0), doubleArrayOf(20.0, 110.0),
-                doubleArrayOf(8.0, 98.0), doubleArrayOf(8.0, 77.0), doubleArrayOf(20.0, 68.0),
-                doubleArrayOf(30.0, 48.0), doubleArrayOf(42.0, 35.0), doubleArrayOf(45.0, 30.0),
-                doubleArrayOf(55.0, 40.0)
-            ),
-            // Australia
-            listOf(
-                doubleArrayOf(-10.0, 113.0), doubleArrayOf(-12.0, 142.0), doubleArrayOf(-22.0, 150.0),
-                doubleArrayOf(-38.0, 148.0), doubleArrayOf(-35.0, 116.0), doubleArrayOf(-22.0, 114.0)
-            )
-        )
+        // Asset: garis pantai dunia dari Natural Earth 110m ("ne_110m_land", domain publik),
+        // diminifikasi jadi [[[lng,lat,lng,lat,...], ring2, ...], polygon2, ...] -- array polygon,
+        // tiap polygon array ring (ring pertama = outer, sisanya = lubang mis. Laut Kaspia),
+        // tiap ring array flat lng/lat berselang-seling, dibulatkan 2 desimal (~1km, lebih dari
+        // cukup untuk peta seukuran layar HP). Menggantikan poligon tangan-gambar versi v1 yang
+        // bentuknya kasar/tidak akurat (lihat known limitation lama di
+        // docs/features/peta-visibilitas.md).
+        private const val LAND_ASSET = "world_land_110m.json"
+    }
+
+    // Lazy (bukan di constructor) supaya baca+parse asset (~66KB, sekali saja) tidak menunda
+    // inflate View kalau ternyata belum perlu digambar; aman dipanggil dari onDraw karena View
+    // selalu di-invalidate ulang setelah pertama kali (lihat setData()).
+    private val landPolygons: List<List<DoubleArray>> by lazy(LazyThreadSafetyMode.NONE) { loadLandPolygons() }
+
+    /** @return list polygon, tiap polygon = list ring (flat lng/lat), atau list kosong kalau asset gagal dibaca/parse. */
+    private fun loadLandPolygons(): List<List<DoubleArray>> = try {
+        val json = context.assets.open(LAND_ASSET).bufferedReader().use { it.readText() }
+        val polygonsJson = JSONArray(json)
+        List(polygonsJson.length()) { i ->
+            val ringsJson = polygonsJson.getJSONArray(i)
+            List(ringsJson.length()) { j ->
+                val flat = ringsJson.getJSONArray(j)
+                DoubleArray(flat.length()) { k -> flat.getDouble(k) }
+            }
+        }
+    } catch (e: Exception) {
+        emptyList()
     }
 
     private var points: List<VisibilityGridPoint> = emptyList()
@@ -115,14 +102,18 @@ class WorldMapView @JvmOverloads constructor(
 
         canvas.drawRect(0f, 0f, w, h, oceanPaint)
 
-        for (continent in CONTINENTS) {
-            val path = Path()
-            continent.forEachIndexed { index, (lat, lng) ->
-                val x = lngToX(lng, w)
-                val y = latToY(lat, h)
-                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        for (polygon in landPolygons) {
+            val path = Path().apply { fillType = Path.FillType.EVEN_ODD }
+            for (ring in polygon) {
+                var i = 0
+                while (i < ring.size) {
+                    val x = lngToX(ring[i], w)
+                    val y = latToY(ring[i + 1], h)
+                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    i += 2
+                }
+                path.close()
             }
-            path.close()
             canvas.drawPath(path, landPaint)
             canvas.drawPath(path, landStrokePaint)
         }
@@ -136,8 +127,4 @@ class WorldMapView @JvmOverloads constructor(
             canvas.drawRect(left, top, right, bottom, paint)
         }
     }
-
-    // Destructuring DoubleArray(lat, lng) di forEachIndexed
-    private operator fun DoubleArray.component1() = this[0]
-    private operator fun DoubleArray.component2() = this[1]
 }
