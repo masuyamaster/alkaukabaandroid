@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationServices
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.api.RetrofitClient
 import site.elahady.alkaukaba.databinding.ActivityJadwalImsakiyahBinding
+import site.elahady.alkaukaba.databinding.ItemImsakiyahDayCellBinding
 import site.elahady.alkaukaba.databinding.ItemImsakiyahRowBinding
 import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.utils.SessionManager
@@ -109,12 +110,34 @@ class JadwalImsakiyahActivity : AppCompatActivity() {
 
     private fun renderTable(state: ImsakiyahUiState) {
         binding.tvMonthLabel.text = state.monthLabel
+        binding.layoutImsakiyahDayColumn.removeAllViews()
         binding.layoutImsakiyahTable.removeAllViews()
 
+        binding.layoutImsakiyahDayColumn.addView(buildDayCell("Tgl", isHeader = true))
         binding.layoutImsakiyahTable.addView(buildHeaderRow(state.columnLabels))
         state.rows.forEachIndexed { index, row ->
+            binding.layoutImsakiyahDayColumn.addView(
+                buildDayCell("${row.hijriDay}\n${row.gregorianLabel}", isHeader = false, rowIndex = index)
+            )
             binding.layoutImsakiyahTable.addView(buildDataRow(row, index))
         }
+    }
+
+    // Kolom tanggal (freeze) - di luar HorizontalScrollView, dibangun terpisah dari kolom waktu
+    // supaya hanya kolom 2 s/d terakhir yang ikut geser horizontal.
+    private fun buildDayCell(text: String, isHeader: Boolean, rowIndex: Int = 0): View {
+        val cellBinding = ItemImsakiyahDayCellBinding.inflate(layoutInflater, binding.layoutImsakiyahDayColumn, false)
+        cellBinding.root.text = text
+        if (isHeader) {
+            cellBinding.root.setBackgroundColor(ContextCompat.getColor(this, R.color.bg_amber_light))
+            cellBinding.root.setTextColor(ContextCompat.getColor(this, R.color.icon_amber))
+            cellBinding.root.setTypeface(null, Typeface.BOLD)
+        } else {
+            val colorEven = ContextCompat.getColor(this, R.color.white)
+            val colorOdd = ContextCompat.getColor(this, R.color.input_inline_bg)
+            cellBinding.root.setBackgroundColor(if (rowIndex % 2 == 0) colorEven else colorOdd)
+        }
+        return cellBinding.root
     }
 
     private fun buildHeaderRow(columnLabels: List<String>): View {
@@ -123,14 +146,13 @@ class JadwalImsakiyahActivity : AppCompatActivity() {
         val colorAmberText = ContextCompat.getColor(this, R.color.icon_amber)
 
         rowBinding.rowRoot.setBackgroundColor(colorAmberBg)
-        rowBinding.tvDay.text = "Tgl"
         val timeViews = listOf(
             rowBinding.tvTime0, rowBinding.tvTime1, rowBinding.tvTime2, rowBinding.tvTime3,
             rowBinding.tvTime4, rowBinding.tvTime5, rowBinding.tvTime6, rowBinding.tvTime7
         )
         timeViews.forEachIndexed { index, tv -> tv.text = columnLabels[index] }
 
-        (listOf(rowBinding.tvDay) + timeViews).forEach { tv ->
+        timeViews.forEach { tv ->
             tv.setTextColor(colorAmberText)
             tv.setTypeface(null, Typeface.BOLD)
         }
@@ -143,7 +165,6 @@ class JadwalImsakiyahActivity : AppCompatActivity() {
         val colorOdd = ContextCompat.getColor(this, R.color.input_inline_bg)
 
         rowBinding.rowRoot.setBackgroundColor(if (index % 2 == 0) colorEven else colorOdd)
-        rowBinding.tvDay.text = "${row.hijriDay}\n${row.gregorianLabel}"
         val timeViews = listOf(
             rowBinding.tvTime0, rowBinding.tvTime1, rowBinding.tvTime2, rowBinding.tvTime3,
             rowBinding.tvTime4, rowBinding.tvTime5, rowBinding.tvTime6, rowBinding.tvTime7

@@ -3,23 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rowRoot"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:paddingVertical="10dp">
-
-    <TextView
-        android:id="@+id/tvDay"
-        android:layout_width="56dp"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="12sp"
-        android:textColor="@color/text_primary"
-        tools:text="1" />
+    android:layout_height="52dp"
+    android:orientation="horizontal">
 
     <TextView
         android:id="@+id/tvTime0"
         android:layout_width="84dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -28,7 +18,7 @@
     <TextView
         android:id="@+id/tvTime1"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -37,7 +27,7 @@
     <TextView
         android:id="@+id/tvTime2"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -46,7 +36,7 @@
     <TextView
         android:id="@+id/tvTime3"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -55,7 +45,7 @@
     <TextView
         android:id="@+id/tvTime4"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -64,7 +54,7 @@
     <TextView
         android:id="@+id/tvTime5"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -73,7 +63,7 @@
     <TextView
         android:id="@+id/tvTime6"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"
@@ -82,7 +72,7 @@
     <TextView
         android:id="@+id/tvTime7"
         android:layout_width="72dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/text_primary"

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="56dp"
+    android:layout_height="52dp"
+    android:gravity="center"
+    android:textSize="12sp"
+    android:textColor="@color/text_primary"
+    tools:text="1\n13/09" />
