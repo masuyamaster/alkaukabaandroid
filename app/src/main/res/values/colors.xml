@@ -99,4 +99,8 @@
     <color name="bg_emerald_light">#D1FAE5</color>
     <color name="icon_emerald">#059669</color>
 
+    <!-- Hisab Awal Bulan Nasional (2026-09) -->
+    <color name="bg_cyan_light">#CFFAFE</color>
+    <color name="icon_cyan">#0E7490</color>
+
 </resources>

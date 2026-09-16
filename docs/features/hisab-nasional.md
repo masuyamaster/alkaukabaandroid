@@ -29,10 +29,20 @@ kemungkinan perlu didiskusikan ulang dengan user.
   activity fitur lain).
 - Dibuka dari grid "Semua Menu" (`SemuaMenuActivity`), item "Hisab Awal
   Bulan Nasional" — sengaja diletakkan tepat setelah "Okultasi" sesuai
-  permintaan user saat ticket dibuat, warna `bg_green_light`/`icon_green`
-  (satu-satunya pasangan warna kartu menu yang belum dipakai menu lain saat
-  itu). Icon reuse `ic_menu_document` (belum ada icon dedicated "peta/globe"
-  di project).
+  permintaan user saat ticket dibuat, warna baru `bg_cyan_light`/`icon_cyan`
+  (ditambahkan khusus fitur ini karena semua 11 pasangan warna kartu menu
+  yang ada sudah terpakai masing-masing tepat sekali). Icon reuse
+  `ic_menu_document` (belum ada icon dedicated "peta/globe" di project).
+- **Juga ditambahkan ke quick-access home** (`activity_main.xml`/
+  `MainActivity.kt`, `bt_hisab_nasional`) — awalnya cuma ditaruh di "Semua
+  Menu", tapi user eksplisit minta muncul juga di home tepat setelah
+  Okultasi. Grid home dikunci tetap 2 baris x 4 kolom (bukan direnggangkan
+  jadi 3 baris atau diubah ke 3 kolom) sesuai instruksi user — supaya
+  8 slot tetap pas, **"Kalkulator" (`bt_kalkulator`) dihapus dari home**
+  atas permintaan user (tetap ada di "Semua Menu", cuma tidak lagi jadi
+  shortcut cepat di home). Urutan home sekarang: Kiblat, Waktu Sholat,
+  Awal Bulan, Gerhana / Okultasi, **Hisab Nasional**, Al-Qur'an, Doa &
+  Dzikir.
 - Tidak butuh permission lokasi sama sekali — semua titik markaz sudah
   fixed (lihat section 4), beda dari "Awal Bulan"/Okultasi yang butuh
   GPS/lokasi user.
@@ -96,6 +106,12 @@ verifikasi: "Menjelang Jumadil Awal 1448 H", 8/8 markaz "Memenuhi", badge
 "Kriteria Terpenuhi Secara Nasional".
 
 ## 7. Known limitations
+
+- [ ] Home quick-access sekarang cuma menyisakan 8 fitur (Kalkulator
+      dikeluarkan supaya "Hisab Nasional" muat tanpa nambah baris) — kalau
+      nanti ada fitur lain yang mau ditambahkan ke home juga, slotnya sudah
+      penuh lagi, perlu keputusan serupa (ganti salah satu, atau baru boleh
+      nambah baris/kolom).
 
 - [ ] **Scope/desain layar ini adalah interpretasi pertama, belum divalidasi
       user** — ticket Notion dibuat kosong ("saya belum punya ide untuk

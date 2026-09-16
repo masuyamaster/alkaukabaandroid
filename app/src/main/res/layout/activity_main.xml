@@ -433,7 +433,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/bt_kalkulator"
+                android:id="@+id/bt_hisab_nasional"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -444,17 +444,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_circle_button"
-                    android:backgroundTint="@color/bg_indigo_light"
+                    android:backgroundTint="@color/bg_cyan_light"
                     android:padding="14dp"
-                    android:src="@drawable/ic_menu_calculator"
-                    app:tint="@color/icon_indigo" />
+                    android:src="@drawable/ic_menu_document"
+                    app:tint="@color/icon_cyan" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:text="Kalkulator"
+                    android:text="Hisab\nNasional"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:textStyle="bold" />

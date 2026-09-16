@@ -10,7 +10,7 @@ import site.elahady.alkaukaba.ui.awalbulan.AwalBulanActivity
 import site.elahady.alkaukaba.ui.calendar.CalendarActivity
 import site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity
 import site.elahady.alkaukaba.ui.gerhana.GerhanaActivity
-import site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity
+import site.elahady.alkaukaba.ui.hisabnasional.HisabNasionalActivity
 import site.elahady.alkaukaba.ui.menu.SemuaMenuActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
 import site.elahady.alkaukaba.ui.doa.DaftarKategoriDoaActivity
@@ -349,8 +349,8 @@ class MainActivity : AppCompatActivity() {
         binding.btOkultasi.setOnClickListener {
             startActivity(Intent(this, OkultasiActivity::class.java))
         }
-        binding.btKalkulator.setOnClickListener {
-            startActivity(Intent(this, KalkulatorActivity::class.java))
+        binding.btHisabNasional.setOnClickListener {
+            startActivity(Intent(this, HisabNasionalActivity::class.java))
         }
         binding.btQuran.setOnClickListener {
             startActivity(Intent(this, DaftarSurahActivity::class.java))
