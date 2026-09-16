@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
+    tools:context=".ui.hisabnasional.HisabNasionalActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_card_gradient_navy">
+
+        <ImageView
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:alpha="0.85"
+            android:src="@drawable/ic_sparkle"
+            app:tint="@color/gold_accent"
+            tools:ignore="ContentDescription" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvBulanLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Menjelang ..."
+                android:textColor="@color/gold_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvKesimpulanNasional"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Menghitung kesimpulan nasional..."
+                android:textColor="@color/text_on_dark"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvKesimpulanBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_pill_navy_light"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="—"
+                android:textColor="@color/text_label_gold"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="4dp"
+        android:text="🗺️ Hisab di titik markaz representatif dari barat ke timur Indonesia (Sabang–Jayapura), kriteria Neo-MABIMS"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="Keputusan resmi awal bulan Hijriyah nasional tetap ditetapkan lewat Sidang Isbat Kemenag RI, dengan mempertimbangkan hasil rukyatul hilal di lapangan — hisab di sini murni perhitungan astronomis, bukan penetapan resmi. Jam ghurub ditampilkan mengikuti zona waktu perangkat, bukan zona waktu lokal tiap markaz."
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:alpha="0.85" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/gold_accent"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMarkaz"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="16dp"
+            tools:listitem="@layout/item_markaz_hisab"
+            tools:itemCount="3" />
+
+    </FrameLayout>
+
+</LinearLayout>

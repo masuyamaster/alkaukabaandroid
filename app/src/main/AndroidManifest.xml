@@ -76,6 +76,9 @@
             android:name="site.elahady.alkaukaba.ui.okultasi.OkultasiActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.hisabnasional.HisabNasionalActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity"
             android:exported="false" />
         <activity
