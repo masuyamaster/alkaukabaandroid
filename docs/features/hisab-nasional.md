@@ -2,10 +2,18 @@
 
 ## 1. Ringkasan
 
-**Fitur**: hisab awal bulan Hijriyah di beberapa titik markaz representatif
-yang membentang dari barat ke timur Indonesia (Sabang s.d. Jayapura),
-ditampilkan sebagai daftar per-markaz + satu kesimpulan level nasional
-(berapa dari titik yang dihitung memenuhi kriteria Neo-MABIMS).
+**Fitur**: hisab awal bulan Hijriyah di titik-titik markaz (ibu kota
+provinsi) yang bisa dipilih user, ditampilkan sebagai daftar per-markaz +
+satu kesimpulan level nasional (berapa dari titik yang dihitung memenuhi
+kriteria Neo-MABIMS).
+
+Per 2026-09-16 (revisi kedua): awalnya cuma 8 titik hardcode, tapi didiskusikan
+ulang dengan user soal risiko kalau semua 38 ibu kota provinsi dimasukkan
+sekaligus (waktu hitung makin lama + banyak titik berdekatan bujur jadi
+redundan, lihat section 5). Solusi yang disepakati: **default kecil yang
+mengisi celah bujur** (11 titik) + **checklist di `PilihMarkazActivity`**
+supaya user yang mau lebih lengkap (sampai 38 ibu kota provinsi) tinggal
+centang sendiri, tanpa menaikkan beban default.
 
 Ini pelengkap [`bulan-hijriyah.md`](bulan-hijriyah.md) ("Awal Bulan"), bukan
 pengganti — "Awal Bulan" menghitung untuk **satu markaz** (lokasi user,
@@ -48,48 +56,86 @@ kemungkinan perlu didiskusikan ulang dengan user.
   Awal Bulan, Gerhana / Okultasi, **Hisab Nasional**, Al-Qur'an, Doa &
   Dzikir.
 - Tidak butuh permission lokasi sama sekali — semua titik markaz sudah
-  fixed (lihat section 4), beda dari "Awal Bulan"/Okultasi yang butuh
-  GPS/lokasi user.
+  fixed by-design (koordinat ibu kota provinsi, bukan GPS user), beda dari
+  "Awal Bulan"/Okultasi.
+- Tombol ⚙️ di toolbar (`btnToolbarAction`, icon `ic_settings`) -> buka
+  `PilihMarkazActivity` (layout `activity_pilih_markaz.xml`) — checklist 38
+  ibu kota provinsi buat pilih markaz mana yang mau dihitung.
 
 ## 3. Alur
 
-1. `onCreate` -> langsung panggil `HisabNasionalViewModel.calculateNasional()`
-   (default `monthOffset=0`, tanpa selector bulan/tahun seperti "Awal Bulan"
-   — lihat known limitation di section 7) tanpa perlu input apa pun dari
-   user.
-2. Hisab dijalankan sekali per markaz (8x pemanggilan
-   `EphemerisCalculator.calculate()`) di `Dispatchers.Default` supaya UI
-   tidak nge-freeze, hasil dikirim sebagai satu list lewat LiveData.
-3. Kartu navy di atas menampilkan label bulan Hijriyah yang dicek + kalimat
+**HisabNasionalActivity:**
+1. `onCreate` cuma setup UI/RecyclerView, TIDAK langsung hitung.
+2. `onResume` -> baca `SessionManager.getSelectedMarkazNasionalIds()` (null
+   kalau user belum pernah atur -> fallback `HisabNasionalCalculator.
+   defaultMarkazIds`) -> `HisabNasionalViewModel.calculateNasional(selectedIds)`.
+   Sengaja di `onResume` (bukan `onCreate`) supaya begitu user balik dari
+   `PilihMarkazActivity` sehabis ubah pilihan & simpan, hasil langsung
+   ke-refresh otomatis tanpa perlu tombol refresh manual.
+3. Hisab dijalankan sekali per markaz terpilih (`EphemerisCalculator.
+   calculate()`) di `Dispatchers.Default` supaya UI tidak nge-freeze, hasil
+   dikirim sebagai satu list lewat LiveData.
+4. Kartu navy di atas menampilkan label bulan Hijriyah yang dicek + kalimat
    kesimpulan ("X dari Y titik markaz memenuhi kriteria...") + badge status.
-4. Di bawahnya, `RecyclerView` menampilkan kartu per-markaz (nama+provinsi,
+5. Di bawahnya, `RecyclerView` menampilkan kartu per-markaz (nama+provinsi,
    ghurub, tinggi hilal, elongasi, badge Memenuhi/Belum Memenuhi).
-5. `btnBack` toolbar -> `finish()`. Tidak ada tombol hitung ulang/refresh —
-   tidak relevan karena tidak ada input lokasi yang bisa diubah user.
+6. `btnBack` toolbar -> `finish()`.
+
+**PilihMarkazActivity:**
+1. Load pilihan tersimpan (atau default kalau belum pernah diatur) ke
+   `selectedIds: MutableSet<String>`, dipegang di Activity (bukan di
+   `MarkazCheckboxAdapter`) supaya tombol "Pilih Semua"/"Pakai Default" bisa
+   ubah banyak item sekaligus lalu tinggal `notifyDataSetChanged()`.
+2. Tap baris manapun toggle checkbox-nya (row seluruhnya clickable, bukan
+   cuma kotak centangnya — `CheckBox` di `item_markaz_checkbox.xml` sengaja
+   `clickable="false"` biar tidak rebutan touch target dengan root row).
+3. "Simpan" -> tolak (Toast) kalau 0 dicentang, kalau tidak ->
+   `SessionManager.setSelectedMarkazNasionalIds(selectedIds)` -> `finish()`
+   -> `HisabNasionalActivity.onResume()` otomatis hitung ulang dengan
+   pilihan baru.
 
 ## 4. Struktur & alur data
 
 | File | Peran |
 |---|---|
 | `ui/hisabnasional/HisabNasionalActivity.kt` + `activity_hisab_nasional.xml` | UI: kartu kesimpulan nasional + daftar per-markaz |
-| `viewmodel/hisabnasional/HisabNasionalViewModel.kt` | `LiveData<List<MarkazHisabResult>>`, jembatan ke `HisabNasionalCalculator` |
-| `utils/HisabNasionalCalculator.kt` | Daftar 8 `MarkazNasional` tetap (Sabang, Jakarta, Yogyakarta, Surabaya, Mataram, Makassar, Ambon, Jayapura — lat/lng hardcode ibu kota/kota besar tiap titik, `heightMeters=0.0` semua) + `calculate(monthOffset)` yang memanggil `EphemerisCalculator.calculate()` (mesin yang sama dgn "Awal Bulan", lihat [`bulan-hijriyah.md` section 5](bulan-hijriyah.md#5-mesin-hisab-ephemeriscalculator)) untuk tiap titik |
-| `model/HisabNasionalModels.kt` | `MarkazNasional` (nama, provinsi, lat, lng) dan `MarkazHisabResult` (markaz + `HilalResult`) |
-| `adapter/MarkazHisabAdapter.kt` + `item_markaz_hisab.xml` | Render satu kartu per markaz di `RecyclerView` |
+| `ui/hisabnasional/PilihMarkazActivity.kt` + `activity_pilih_markaz.xml` | UI: checklist 38 markaz + tombol Pilih Semua/Pakai Default/Simpan |
+| `viewmodel/hisabnasional/HisabNasionalViewModel.kt` | `LiveData<List<MarkazHisabResult>>`, jembatan ke `HisabNasionalCalculator`; `calculateNasional(selectedIds, monthOffset)` menerima set ID markaz aktif |
+| `utils/HisabNasionalCalculator.kt` | `allMarkaz` — 38 `MarkazNasional` (ibu kota tiap provinsi, diurutkan `longitude`) + `defaultMarkazIds` (11 ID, subset yang mengisi celah bujur — lihat section 5) + `calculate(monthOffset, selectedIds)` yang filter `allMarkaz` lalu panggil `EphemerisCalculator.calculate()` (mesin yang sama dgn "Awal Bulan", lihat [`bulan-hijriyah.md` section 5](bulan-hijriyah.md#5-mesin-hisab-ephemeriscalculator)) per titik terpilih |
+| `utils/SessionManager.kt` | `getSelectedMarkazNasionalIds()`/`setSelectedMarkazNasionalIds()` — persist pilihan user (`Set<String>` di SharedPreferences, key `HISAB_NASIONAL_MARKAZ_IDS`), `null` = belum pernah diatur |
+| `model/HisabNasionalModels.kt` | `MarkazNasional` (`id` slug provinsi + nama, provinsi, lat, lng) dan `MarkazHisabResult` (markaz + `HilalResult`) |
+| `adapter/MarkazHisabAdapter.kt` + `item_markaz_hisab.xml` | Render satu kartu hasil per markaz di `RecyclerView` (`HisabNasionalActivity`) |
+| `adapter/MarkazCheckboxAdapter.kt` + `item_markaz_checkbox.xml` | Render satu baris checklist per markaz di `RecyclerView` (`PilihMarkazActivity`) |
 
-Alur data: `onCreate` -> `calculateNasional()` -> loop 8 markaz ->
-`EphemerisCalculator.calculate()` per markaz -> `List<MarkazHisabResult>` ->
-LiveData -> Activity render kartu kesimpulan (hitung
-`count { hilalMemenuhiKriteria }`) + `MarkazHisabAdapter.setData()`.
+Alur data: `onResume` -> baca `SessionManager` -> `calculateNasional(selectedIds)`
+-> filter+loop markaz terpilih -> `EphemerisCalculator.calculate()` per markaz
+-> `List<MarkazHisabResult>` -> LiveData -> Activity render kartu kesimpulan
+(hitung `count { hilalMemenuhiKriteria }`) + `MarkazHisabAdapter.setData()`.
 
 ## 5. Pemilihan titik markaz & kriteria
 
-8 titik dipilih murni supaya bentang bujur Indonesia (~95°BT Sabang s.d.
-~141°BT Jayapura) terwakili, **bukan** daftar titik rukyat resmi Kemenag
-(yang jumlahnya ratusan dan tersebar per kabupaten/kota). Kriteria kelulusan
-tiap titik pakai Neo-MABIMS yang sama dengan "Awal Bulan" (tinggi hilal ≥3°,
-elongasi ≥6.4°, dari `HilalResult.hilalMemenuhiKriteria` — tidak ada logika
-kriteria baru yang ditulis khusus di sini).
+`allMarkaz` mencakup ibu kota ke-38 provinsi (per pemekaran Papua 2022),
+supaya user yang mau lengkap punya opsi. `id` tiap markaz pakai slug
+provinsi (bukan nama kota) sebagai key persist — stabil biarpun label kota
+di UI berubah nanti.
+
+`defaultMarkazIds` (11 titik: Aceh, Sumbar, DKI Jakarta, DIY, Jatim, NTB,
+Sulsel, Sulut, Maluku, Papua Barat, Papua) dipilih murni untuk mengisi celah
+bujur (bukan "kota besar terkenal") — didiskusikan dengan user soal risiko
+kalau default-nya all-38: (a) waktu hitung ~38x pemanggilan
+`EphemerisCalculator.calculate()` sekaligus di setiap buka layar, (b) banyak
+ibu kota berdekatan bujur (mis. semua provinsi di Jawa/Sumatera) memberi
+hasil nyaris identik karena visibilitas hilal di Indonesia dominan
+dipengaruhi bujur, bukan lintang — jadi menambah titik di situ tidak
+menambah informasi, cuma menambah waktu tunggu. Kesepakatannya: default
+kecil & merata, opsi lengkap tersedia via checklist (section 3) buat user
+yang mau eksplisit.
+
+**Bukan** daftar titik rukyat resmi Kemenag (yang jumlahnya ratusan dan
+tersebar per kabupaten/kota, bukan cuma ibu kota provinsi). Kriteria
+kelulusan tiap titik pakai Neo-MABIMS yang sama dengan "Awal Bulan" (tinggi
+hilal ≥3°, elongasi ≥6.4°, dari `HilalResult.hilalMemenuhiKriteria` — tidak
+ada logika kriteria baru yang ditulis khusus di sini).
 
 Kesimpulan nasional di layar cuma penjumlahan sederhana
 (`count/total` markaz yang lulus) dengan 3 label:
@@ -102,12 +148,28 @@ Sebagian Wilayah" (sebagian), "Kriteria Belum Terpenuhi di Semua Markaz"
 
 Belum ada test otomatis (`HisabNasionalCalculator` murni komposisi berulang
 dari `EphemerisCalculator` yang sudah ada, tidak ada rumus baru yang perlu
-divalidasi terpisah). Verifikasi manual (emulator, 2026-09-16): install APK
-debug, home -> Semua Menu -> "Hisab Awal Bulan Nasional" -> kartu kesimpulan
-& 8 kartu markaz terisi tanpa crash (dicek via `uiautomator dump`, bukan
-screenshot — lihat `CLAUDE.md` soal batasi screenshot), hasil contoh saat
-verifikasi: "Menjelang Jumadil Awal 1448 H", 8/8 markaz "Memenuhi", badge
-"Kriteria Terpenuhi Secara Nasional".
+divalidasi terpisah). Verifikasi manual (emulator, 2026-09-16, dicek via
+`uiautomator dump`, bukan screenshot — lihat `CLAUDE.md` soal batasi
+screenshot):
+
+- Home -> "Hisab Nasional" -> default 11 markaz terhitung benar ("11 dari 11
+  titik markaz memenuhi kriteria...", badge "Kriteria Terpenuhi Secara
+  Nasional") tanpa crash.
+- Toolbar ⚙️ -> `PilihMarkazActivity` terbuka, list terurut benar mulai dari
+  markaz paling barat (Banda Aceh), tombol Pilih Semua/Pakai Default/Simpan
+  semua ada & bisa di-tap.
+- Tap "Pilih Semua" -> "Simpan" -> kembali ke `HisabNasionalActivity` tanpa
+  crash (dikonfirmasi lewat `dumpsys activity activities` — resume ke
+  activity yang benar, task ID sama, bukan restart).
+- Verifikasi lanjutan (hasil 38/38 setelah "Pilih Semua") **tidak sempat
+  dikonfirmasi lewat dump** — sesi emulator ini dipakai bersamaan oleh sesi
+  Claude lain (`alkaukaba-00`, terlihat dari `ListAgents` + perubahan file
+  tak terduga seperti fitur "Jadwal Imsakiyah" muncul di tengah kerja) yang
+  ikut mengirim perintah `adb`/rebuild ke emulator yang sama, sempat
+  menyebabkan activity balik ke `MainActivity` di tengah pengecekan. Logcat
+  penuh dicek ulang (`FATAL EXCEPTION`) dan bersih — tidak ada crash dari
+  app, jadi kemungkinan besar cuma race navigasi antar-sesi, bukan bug. Perlu
+  dicek ulang manual sekali lagi saat emulator tidak dipakai bersamaan.
 
 ## 7. Known limitations
 
@@ -134,9 +196,16 @@ verifikasi: "Menjelang Jumadil Awal 1448 H", 8/8 markaz "Memenuhi", badge
       (`monthOffset=0`). `HisabNasionalViewModel.calculateNasional()` sudah
       menerima parameter `monthOffset` supaya gampang disambung ke UI
       selector kalau nanti dibutuhkan.
-- [ ] 8 titik markaz hardcode di kode (`HisabNasionalCalculator.markazList`)
-      — kalau user mau titik yang berbeda/lebih banyak/mengikuti daftar
-      resmi Kemenag, tinggal ubah list ini, tidak ada dependensi lain yang
-      perlu diubah.
+- [ ] 38 titik markaz (ibu kota provinsi) hardcode di kode
+      (`HisabNasionalCalculator.allMarkaz`) — kalau user mau titik yang
+      berbeda/mengikuti daftar resmi Kemenag (ratusan titik per
+      kabupaten/kota), tinggal ubah list ini, tidak ada dependensi lain yang
+      perlu diubah (UI checklist otomatis ikut menyesuaikan).
 - [ ] Elevasi (`heightMeters`) semua markaz disamakan `0.0` — penyederhanaan,
       belum pakai elevasi asli tiap kota.
+- [ ] `PilihMarkazActivity` belum ada search/filter — scroll manual di 38
+      item masih wajar, tapi kalau daftar markaz diperbesar lagi (mis. ke
+      level kabupaten/kota) perlu ditambah search box.
+- [ ] Verifikasi manual belum tuntas untuk alur "Pilih Semua" -> hasil 38/38
+      benar-benar tampil (lihat section 6) — terganggu sesi emulator
+      bersamaan, perlu dicek ulang.

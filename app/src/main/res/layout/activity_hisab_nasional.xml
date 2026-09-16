@@ -74,7 +74,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="4dp"
-        android:text="🗺️ Hisab di titik markaz representatif dari barat ke timur Indonesia (Sabang–Jayapura), kriteria Neo-MABIMS"
+        android:text="🗺️ Hisab di markaz-markaz ibu kota provinsi yang dipilih (⚙️ di pojok kanan atas), kriteria Neo-MABIMS"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
 

@@ -33,6 +33,8 @@ class SessionManager(context: Context) {
         const val HISAB_AWAL_BULAN_ASTRONOMY_ENGINE = "ASTRONOMY_ENGINE"
         const val HISAB_AWAL_BULAN_DURRUL_ANIQ = "DURRUL_ANIQ"
 
+        private const val KEY_HISAB_NASIONAL_MARKAZ_IDS = "HISAB_NASIONAL_MARKAZ_IDS"
+
         private const val KEY_PRE_ADZAN_REMINDER_ENABLED = "PRE_ADZAN_REMINDER_ENABLED"
         private const val KEY_PRE_ADZAN_REMINDER_MINUTES = "PRE_ADZAN_REMINDER_MINUTES"
         const val DEFAULT_PRE_ADZAN_REMINDER_MINUTES = 10
@@ -107,6 +109,14 @@ class SessionManager(context: Context) {
 
     fun getHisabAwalBulanMethod(): String =
         prefs.getString(KEY_HISAB_AWAL_BULAN_METHOD, HISAB_AWAL_BULAN_ASTRONOMY_ENGINE) ?: HISAB_AWAL_BULAN_ASTRONOMY_ENGINE
+
+    /** Markaz (ibu kota provinsi) yang dicentang user untuk fitur "Hisab Awal Bulan Nasional".
+     *  `null` = user belum pernah mengatur, caller pakai `HisabNasionalCalculator.defaultMarkazIds`. */
+    fun setSelectedMarkazNasionalIds(ids: Set<String>) {
+        prefs.edit().putStringSet(KEY_HISAB_NASIONAL_MARKAZ_IDS, ids).apply()
+    }
+
+    fun getSelectedMarkazNasionalIds(): Set<String>? = prefs.getStringSet(KEY_HISAB_NASIONAL_MARKAZ_IDS, null)
 
     /** Pengingat pra-adzan (mis. "10 menit lagi Dzuhur") — nonaktif by default (opt-in),
      *  berlaku untuk semua 5 waktu sholat wajib sekaligus (bukan per-waktu). */

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
+    tools:context=".ui.hisabnasional.PilihMarkazActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="0dp"
+        android:text="Pilih ibu kota provinsi yang mau ditampilkan sebagai markaz hisab nasional. Makin banyak dipilih, makin lama waktu hitungnya."
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnPilihSemua"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Pilih Semua"
+            android:textColor="@color/text_label_gold"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:paddingVertical="10dp"
+            android:background="@drawable/bg_pill_navy_light"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/btnPakaiDefault"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:gravity="center"
+            android:text="Pakai Default"
+            android:textColor="@color/text_label_gold"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:paddingVertical="10dp"
+            android:background="@drawable/bg_pill_navy_light"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="@color/divider_soft" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvMarkazCheckbox"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:listitem="@layout/item_markaz_checkbox"
+        tools:itemCount="10" />
+
+    <Button
+        android:id="@+id/btnSimpan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="SIMPAN"
+        android:textColor="@color/login_bg_deep"
+        android:backgroundTint="@color/gold_accent"
+        app:cornerRadius="28dp"
+        android:elevation="6dp"
+        android:padding="16dp" />
+
+</LinearLayout>

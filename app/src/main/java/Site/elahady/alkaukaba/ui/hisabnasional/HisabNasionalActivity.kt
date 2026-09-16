@@ -4,10 +4,13 @@ import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.adapter.MarkazHisabAdapter
 import site.elahady.alkaukaba.databinding.ActivityHisabNasionalBinding
 import site.elahady.alkaukaba.model.MarkazHisabResult
+import site.elahady.alkaukaba.utils.HisabNasionalCalculator
+import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.viewmodel.hisabnasional.HisabNasionalViewModel
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +24,7 @@ class HisabNasionalActivity : AppCompatActivity() {
     private lateinit var binding: ActivityHisabNasionalBinding
     private lateinit var viewModel: HisabNasionalViewModel
     private lateinit var markazAdapter: MarkazHisabAdapter
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,17 +36,30 @@ class HisabNasionalActivity : AppCompatActivity() {
         binding.includeToolbar.toolbarDefault.applyTopSystemBarInsetAsMargin()
         binding.root.applySystemBarInsetsPadding(applyBottom = true)
 
+        sessionManager = SessionManager(this)
         viewModel = ViewModelProvider(this)[HisabNasionalViewModel::class.java]
 
         setupUI()
         setupRecyclerView()
         setupObservers()
-        viewModel.calculateNasional()
+    }
+
+    // onResume (bukan onCreate) supaya pilihan markaz yang baru disimpan dari
+    // PilihMarkazActivity langsung terpakai begitu user kembali ke layar ini.
+    override fun onResume() {
+        super.onResume()
+        val selectedIds = sessionManager.getSelectedMarkazNasionalIds() ?: HisabNasionalCalculator.defaultMarkazIds
+        viewModel.calculateNasional(selectedIds)
     }
 
     private fun setupUI() {
         binding.includeToolbar.tvToolbarTitle.text = "Hisab Awal Bulan Nasional"
         binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+        binding.includeToolbar.btnToolbarAction.apply {
+            visibility = View.VISIBLE
+            setImageResource(R.drawable.ic_settings)
+            setOnClickListener { startActivity(Intent(this@HisabNasionalActivity, PilihMarkazActivity::class.java)) }
+        }
     }
 
     private fun setupRecyclerView() {

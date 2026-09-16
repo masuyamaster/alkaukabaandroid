@@ -18,13 +18,13 @@ class HisabNasionalViewModel : ViewModel() {
     private val _results = MutableLiveData<List<MarkazHisabResult>>()
     val results: LiveData<List<MarkazHisabResult>> = _results
 
-    // Hisab dijalankan berkali-kali (satu per markaz), jadi tetap di background thread
-    // walau tiap panggilan sendiri relatif cepat.
-    fun calculateNasional(monthOffset: Int = 0) {
+    // Hisab dijalankan berkali-kali (satu per markaz terpilih), jadi tetap di background
+    // thread walau tiap panggilan sendiri relatif cepat.
+    fun calculateNasional(selectedIds: Set<String>, monthOffset: Int = 0) {
         _isLoading.value = true
         viewModelScope.launch {
             val calculated = withContext(Dispatchers.Default) {
-                HisabNasionalCalculator.calculate(monthOffset)
+                HisabNasionalCalculator.calculate(monthOffset, selectedIds)
             }
             _results.value = calculated
             _isLoading.value = false
