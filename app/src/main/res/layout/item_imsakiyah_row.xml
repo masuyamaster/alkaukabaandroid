@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rowRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="10dp">
+
+    <TextView
+        android:id="@+id/tvDay"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="1" />
+
+    <TextView
+        android:id="@+id/tvTime0"
+        android:layout_width="84dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime1"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime2"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime3"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime4"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime5"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime6"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+    <TextView
+        android:id="@+id/tvTime7"
+        android:layout_width="72dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        tools:text="04:12" />
+
+</LinearLayout>

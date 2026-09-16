@@ -103,4 +103,8 @@
     <color name="bg_cyan_light">#CFFAFE</color>
     <color name="icon_cyan">#0E7490</color>
 
+    <!-- Jadwal Imsakiyah (2026-09) -->
+    <color name="bg_amber_light">#FEF3C7</color>
+    <color name="icon_amber">#B45309</color>
+
 </resources>
