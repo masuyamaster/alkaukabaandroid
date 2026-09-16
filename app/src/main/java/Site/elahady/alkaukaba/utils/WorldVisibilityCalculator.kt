@@ -6,10 +6,11 @@ import site.elahady.alkaukaba.model.WorldVisibilityResult
 
 // Peta visibilitas hilal dunia versi "kasar": grid renggang (15° lintang x 15° bujur, bukan
 // grid rapat ala HilalMap/al-habib.info yang punya resolusi jauh lebih halus) supaya tetap
-// bisa dihitung di HP dalam waktu wajar — tiap sel butuh satu pemanggilan penuh
-// EphemerisCalculator.calculate() (cari ijtima' + ghurub + posisi Matahari/Bulan), jadi grid
-// rapat ala referensi (ribuan titik) akan terlalu lambat tanpa optimasi mesin hisab lebih
-// lanjut (lihat known limitation di docs/features/peta-visibilitas.md).
+// bisa dihitung di HP dalam waktu wajar — tiap sel masih butuh satu pemanggilan
+// EphemerisCalculator.calculate() penuh (cari ghurub + posisi Matahari/Bulan di titik itu),
+// walau pencarian ijtima' (peristiwa global, sama untuk semua titik) sudah tidak diulang per sel
+// (lihat findIjtima() di bawah). Grid rapat ala referensi (ribuan titik) tetap akan terasa berat
+// tanpa optimasi lebih lanjut di sisi ghurub/posisi per titik (lihat docs/features/peta-visibilitas.md).
 //
 // Kriteria yang dipakai Neo-MABIMS (2 kategori: memenuhi/belum, dari
 // HilalResult.hilalMemenuhiKriteria) — BUKAN Odeh 2006 (4 kategori) yang dipakai peta
@@ -17,18 +18,27 @@ import site.elahady.alkaukaba.model.WorldVisibilityResult
 // (Awal Bulan, Hisab Nasional), bukan implementasi kriteria baru dari nol.
 object WorldVisibilityCalculator {
 
-    private val LATITUDES = (-60..75 step 15).map { it.toDouble() }
-    private val LONGITUDES = (-180..165 step 15).map { it.toDouble() }
+    // 5° step (naik dari 15° semula) -- feasible setelah pencarian ijtima' tidak lagi diulang per
+    // titik (lihat calculate() di bawah): benchmark JVM 1960 titik (5°) ~0.4 detik, vs 240 titik
+    // (15°) versi lama yang terasa "beberapa detik" karena redundansi ijtima' per titik.
+    private val LATITUDES = (-60..75 step 5).map { it.toDouble() }
+    private val LONGITUDES = (-180..175 step 5).map { it.toDouble() }
 
     fun calculate(monthOffset: Int = 0): WorldVisibilityResult {
         val points = mutableListOf<VisibilityGridPoint>()
         var bulanLabel = ""
         var ghurubRefLabel = ""
 
+        // Ijtima' dihitung sekali (peristiwa global, tidak tergantung observer) lalu dipakai ulang
+        // di semua 240 titik grid lewat overload EphemerisCalculator.calculate(input, ijtima) --
+        // menghindari 240x pencarian rantai new-moon yang hasilnya identik (lihat dokumentasi
+        // overload itu).
+        val ijtima = EphemerisCalculator.findIjtima(monthOffset)
+
         for (lat in LATITUDES) {
             for (lng in LONGITUDES) {
                 try {
-                    val hasil = EphemerisCalculator.calculate(HilalInput(lat, lng, 0.0, monthOffset))
+                    val hasil = EphemerisCalculator.calculate(HilalInput(lat, lng, 0.0, monthOffset), ijtima)
                     points.add(VisibilityGridPoint(lat, lng, hasil.hilalMemenuhiKriteria))
                     if (bulanLabel.isEmpty()) {
                         bulanLabel = hasil.bulanHijriyahLabel

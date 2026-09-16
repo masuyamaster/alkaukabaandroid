@@ -24,9 +24,9 @@ class WorldMapView @JvmOverloads constructor(
 
     companion object {
         // Setengah lebar/tinggi sel grid (derajat) — harus sinkron dengan spasi
-        // grid di WorldVisibilityCalculator (15° x 15°).
-        private const val CELL_HALF_LAT = 7.5
-        private const val CELL_HALF_LNG = 7.5
+        // grid di WorldVisibilityCalculator (5° x 5°).
+        private const val CELL_HALF_LAT = 2.5
+        private const val CELL_HALF_LNG = 2.5
 
         // Poligon benua sangat disederhanakan (lat, lng) per titik — dibuat manual,
         // sekadar cukup dikenali bentuknya, bukan hasil digitasi peta sungguhan.

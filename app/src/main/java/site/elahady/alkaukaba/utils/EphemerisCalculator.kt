@@ -37,15 +37,20 @@ object EphemerisCalculator {
     private const val KRITERIA_TINGGI_MIN = 3.0 // derajat, Neo-MABIMS
     private const val KRITERIA_ELONGASI_MIN = 6.4 // derajat, Neo-MABIMS
 
-    fun calculate(input: HilalInput): HilalResult {
+    fun calculate(input: HilalInput): HilalResult =
+        calculate(input, findIjtima(input.monthOffset))
+
+    /**
+     * Sama seperti [calculate], tapi menerima [ijtima] yang sudah dihitung sebelumnya lewat
+     * [findIjtima] alih-alih menghitung ulang dari nol -- dipakai `WorldVisibilityCalculator` yang
+     * memanggil fungsi ini ratusan kali per grid dengan monthOffset yang sama: ijtima' adalah
+     * peristiwa global (tidak tergantung observer), jadi menghitungnya sekali lalu dipakai ulang
+     * jauh lebih murah daripada mencari ulang rantai new-moon di tiap titik grid.
+     */
+    fun calculate(input: HilalInput, ijtima: Time): HilalResult {
         val observer = Observer(input.latitude, input.longitude, input.heightMeters)
-        val now = Time.fromMillisecondsSince1970(System.currentTimeMillis())
 
-        // 1. Ijtima' (konjungsi/new moon) sesuai monthOffset: 0 = terdekat ke depan dari sekarang
-        //    (perilaku lama), + = maju N bulan, - = mundur N bulan.
-        val ijtima = findIjtimaAtOffset(now, input.monthOffset)
-
-        // 2. Ghurub markaz: ghurub di tanggal yang sama dengan ijtima'; kalau
+        // 1. Ghurub markaz: ghurub di tanggal yang sama dengan ijtima'; kalau
         // ijtima' terjadi setelah ghurub hari itu, geser ke ghurub keesokan hari.
         val ijtimaLocalMidnight = localMidnightOf(ijtima)
         var ghurub = searchRiseSet(Body.Sun, observer, Direction.Set, ijtimaLocalMidnight, 1.5)
@@ -55,21 +60,21 @@ object EphemerisCalculator {
                 ?: throw IllegalStateException("Tidak bisa menghitung waktu ghurub keesokan hari")
         }
 
-        // 3. Data Matahari saat ghurub
+        // 2. Data Matahari saat ghurub
         val sunEq = equator(Body.Sun, ghurub, observer, EquatorEpoch.OfDate, Aberration.Corrected)
         val sunHor = horizon(ghurub, observer, sunEq.ra, sunEq.dec, Refraction.Normal)
 
-        // 4. Data Bulan saat ghurub
+        // 3. Data Bulan saat ghurub
         val moonEq = equator(Body.Moon, ghurub, observer, EquatorEpoch.OfDate, Aberration.Corrected)
         val moonHor = horizon(ghurub, observer, moonEq.ra, moonEq.dec, Refraction.Normal)
         val elong = elongation(Body.Moon, ghurub)
         val illum = illumination(Body.Moon, ghurub)
 
-        // 5. Mukuts: lama hilal di atas ufuk setelah ghurub (moonset - ghurub)
+        // 4. Mukuts: lama hilal di atas ufuk setelah ghurub (moonset - ghurub)
         val moonset = searchRiseSet(Body.Moon, observer, Direction.Set, ghurub, 1.0)
         val mukutsMenit = moonset?.let { (it.ut - ghurub.ut) * 24.0 * 60.0 } ?: 0.0
 
-        // 6. Kesimpulan kriteria Neo-MABIMS (tinggi >= 3 derajat DAN elongasi >= 6.4 derajat)
+        // 5. Kesimpulan kriteria Neo-MABIMS (tinggi >= 3 derajat DAN elongasi >= 6.4 derajat)
         val tinggiHilal = moonHor.altitude
         val elongasi = elong.elongation
         val memenuhiKriteria = tinggiHilal >= KRITERIA_TINGGI_MIN && elongasi >= KRITERIA_ELONGASI_MIN
@@ -191,6 +196,14 @@ object EphemerisCalculator {
         }
         return sb.toString()
     }
+
+    /**
+     * Ijtima' ke-[monthOffset] relatif ke ijtima' terdekat ke depan dari sekarang (offset 0 =
+     * perilaku lama). Dipisah dari [calculate] supaya bisa dihitung sekali lalu dipakai ulang lewat
+     * overload [calculate] yang menerima `ijtima` -- lihat dokumentasi overload itu.
+     */
+    fun findIjtima(monthOffset: Int): Time =
+        findIjtimaAtOffset(Time.fromMillisecondsSince1970(System.currentTimeMillis()), monthOffset)
 
     /**
      * Ijtima' ke-[monthOffset] relatif ke ijtima' terdekat ke depan dari [now] (offset 0 = perilaku
