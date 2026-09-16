@@ -160,16 +160,21 @@ dihentikan sesuai aturan anti-spam-screenshot) — user diminta cek manual.
 - [ ] **Warna overlay ter-alpha-blend dengan latar** (section 5) — di peta
       terlihat toska/mauve, bukan hijau/merah murni seperti di legenda.
       Kalau dirasa membingungkan, bisa dinaikkan opacity-nya
-      (`WorldMapView.memenuhiPaint`/`belumPaint`) atau ganti pendekatan
+      (`WorldMapView.memenuhiColor`/`belumColor`) atau ganti pendekatan
       (mis. gambar overlay di layer terpisah tanpa blending dengan warna
       benua).
 - [ ] **Grid resolusi tetap hardcode** (`WorldVisibilityCalculator.
       LATITUDES`/`LONGITUDES`, 5° step per 2026-09-17) — gampang diubah
       kalau mau lebih rapat/renggang (benchmark JVM: 5336 titik/step 3°
-      masih ~0.7 detik, lihat 6a), tapi harus disinkronkan dengan
-      `WorldMapView.CELL_HALF_LAT`/`CELL_HALF_LNG`, dan garis grid akan
-      selalu terlihat blocky (bukan gradasi halus) tanpa interpolasi antar
-      titik (belum diimplementasikan, lihat 6a).
+      masih ~0.7 detik, lihat 6a); `WorldMapView` tidak perlu ikut disinkron
+      lagi sejak interpolasi bitmap (6a poin 3) — ukuran sel grid tidak lagi
+      dipakai untuk rendering.
+- [ ] **Interpolasi bitmap (6a poin 3) mengasumsikan grid dunia lingkaran
+      penuh** (`WorldMapView.buildGridBitmap()` selalu menduplikasi kolom
+      bujur pertama sebagai penutup seam ±180) — valid selama
+      `WorldVisibilityCalculator.LONGITUDES` mencakup 360° penuh (kondisi
+      saat ini), tapi akan salah kalau nanti ada mode grid parsial
+      (mis. cuma Indonesia) tanpa penyesuaian logic ini.
 
 ### 6a. Riwayat optimasi performa (2026-09-17)
 
@@ -189,17 +194,28 @@ sudah dikerjakan sebagian:
    `EphemerisCalculatorTest` yang sudah ada (masih pass, tanpa perubahan
    assertion).
 2. **Naikkan resolusi grid 15° → 5°** (selesai) — `WorldVisibilityCalculator.
-   LATITUDES`/`LONGITUDES` dan `WorldMapView.CELL_HALF_LAT`/`CELL_HALF_LNG`
-   disinkronkan ke 5° (2016 titik, naik dari 240). Batas bujur atas juga
-   dikoreksi dari 165° ke 175° (pola `180° - step`) supaya tidak ada celah
-   antara kolom terakhir dan meridian ±180° saat step diperkecil.
-   Kelayakannya dicek lewat benchmark JVM sementara (unit test yang dihapus
-   lagi setelah dipakai): grid 5° (1960-2016 titik) ~0.4 detik, grid step 3°
-   (5336 titik) ~0.7 detik — jauh di bawah versi lama (240 titik tanpa
-   optimasi #1, "beberapa detik").
-3. **Interpolasi antar titik grid** (opsional, belum dikerjakan) — supaya
-   transisi warna terlihat gradasi halus, bukan kotak-kotak tegas. Belum
-   ada rencana teknis konkret.
+   LATITUDES`/`LONGITUDES` dinaikkan ke 5° (2016 titik, naik dari 240). Batas
+   bujur atas juga dikoreksi dari 165° ke 175° (pola `180° - step`) supaya
+   tidak ada celah antara kolom terakhir dan meridian ±180° saat step
+   diperkecil. Kelayakannya dicek lewat benchmark JVM sementara (unit test
+   yang dihapus lagi setelah dipakai): grid 5° (1960-2016 titik) ~0.4 detik,
+   grid step 3° (5336 titik) ~0.7 detik — jauh di bawah versi lama (240
+   titik tanpa optimasi #1, "beberapa detik").
+3. **Interpolasi antar titik grid** (selesai) — user cek hasil #1/#2 &
+   minta interpolasi tanpa menaikkan resolusi lagi (pertimbangan: grid
+   1 arcmenit ~172 juta titik, jauh di luar batas wajar hitung maupun
+   render). Solusinya BUKAN interpolasi manual per-piksel, tapi trik bitmap:
+   `WorldMapView.buildGridBitmap()` menyusun tiap titik grid jadi 1 piksel
+   `Bitmap` kecil (numLng+1 x numLat, kolom ekstra = duplikat kolom pertama
+   untuk menyambung seam bujur ±180), lalu `onDraw()` menggambarnya
+   ter-scale ke ukuran peta penuh lewat `canvas.drawBitmap(..., paint)` yang
+   `isFilterBitmap = true` — Android otomatis bilinear-interpolate warna
+   antar piksel saat scale-up, jadi transisi memenuhi/belum terlihat
+   gradasi halus tanpa titik hisab tambahan. Efek samping yang diterima:
+   `CELL_HALF_LAT`/`CELL_HALF_LNG` (dulu buat gambar kotak per titik) sudah
+   tidak diperlukan sama sekali & dihapus — grid resolution dan rendering
+   jadi lebih decoupled (`WorldMapView` tidak perlu tahu ukuran sel, cuma
+   posisi titik-titik yang dikirim).
 4. **Ganti poligon benua ke data GeoJSON asli** (selesai, sama hari) — lihat
    section 4 untuk detail sumber data & proses minifikasi.
 
@@ -207,10 +223,14 @@ Verifikasi: `EphemerisCalculatorTest` full suite tetap pass; full unit test
 suite project (`testDebugUnitTest`) punya 4 failure pre-existing & tidak
 terkait (`OccultationCalculatorTest` — golden test waktu-nyata Venus-Bulan,
 `KiblatViewModelTest` x3 — `NotImplementedError`), dikonfirmasi lewat
-`git stash` (gagal sama persis di kode sebelum perubahan ini). Build &
-install debug APK ke emulator sukses tanpa error tiap iterasi (termasuk
-setelah ganti poligon benua — logcat dicek, tidak ada crash/FATAL). Asset
-`world_land_110m.json` dikonfirmasi ikut ter-bundle di APK
+`git stash` (gagal sama persis di kode sebelum perubahan ini) dan tetap
+sama setelah #3. Build & install debug APK ke emulator sukses tanpa error
+tiap iterasi. Untuk #3/#4, verifikasi visual berhasil (screenshot emulator,
+2026-09-17): bentuk benua kebaca jelas sebagai peta dunia, dan garis batas
+antar zona memenuhi/belum kriteria terlihat sebagai gradasi/kurva halus
+(bukan lagi tangga kotak-kotak 5°) — konfirmasi trik bitmap+filter bekerja
+sesuai harapan. Asset `world_land_110m.json` dikonfirmasi ikut ter-bundle
+di APK
 (`unzip -l app-debug.apk`). Verifikasi visual langsung di device **tidak
 berhasil diotomasi** — `uiautomator`/`input tap` gagal konsisten
 menavigasi ke layar ini pada beberapa percobaan (state Activity di

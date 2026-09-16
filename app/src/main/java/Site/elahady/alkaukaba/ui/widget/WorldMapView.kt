@@ -2,10 +2,13 @@ package site.elahady.alkaukaba.ui.widget
 
 import site.elahady.alkaukaba.model.VisibilityGridPoint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import org.json.JSONArray
@@ -25,11 +28,6 @@ class WorldMapView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     companion object {
-        // Setengah lebar/tinggi sel grid (derajat) — harus sinkron dengan spasi
-        // grid di WorldVisibilityCalculator (5° x 5°).
-        private const val CELL_HALF_LAT = 2.5
-        private const val CELL_HALF_LNG = 2.5
-
         // Asset: garis pantai dunia dari Natural Earth 110m ("ne_110m_land", domain publik),
         // diminifikasi jadi [[[lng,lat,lng,lat,...], ring2, ...], polygon2, ...] -- array polygon,
         // tiap polygon array ring (ring pertama = outer, sisanya = lubang mis. Laut Kaspia),
@@ -60,8 +58,6 @@ class WorldMapView @JvmOverloads constructor(
         emptyList()
     }
 
-    private var points: List<VisibilityGridPoint> = emptyList()
-
     private val oceanPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#BFE3F5") }
     private val landPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E4E0CF")
@@ -72,16 +68,67 @@ class WorldMapView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeWidth = 2f
     }
-    private val memenuhiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#66059669") // hijau emerald, semi-transparan
-    }
-    private val belumPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#59B91C1C") // merah, semi-transparan (35% alpha)
-    }
+    private val memenuhiColor = Color.parseColor("#66059669") // hijau emerald, semi-transparan
+    private val belumColor = Color.parseColor("#59B91C1C") // merah, semi-transparan (35% alpha)
+
+    // Bitmap kecil (1 piksel per titik grid + 1 kolom wrap) yang di-scale-up dengan bilinear
+    // filter (lihat gridBitmapPaint) -- trik standar untuk dapat gradasi warna halus antar titik
+    // grid tanpa menambah jumlah titik hisab (opsi B.3 di rencana peta-visibilitas.md 6a).
+    private var gridBitmap: Bitmap? = null
+    private var gridMinLat = 0.0
+    private var gridMaxLat = 0.0
+    private var gridMinLng = 0.0
+    private var gridLngStep = 0.0
+    private val gridBitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
 
     fun setData(newPoints: List<VisibilityGridPoint>) {
-        points = newPoints
+        gridBitmap = buildGridBitmap(newPoints)
         invalidate()
+    }
+
+    /**
+     * Susun titik grid (renggang, tersebar per [VisibilityGridPoint]) jadi bitmap kecil
+     * numLng x numLat (1 piksel = 1 titik), lalu digambar ter-scale di [onDraw] dengan bilinear
+     * filter -- Android otomatis menginterpolasi warna antar piksel bitmap saat di-scale,
+     * sehingga transisi memenuhi/belum kriteria terlihat gradasi halus, bukan kotak-kotak
+     * tegas, tanpa perlu menghitung titik grid lebih rapat. Sel yang gagal dihitung (skip di
+     * WorldVisibilityCalculator) jadi piksel transparan -- ikut diinterpolasi jadi fade lembut
+     * ke arah transparan, bukan lubang tegas seperti versi kotak-kotak sebelumnya.
+     */
+    private fun buildGridBitmap(points: List<VisibilityGridPoint>): Bitmap? {
+        val lats = points.map { it.latitude }.distinct().sorted()
+        val lngs = points.map { it.longitude }.distinct().sorted()
+        if (lats.size < 2 || lngs.size < 2) return null
+
+        val resultByCoord = points.associateBy { it.latitude to it.longitude }
+        val numLat = lats.size
+        val numLng = lngs.size
+
+        // +1 kolom di kanan = duplikat kolom pertama, merepresentasikan bujur 180° (~ -180°) --
+        // grid dunia selalu lingkaran penuh, jadi ini menyambungkan interpolasi di seam
+        // meridian ±180 alih-alih terpotong tegas di tepi peta.
+        val bitmap = Bitmap.createBitmap(numLng + 1, numLat, Bitmap.Config.ARGB_8888)
+        for (latIndex in 0 until numLat) {
+            val lat = lats[latIndex]
+            // Baris bitmap 0 = lintang tertinggi (atas peta); baris terakhir = lintang terendah.
+            val py = numLat - 1 - latIndex
+            for (lngIndex in 0..numLng) {
+                val lng = lngs[lngIndex % numLng]
+                val result = resultByCoord[lat to lng]
+                val color = when {
+                    result == null -> Color.TRANSPARENT
+                    result.memenuhiKriteria -> memenuhiColor
+                    else -> belumColor
+                }
+                bitmap.setPixel(lngIndex, py, color)
+            }
+        }
+
+        gridMinLat = lats.first()
+        gridMaxLat = lats.last()
+        gridMinLng = lngs.first()
+        gridLngStep = lngs[1] - lngs[0]
+        return bitmap
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -118,13 +165,15 @@ class WorldMapView @JvmOverloads constructor(
             canvas.drawPath(path, landStrokePaint)
         }
 
-        for (point in points) {
-            val left = lngToX(point.longitude - CELL_HALF_LNG, w)
-            val right = lngToX(point.longitude + CELL_HALF_LNG, w)
-            val top = latToY(point.latitude + CELL_HALF_LAT, h)
-            val bottom = latToY(point.latitude - CELL_HALF_LAT, h)
-            val paint = if (point.memenuhiKriteria) memenuhiPaint else belumPaint
-            canvas.drawRect(left, top, right, bottom, paint)
+        gridBitmap?.let { bitmap ->
+            val src = Rect(0, 0, bitmap.width, bitmap.height)
+            val dst = RectF(
+                lngToX(gridMinLng, w),
+                latToY(gridMaxLat, h),
+                lngToX(gridMinLng + gridLngStep * bitmap.width, w),
+                latToY(gridMinLat, h)
+            )
+            canvas.drawBitmap(bitmap, src, dst, gridBitmapPaint)
         }
     }
 }
