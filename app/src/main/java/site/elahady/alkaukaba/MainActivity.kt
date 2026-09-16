@@ -14,7 +14,7 @@ import site.elahady.alkaukaba.ui.hisabnasional.HisabNasionalActivity
 import site.elahady.alkaukaba.ui.jadwalimsakiyah.JadwalImsakiyahActivity
 import site.elahady.alkaukaba.ui.menu.SemuaMenuActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
-import site.elahady.alkaukaba.ui.quran.DaftarSurahActivity
+import site.elahady.alkaukaba.ui.petavisibilitas.PetaVisibilitasActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
 import site.elahady.alkaukaba.utils.Resource
 import site.elahady.alkaukaba.utils.SessionManager
@@ -352,11 +352,11 @@ class MainActivity : AppCompatActivity() {
         binding.btHisabNasional.setOnClickListener {
             startActivity(Intent(this, HisabNasionalActivity::class.java))
         }
+        binding.btPetaVisibilitas.setOnClickListener {
+            startActivity(Intent(this, PetaVisibilitasActivity::class.java))
+        }
         binding.btJadwalImsakiyah.setOnClickListener {
             startActivity(Intent(this, JadwalImsakiyahActivity::class.java))
-        }
-        binding.btQuran.setOnClickListener {
-            startActivity(Intent(this, DaftarSurahActivity::class.java))
         }
         binding.btnSeeAllMenu.setOnClickListener {
             startActivity(Intent(this, SemuaMenuActivity::class.java))

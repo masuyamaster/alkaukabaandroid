@@ -18,6 +18,7 @@ import site.elahady.alkaukaba.ui.jadwalimsakiyah.JadwalImsakiyahActivity
 import site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity
 import site.elahady.alkaukaba.ui.masjidterdekat.MasjidTerdekatActivity
 import site.elahady.alkaukaba.ui.okultasi.OkultasiActivity
+import site.elahady.alkaukaba.ui.petavisibilitas.PetaVisibilitasActivity
 import site.elahady.alkaukaba.ui.quran.DaftarSurahActivity
 import site.elahady.alkaukaba.ui.tasbih.TasbihActivity
 import site.elahady.alkaukaba.ui.waktusholat.WaktuSholatActivity
@@ -57,6 +58,7 @@ class SemuaMenuActivity : AppCompatActivity() {
         MenuItem(R.drawable.ic_menu_moon, "Gerhana", R.color.bg_blue_light, R.color.icon_blue, GerhanaActivity::class.java),
         MenuItem(R.drawable.ic_menu_star, "Okultasi", R.color.bg_orange_light, R.color.icon_orange, OkultasiActivity::class.java),
         MenuItem(R.drawable.ic_menu_hisab_nasional, "Hisab Awal\nBulan Nasional", R.color.bg_cyan_light, R.color.icon_cyan, HisabNasionalActivity::class.java),
+        MenuItem(R.drawable.ic_menu_peta_visibilitas, "Peta\nVisibilitas Hilal", R.color.bg_lime_light, R.color.icon_lime, PetaVisibilitasActivity::class.java),
         MenuItem(R.drawable.ic_menu_imsakiyah, "Jadwal\nImsakiyah", R.color.bg_amber_light, R.color.icon_amber, JadwalImsakiyahActivity::class.java),
         MenuItem(R.drawable.ic_menu_calculator, "Kalkulator", R.color.bg_indigo_light, R.color.icon_indigo, KalkulatorActivity::class.java),
         MenuItem(R.drawable.ic_menu_quran, "Al-Qur'an", R.color.bg_gold_light, R.color.text_label_gold, DaftarSurahActivity::class.java),

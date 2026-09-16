@@ -79,6 +79,12 @@
             android:name="site.elahady.alkaukaba.ui.hisabnasional.HisabNasionalActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.hisabnasional.PilihMarkazActivity"
+            android:exported="false" />
+        <activity
+            android:name="site.elahady.alkaukaba.ui.petavisibilitas.PetaVisibilitasActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.jadwalimsakiyah.JadwalImsakiyahActivity"
             android:exported="false" />
         <activity
