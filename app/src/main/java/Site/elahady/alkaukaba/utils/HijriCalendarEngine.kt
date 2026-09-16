@@ -36,6 +36,11 @@ object HijriCalendarEngine {
         val label: String get() = "$monthName $year H"
     }
 
+    /** Rentang 1 bulan Hijriyah dalam kalender Masehi: [startDate] = tanggal 1 H (Masehi),
+     *  [dayCount] = jumlah hari (29/30, hasil istikmal). Dipakai fitur yang butuh iterasi
+     *  per-hari dalam 1 bulan Hijriyah penuh, mis. Jadwal Imsakiyah. */
+    data class HijriMonthRange(val startDate: Calendar, val dayCount: Int, val monthName: String, val year: Int)
+
     private data class Segment(val start: Time, val end: Time, val ijtima: Time)
 
     /** Hijri day/bulan/tahun untuk tiap tanggal (1..[daysInMonth]) dalam bulan Masehi yang diawali [monthStartDate]. */
@@ -75,6 +80,23 @@ object HijriCalendarEngine {
         return "$hijriDay $monthName $year H"
     }
 
+    /** Rentang Masehi (tanggal 1 + jumlah hari) bulan Hijriyah yang memuat [referenceDate],
+     *  digeser [monthOffset] bulan (0 = bulan yang memuat [referenceDate], + = maju, - = mundur) —
+     *  pola sama seperti `HilalInput.monthOffset` di fitur Awal Bulan. */
+    fun monthRangeForOffset(observer: Observer, referenceDate: Calendar, monthOffset: Int): HijriMonthRange {
+        var segment = findSegmentContaining(observer, timeAtLocalMidnight(referenceDate))
+        if (monthOffset > 0) {
+            repeat(monthOffset) { segment = nextSegment(observer, segment) }
+        } else if (monthOffset < 0) {
+            repeat(-monthOffset) { segment = previousSegment(observer, segment) }
+        }
+        val startCal = Calendar.getInstance()
+        startCal.timeInMillis = segment.start.toMillisecondsSince1970()
+        val dayCount = daysBetween(segment.start, segment.end)
+        val (monthName, year) = monthLabelOf(segment)
+        return HijriMonthRange(startCal, dayCount, monthName, year)
+    }
+
     // Cari segmen (rentang 1 bulan Hijriyah) yang memuat [date], dengan mencari mundur dulu
     // sampai ketemu awal bulan <= date, lalu maju sekali untuk batas akhirnya.
     private fun findSegmentContaining(observer: Observer, date: Time): Segment {
@@ -99,6 +121,12 @@ object HijriCalendarEngine {
             ?: error("Tidak bisa menemukan ijtima' berikutnya")
         val end = monthStartAfterIjtima(observer, nextIjtima)
         return Segment(segment.end, end, nextIjtima)
+    }
+
+    // Mundur ke segmen (bulan Hijriyah) sebelum [segment] — cukup cari ulang segmen yang
+    // memuat 1 hari sebelum awal [segment], karena tiap bulan Hijriyah minimal 29 hari.
+    private fun previousSegment(observer: Observer, segment: Segment): Segment {
+        return findSegmentContaining(observer, segment.start.addDays(-1.0))
     }
 
     // Tanggal 1 bulan Hijriyah berikutnya, dihitung dari ghurub setelah [ijtima] + kriteria Neo-MABIMS.
