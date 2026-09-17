@@ -11,12 +11,16 @@ data class LunarEclipseItem(
 data class SolarEclipseItem(
     val kindLabel: String, // "Total" / "Cincin" / "Sebagian"
     val peakDateLabel: String,
-    val partialBeginLabel: String,
+    // partialBeginLabel/partialEndLabel/magnitudePercent null kalau gerhana ini sama sekali
+    // tidak punya sirkumstansi lokal di markaz (mis. terjadi saat markaz malam sepanjang
+    // durasi gerhana) -> event tetap ditampilkan (lihat EclipseCalculator), cuma rincian jam
+    // lokal & magnitude-nya tidak bisa dihitung tanpa titik observasi yang relevan.
+    val partialBeginLabel: String?,
     val peakTimeLabel: String,
-    val partialEndLabel: String,
+    val partialEndLabel: String?,
     val totalBeginLabel: String?, // null kalau tidak sampai fase total/cincin
     val totalEndLabel: String?,
-    val magnitudePercent: Double, // obscuration puncak, 0-100
+    val magnitudePercent: Double?, // obscuration puncak, 0-100; null kalau tak terhitung (lihat di atas)
     val visibleFromLocation: Boolean // Matahari di atas ufuk lokasi markaz saat puncak
 )
 
