@@ -3,9 +3,12 @@
 ## 1. Ringkasan
 
 **Fitur**: Gerhana — daftar 5 gerhana Bulan dan 5 gerhana Matahari terdekat ke
-depan dari lokasi markaz (GPS atau setting manual di Konfigurasi), lengkap
-dengan waktu lokal, jenis, magnitude, dan status visibilitas dari lokasi
-tersebut.
+depan dari lokasi markaz (GPS atau setting manual di Konfigurasi, dengan
+opsi override khusus layar ini — lihat §2), lengkap dengan waktu lokal,
+jenis, magnitude, dan status visibilitas dari lokasi tersebut. Kedua daftar
+selalu berisi event **global** ke depan apa adanya (lihat §5) — termasuk
+event yang sama sekali tidak terlihat dari markaz yang sedang dipakai,
+ditandai badge merah "Tidak terlihat dari lokasimu".
 
 Perhitungan 100% oleh "Astronomy Engine" (`utils/Astronomy.kt`,
 `io.github.cosinekitty.astronomy`, sama seperti fitur Bulan Hijriyah) —
@@ -24,6 +27,35 @@ tidak ada panggilan network.
   (`-6.2088, 106.8456`). Ketinggian markaz tidak diinput manual di layar ini
   (selalu 0 m — tidak berpengaruh signifikan terhadap hasil gerhana).
 
+### Lokasi: override khusus halaman ini (2026-09-17)
+
+Tombol "⟳ Ubah Lokasi" di bar lokasi **tidak lagi** sekadar refresh GPS —
+sekarang membuka bottom sheet `dialog_lokasi_halaman.xml` dengan 2 opsi:
+
+1. **"Ikuti pengaturan global"** (default) — perilaku lama: pakai
+   `SessionManager` punya lokasi (manual global atau GPS), persis sama
+   dengan fitur lain.
+2. **"Manual khusus halaman ini"** — lat/lng yang diisi (atau diambil dari
+   GPS lewat tombol "Pakai lokasi GPS saat ini" di dalam dialog) disimpan
+   ke `SharedPreferences` **terpisah** (`GerhanaPagePrefs`, key
+   `PAGE_MANUAL_LAT`/`PAGE_MANUAL_LNG`) — **bukan** ke `SessionManager`.
+   Override ini murni lokal untuk `GerhanaActivity`: tidak pernah dibaca
+   atau ditulis oleh fitur lain (Waktu Sholat, Kiblat, dll tetap pakai
+   lokasi global apa adanya), dan sebaliknya perubahan di Konfigurasi tidak
+   menimpa override ini.
+
+`resolveLocationAndCalculate()` mengecek urutan: override halaman
+(`hasPageLocationOverride()`) -> lokasi manual global (`SessionManager`) ->
+GPS. Override halaman ini persisten antar sesi (SharedPreferences, bukan
+in-memory) sampai user memilih ulang "Ikuti pengaturan global" di dialog
+yang sama (menghapus key override, bukan menyimpan flag "false").
+
+Diverifikasi manual di emulator (2026-09-17): set override ke Jakarta
+(-6.2088, 106.8456) saat lokasi global masih Surabaya -> bar lokasi Gerhana
+berubah ke "Kota Jakarta Selatan" dan waktu gerhana Matahari terhitung ulang
+sesuai Jakarta, sementara layar Waktu Sholat tetap menampilkan "Surabaya,
+Jawa Timur" (lokasi global tidak ikut berubah).
+
 ## 3. Alur
 
 1. `onCreate` -> resolve lokasi (manual/GPS/fallback) -> begitu lokasi
@@ -36,7 +68,8 @@ tidak ada panggilan network.
    yang di-toggle visibility oleh tab "Gerhana Bulan" / "Gerhana Matahari"
    (pola tab sama dengan `WaktuSholatActivity`, tapi warna tab aktif dibuat
    khusus — lihat catatan 2026-08-30 di section 7).
-4. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang.
+4. `btnRefreshLoc` ("⟳ Ubah Lokasi") membuka dialog pemilihan lokasi (lihat
+   §2) -> setelah "Simpan", `resolveLocationAndCalculate()` dipanggil ulang.
 5. `btnBack` (toolbar) -> `finish()`.
 
 ## 4. Struktur & alur data
@@ -44,6 +77,7 @@ tidak ada panggilan network.
 | File | Peran |
 |---|---|
 | `ui/gerhana/GerhanaActivity.kt` + `activity_gerhana.xml` | UI: lokasi, tab switch, 2 RecyclerView |
+| `res/layout/dialog_lokasi_halaman.xml` | Bottom sheet "Ubah Lokasi" (global vs manual khusus halaman) — lihat §2 |
 | `viewmodel/gerhana/GerhanaViewModel.kt` | `LiveData<GerhanaResult> result` + `LiveData<Boolean> isLoading`; jembatan Activity -> `EclipseCalculator` (dijalankan di `Dispatchers.Default` via `viewModelScope`) |
 | `model/GerhanaModels.kt` | `LunarEclipseItem`, `SolarEclipseItem` (model tampilan siap-render), `GerhanaResult` (bungkus keduanya) |
 | `utils/EclipseCalculator.kt` | Mesin hisab — lihat section 5 |
@@ -60,16 +94,43 @@ Activity bind ke `lunarAdapter`/`solarAdapter`.
    dasarnya terlihat dari mana pun di belahan Bumi yang malam saat itu.
    Visibilitas lokal dihitung manual per item: `equator()` + `horizon()`
    Bulan pada waktu `peak`, `visibleFromLocation = altitude > 0`.
-2. **Gerhana Matahari**: `localSolarEclipsesAfter(now, observer).take(5)` —
-   Astronomy Engine sudah punya varian pencarian per-lokasi untuk ini
-   (`searchLocalSolarEclipse`), jadi hasilnya otomatis relevan untuk markaz
-   yang dipakai. **Catatan penting**: hasil `searchLocalSolarEclipse` bisa
-   saja punya `peak.altitude` negatif (gerhana terjadi tapi Matahari di
-   bawah ufuk saat puncak, cuma sebagian fase yang kelihatan saat
-   terbit/tenggelam) — makanya `visibleFromLocation` tetap dihitung eksplisit
-   dari `info.peak.altitude > 0.0`, bukan diasumsikan selalu `true`.
+2. **Gerhana Matahari** (diubah 2026-09-17, lihat juga §7): sekarang
+   `globalSolarEclipsesAfter(now).take(5)` — **bukan lagi**
+   `localSolarEclipsesAfter(now, observer)`. Alasannya: `localSolarEclipsesAfter`
+   melompati (skip) event yang sama sekali tidak punya sirkumstansi lokal di
+   markaz (mis. seluruh durasi gerhana terjadi saat markaz malam), jadi
+   daftar 5 event yang tampil sebelumnya bisa jadi jauh ke depan (skip
+   banyak event yang sebetulnya terjadi lebih dulu tapi tidak terlihat dari
+   markaz itu). Dengan pencarian global, urutan 5 event yang tampil selalu
+   konsisten dengan almanak gerhana global manapun, terlepas dari lokasi
+   markaz.
+
+   Untuk tiap event global, `EclipseCalculator.matchLocalCircumstance()`
+   mencoba mencari sirkumstansi lokalnya lewat `searchLocalSolarEclipse`
+   yang di-seed 3 hari sebelum waktu puncak global, lalu membandingkan waktu
+   puncak hasil pencarian itu dengan waktu puncak global (toleransi 3 hari,
+   aman karena jarak antar gerhana Matahari beruntun >=29 hari). Dua
+   kemungkinan:
+   - **Cocok** (event lokal ketemu di bulan baru yang sama) -> pakai rincian
+     lengkap dari `LocalSolarEclipseInfo` (Mulai/Puncak/Berakhir/fase
+     Total-Cincin/magnitude/`visibleFromLocation` dari `peak.altitude`).
+   - **Tidak cocok** (pencarian lokal melompat ke event lain yang lebih
+     belakangan, berarti event global ini memang tidak punya sirkumstansi
+     lokal apapun di markaz) -> item tetap dibuat, tapi `partialBeginLabel`/
+     `partialEndLabel`/`totalBeginLabel`/`totalEndLabel` = `null` dan
+     `visibleFromLocation = false`. `magnitudePercent` diisi dari
+     `GlobalSolarEclipseInfo.obscuration` untuk jenis Total/Cincin, tapi
+     `null` untuk jenis Sebagian (obscuration global tanpa titik observasi
+     memang undefined menurut KDoc `GlobalSolarEclipseInfo` di
+     `utils/Astronomy.kt`).
+
+   `SolarEclipseAdapter` menyembunyikan baris Mulai/Berakhir/Magnitude
+   (`rowPartialBegin`/`rowPartialEnd`/`rowMagnitude` di
+   `item_gerhana_matahari.xml`) kalau field terkait `null`, bukan
+   menampilkan placeholder "-".
 3. **Magnitude**: `obscuration` (0.0–1.0) dari Astronomy Engine, ditampilkan
-   sebagai persen.
+   sebagai persen (lihat pengecualian gerhana Matahari Sebagian tak-terlihat
+   di atas).
 4. **Label jenis**: `EclipseKind.Penumbral/Partial/Total` (gerhana Bulan) dan
    `EclipseKind.Partial/Annular/Total` (gerhana Matahari) di-map ke label
    Indonesia "Penumbra"/"Sebagian"/"Total"/"Cincin".
@@ -85,6 +146,21 @@ bandingkan tanggal/waktu puncak yang dihasilkan dengan referensi resmi
 (mis. publikasi BMKG/NASA eclipse catalog) untuk lokasi & rentang tahun yang
 sama.
 
+Per 2026-09-17, diverifikasi manual tambahan di emulator Pixel 4 XL API 36
+(lokasi global Surabaya):
+- Tab Gerhana Matahari menampilkan 5 event global berurutan (Feb 2027 s.d.
+  Jan 2029), termasuk 3 event bertanda "Tidak terlihat dari lokasimu" (baris
+  Mulai/Berakhir tersembunyi, magnitude tetap tampil untuk Cincin/Total,
+  disembunyikan untuk Sebagian) dan 1 event "Terlihat dari lokasimu" (22 Juli
+  2028) dengan rincian Mulai/Puncak/Berakhir/Magnitude lengkap.
+- Dialog "Ubah Lokasi" -> pilih "Manual khusus halaman ini" -> isi
+  -6.2088/106.8456 -> Simpan: bar lokasi Gerhana berubah ke "Kota Jakarta
+  Selatan" dan waktu gerhana Matahari terhitung ulang (mis. event 22 Juli
+  2028 berubah dari Mulai 07:46:07/magnitude 92.1% di Surabaya menjadi Mulai
+  07:38:04/magnitude 88.7% di Jakarta) — sementara layar Waktu Sholat (fitur
+  lain) tetap menampilkan "Surabaya, Jawa Timur", membuktikan override tidak
+  bocor ke pengaturan lokasi global.
+
 ## 7. Known limitations
 
 - [ ] Belum ada test otomatis untuk `EclipseCalculator`.
@@ -97,6 +173,11 @@ sama.
       (mis. cuma awal atau cuma akhir) tetap kelihatan — simplifikasi yang
       disengaja, konsisten dengan pola badge boolean tunggal di gerhana
       Bulan.
+- [ ] Override lokasi khusus halaman ini (§2) baru ada di Gerhana — fitur
+      astronomi lain yang serupa (Okultasi, Bulan Hijriyah) belum punya pola
+      yang sama; kalau mau ditambahkan di sana, tidak disarankan
+      langsung generalize `GerhanaPagePrefs` jadi util bersama tanpa diminta
+      — tunggu ada kebutuhan konkret di fitur itu dulu.
 
 Per 2026-08-30 (polish UI, belum di-commit): standardisasi visual mengikuti
 masukan user —
