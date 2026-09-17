@@ -8,7 +8,10 @@ opsi override khusus layar ini — lihat §2), lengkap dengan waktu lokal,
 jenis, magnitude, dan status visibilitas dari lokasi tersebut. Kedua daftar
 selalu berisi event **global** ke depan apa adanya (lihat §5) — termasuk
 event yang sama sekali tidak terlihat dari markaz yang sedang dipakai,
-ditandai badge merah "Tidak terlihat dari lokasimu".
+ditandai badge merah "Tidak terlihat dari lokasimu". Tiap kartu event juga
+punya keterangan tambahan "🌍 Terlihat dari: ..." — daftar wilayah makro
+dunia (bukan cuma markaz yang sedang dipakai) di mana event itu terlihat,
+lihat §5.
 
 Perhitungan 100% oleh "Astronomy Engine" (`utils/Astronomy.kt`,
 `io.github.cosinekitty.astronomy`, sama seperti fitur Bulan Hijriyah) —
@@ -134,6 +137,42 @@ Activity bind ke `lunarAdapter`/`solarAdapter`.
 4. **Label jenis**: `EclipseKind.Penumbral/Partial/Total` (gerhana Bulan) dan
    `EclipseKind.Partial/Annular/Total` (gerhana Matahari) di-map ke label
    Indonesia "Penumbra"/"Sebagian"/"Total"/"Cincin".
+5. **Keterangan "terlihat di mana"** (`visibleRegions`, ditambah 2026-09-17):
+   selain badge terlihat/tidak untuk markaz yang sedang dipakai, tiap event
+   juga dapat daftar wilayah makro dunia yang bisa melihatnya —
+   `EclipseCalculator.VISIBILITY_REGIONS`, 9 titik representatif tetap
+   (Indonesia & Asia Tenggara, Asia Timur, Asia Selatan, Timur Tengah,
+   Eropa, Afrika, Amerika Utara, Amerika Selatan, Australia & Oseania).
+   Untuk tiap event, satu wilayah masuk daftar kalau titik representatifnya
+   "terlihat" dengan kriteria **persis sama** dengan `visibleFromLocation`
+   markaz (Bulan: `horizon().altitude > 0` saat puncak; Matahari: hasil
+   `matchLocalCircumstance()` di titik itu punya `peak.altitude > 0`).
+
+   **Ini aproksimasi kasar, bukan peta jalur gerhana presisi** — beda dari
+   `WorldVisibilityCalculator` (fitur Peta Visibilitas Hilal) yang pakai
+   grid rapat 15°x15° (~240 titik) dengan kalkulasi penuh per titik; di
+   sini cuma 9 titik supaya tetap ringan dihitung untuk 10 event sekaligus
+   (~90 pemanggilan tambahan per load layar — untuk gerhana Matahari,
+   `matchLocalCircumstance` lewat `searchLocalSolarEclipse` per titik,
+   lumayan tapi masih dalam anggaran `Dispatchers.Default` yang sama
+   dengan perhitungan utama). Konsekuensinya:
+   - Jalur totalitas gerhana Matahari sebenarnya cuma selebar
+     puluhan-ratusan km — satu wilayah makro (misal "Amerika Selatan")
+     bisa saja cuma sebagian kecil (satu negara/pesisir) yang benar-benar
+     dilewati jalur itu, tapi seluruh wilayah tetap ditandai "terlihat"
+     kalau titik representatifnya kebetulan berada di jalur/zona parsial.
+     Sebaliknya, event yang jalurnya meleset tipis dari titik representatif
+     bisa saja tidak masuk daftar padahal ada bagian kecil wilayah itu yang
+     sebenarnya melihatnya.
+   - Kalau tidak ada satupun dari 9 wilayah yang cocok (umum untuk event
+     yang jalurnya cuma lewat kutub/lautan terbuka), `visibleRegions`
+     kosong -> UI (`LunarEclipseAdapter`/`SolarEclipseAdapter`) tampilkan
+     fallback "🌍 Di luar wilayah acuan (kemungkinan cuma teramati di
+     kutub/lautan)" alih-alih baris kosong.
+   - Baris ini **selalu ditampilkan** (beda dari baris Mulai/Berakhir/
+     Magnitude gerhana Matahari yang disembunyikan kalau `null`) karena
+     `visibleRegions` selalu berupa `List<String>` valid (boleh kosong),
+     bukan nullable.
 
 ## 6. Testing
 
@@ -161,6 +200,15 @@ Per 2026-09-17, diverifikasi manual tambahan di emulator Pixel 4 XL API 36
   lain) tetap menampilkan "Surabaya, Jawa Timur", membuktikan override tidak
   bocor ke pengaturan lokasi global.
 
+Per 2026-09-17 (lanjutan sesi yang sama), diverifikasi keterangan
+"🌍 Terlihat dari: ..." di kedua tab dengan lokasi override Jakarta Selatan:
+tab Gerhana Bulan event 21 Feb 2027 ("Tidak terlihat dari lokasimu") tetap
+menampilkan wilayah lain yang terlihat ("Asia Timur, Asia Selatan, Timur
+Tengah, Eropa, Afrika, Amerika Selatan" — Indonesia & Amerika Utara
+konsisten tidak masuk); tab Gerhana Matahari event 02 Agustus 2027 (Total,
+"Tidak terlihat dari lokasimu") menampilkan "Asia Selatan, Timur Tengah,
+Eropa, Afrika".
+
 ## 7. Known limitations
 
 - [ ] Belum ada test otomatis untuk `EclipseCalculator`.
@@ -178,6 +226,14 @@ Per 2026-09-17, diverifikasi manual tambahan di emulator Pixel 4 XL API 36
       yang sama; kalau mau ditambahkan di sana, tidak disarankan
       langsung generalize `GerhanaPagePrefs` jadi util bersama tanpa diminta
       — tunggu ada kebutuhan konkret di fitur itu dulu.
+- [ ] `visibleRegions` (§5) pakai 9 titik representatif tetap, bukan peta
+      jalur gerhana presisi — lihat detail konsekuensinya di §5. Kalau nanti
+      dibutuhkan akurasi lebih tinggi (mis. nama negara spesifik, bukan
+      "wilayah makro"), opsi ke depan: reverse-geocode titik pusat bayangan
+      dari `GlobalSolarEclipseInfo.latitude/longitude` (cuma tersedia untuk
+      jenis Total/Cincin, `Geocoder` sudah dipakai di `GerhanaActivity` untuk
+      nama lokasi markaz) alih-alih grid tetap — belum dikerjakan karena
+      tidak berlaku untuk jenis Sebagian & gerhana Bulan.
 
 Per 2026-08-30 (polish UI, belum di-commit): standardisasi visual mengikuti
 masukan user —

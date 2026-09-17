@@ -41,6 +41,29 @@ object EclipseCalculator {
     // "ketemu event lokal lain yang lebih belakangan" (lihat matchLocalCircumstance()).
     private const val LOCAL_MATCH_TOLERANCE_DAYS = 3.0
 
+    /**
+     * Titik acuan kasar untuk keterangan "terlihat dari wilayah mana" per event (bukan markaz
+     * user) — 9 wilayah makro dunia, satu titik representatif per wilayah, BUKAN grid rapat ala
+     * `WorldVisibilityCalculator` (yang butuh ratusan titik x kalkulasi penuh per titik, terlalu
+     * lambat untuk 10 event gerhana sekaligus di layar ini). Ini aproksimasi kasar: satu wilayah
+     * ditandai "terlihat" kalau titik representatifnya melihat puncak gerhana, walau jalur
+     * gerhana sebenarnya (terutama Matahari, lebar totalitas cuma puluhan-ratusan km) bisa saja
+     * cuma menyentuh sebagian kecil wilayah itu atau meleset tipis dari titik representatifnya.
+     */
+    private data class Region(val label: String, val lat: Double, val lng: Double)
+
+    private val VISIBILITY_REGIONS = listOf(
+        Region("Indonesia & Asia Tenggara", -2.5, 118.0),
+        Region("Asia Timur", 35.0, 105.0),
+        Region("Asia Selatan", 20.0, 78.0),
+        Region("Timur Tengah", 25.0, 45.0),
+        Region("Eropa", 50.0, 10.0),
+        Region("Afrika", 5.0, 20.0),
+        Region("Amerika Utara", 40.0, -100.0),
+        Region("Amerika Selatan", -15.0, -60.0),
+        Region("Australia & Oseania", -25.0, 140.0)
+    )
+
     fun calculate(latitude: Double, longitude: Double, heightMeters: Double): GerhanaResult {
         val observer = Observer(latitude, longitude, heightMeters)
         val now = Time.fromMillisecondsSince1970(System.currentTimeMillis())
@@ -66,11 +89,20 @@ object EclipseCalculator {
             peakDateLabel = formatLocalDate(info.peak),
             peakTimeLabel = formatLocalTime(info.peak),
             magnitudePercent = info.obscuration * 100.0,
-            visibleFromLocation = moonHor.altitude > 0.0
+            visibleFromLocation = moonHor.altitude > 0.0,
+            visibleRegions = visibleRegionsForLunar(info.peak)
         )
     }
 
+    private fun visibleRegionsForLunar(peak: Time): List<String> = VISIBILITY_REGIONS.filter { region ->
+        val regionObserver = Observer(region.lat, region.lng, 0.0)
+        val moonEq = equator(Body.Moon, peak, regionObserver, EquatorEpoch.OfDate, Aberration.Corrected)
+        val moonHor = horizon(peak, regionObserver, moonEq.ra, moonEq.dec, Refraction.Normal)
+        moonHor.altitude > 0.0
+    }.map { it.label }
+
     private fun toSolarItem(info: GlobalSolarEclipseInfo, observer: Observer): SolarEclipseItem {
+        val visibleRegions = visibleRegionsForSolar(info)
         val local = matchLocalCircumstance(info, observer)
         if (local != null) {
             return SolarEclipseItem(
@@ -82,7 +114,8 @@ object EclipseCalculator {
                 totalBeginLabel = local.totalBegin?.let { formatLocalTime(it.time) },
                 totalEndLabel = local.totalEnd?.let { formatLocalTime(it.time) },
                 magnitudePercent = local.obscuration * 100.0,
-                visibleFromLocation = local.peak.altitude > 0.0
+                visibleFromLocation = local.peak.altitude > 0.0,
+                visibleRegions = visibleRegions
             )
         }
 
@@ -99,9 +132,20 @@ object EclipseCalculator {
             totalBeginLabel = null,
             totalEndLabel = null,
             magnitudePercent = if (info.kind == EclipseKind.Partial) null else info.obscuration * 100.0,
-            visibleFromLocation = false
+            visibleFromLocation = false,
+            visibleRegions = visibleRegions
         )
     }
+
+    /** Sama seperti [matchLocalCircumstance] per markaz user, tapi dites ke 9 [VISIBILITY_REGIONS]
+     *  sekaligus -> daftar nama wilayah yang puncak gerhananya di atas ufuk (kriteria sama persis
+     *  dengan `visibleFromLocation`: `peak.altitude > 0.0`, bukan cuma sirkumstansi parsial). */
+    private fun visibleRegionsForSolar(info: GlobalSolarEclipseInfo): List<String> = VISIBILITY_REGIONS
+        .filter { region ->
+            val regionObserver = Observer(region.lat, region.lng, 0.0)
+            matchLocalCircumstance(info, regionObserver)?.peak?.altitude?.let { it > 0.0 } ?: false
+        }
+        .map { it.label }
 
     /**
      * Cocokkan gerhana Matahari global dengan hasil `searchLocalSolarEclipse` pada bulan baru

@@ -68,6 +68,12 @@ class SolarEclipseAdapter : RecyclerView.Adapter<SolarEclipseAdapter.ViewHolder>
                 binding.tvVisibility.setBackgroundResource(R.drawable.bg_pill_red)
                 binding.tvVisibility.setTextColor(ContextCompat.getColor(context, R.color.pill_red_text))
             }
+
+            binding.tvVisibleRegions.text = if (item.visibleRegions.isNotEmpty()) {
+                "🌍 Terlihat dari: ${item.visibleRegions.joinToString(", ")}"
+            } else {
+                "🌍 Di luar wilayah acuan (kemungkinan cuma teramati di kutub/lautan)"
+            }
         }
     }
 

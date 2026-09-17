@@ -5,7 +5,8 @@ data class LunarEclipseItem(
     val peakDateLabel: String, // "15 Maret 2026"
     val peakTimeLabel: String, // "15 Maret 2026, 20:12:34"
     val magnitudePercent: Double, // obscuration puncak, 0-100
-    val visibleFromLocation: Boolean // Bulan di atas ufuk lokasi markaz saat puncak
+    val visibleFromLocation: Boolean, // Bulan di atas ufuk lokasi markaz saat puncak
+    val visibleRegions: List<String> // Wilayah makro dunia yang terlihat (aproksimasi kasar, lihat EclipseCalculator.VISIBILITY_REGIONS)
 )
 
 data class SolarEclipseItem(
@@ -21,7 +22,8 @@ data class SolarEclipseItem(
     val totalBeginLabel: String?, // null kalau tidak sampai fase total/cincin
     val totalEndLabel: String?,
     val magnitudePercent: Double?, // obscuration puncak, 0-100; null kalau tak terhitung (lihat di atas)
-    val visibleFromLocation: Boolean // Matahari di atas ufuk lokasi markaz saat puncak
+    val visibleFromLocation: Boolean, // Matahari di atas ufuk lokasi markaz saat puncak
+    val visibleRegions: List<String> // Wilayah makro dunia yang terlihat (aproksimasi kasar, lihat EclipseCalculator.VISIBILITY_REGIONS)
 )
 
 data class GerhanaResult(
