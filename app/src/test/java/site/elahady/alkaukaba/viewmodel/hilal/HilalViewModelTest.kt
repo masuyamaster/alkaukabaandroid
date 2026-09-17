@@ -64,7 +64,7 @@ class HilalViewModelTest {
     private fun fakeHilalResult(penanda: String) = HilalResult(
         bulanHijriyahLabel = penanda,
         tanggalGhurubLabel = "01 Januari 2026",
-        statusBadge = "Hilal Mungkin Terlihat",
+        statusBadge = "Hilal Sudah Imkan",
         hilalMemenuhiKriteria = true,
         tinggiHilal = 5.0,
         elongasi = 8.0,

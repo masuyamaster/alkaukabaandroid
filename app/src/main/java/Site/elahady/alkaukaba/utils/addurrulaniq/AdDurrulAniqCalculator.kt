@@ -50,7 +50,7 @@ object AdDurrulAniqCalculator {
         val tinggiHilal = bulan.tinggiTopocentric
         val elongasi = bulan.elongasiTopocentric
         val memenuhiKriteria = tinggiHilal >= KRITERIA_TINGGI_MIN && elongasi >= KRITERIA_ELONGASI_MIN
-        val statusBadge = if (memenuhiKriteria) "Hilal Mungkin Terlihat" else "Belum Memenuhi Kriteria — Istikmal"
+        val statusBadge = if (memenuhiKriteria) "Hilal Sudah Imkan" else "Hilal Belum Imkan"
 
         val ghurubDate = Date(ghurub.utcMillis)
         val bulanHijriyahLabel = site.elahady.alkaukaba.utils.HijriDateUtil.nextMonthLabel(

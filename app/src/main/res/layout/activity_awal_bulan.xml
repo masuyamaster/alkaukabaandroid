@@ -214,7 +214,7 @@
                                 android:layout_marginTop="12dp"
                                 android:paddingHorizontal="14dp"
                                 android:paddingVertical="6dp"
-                                android:text="Hilal Mungkin Terlihat"
+                                android:text="Hilal Sudah Imkan"
                                 android:textColor="@color/pill_green_text"
                                 android:textSize="12sp"
                                 android:textStyle="bold"

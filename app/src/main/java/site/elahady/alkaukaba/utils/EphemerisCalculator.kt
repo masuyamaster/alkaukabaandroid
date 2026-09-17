@@ -73,7 +73,7 @@ object EphemerisCalculator {
         val tinggiHilal = moonHor.altitude
         val elongasi = elong.elongation
         val memenuhiKriteria = tinggiHilal >= KRITERIA_TINGGI_MIN && elongasi >= KRITERIA_ELONGASI_MIN
-        val statusBadge = if (memenuhiKriteria) "Hilal Mungkin Terlihat" else "Belum Memenuhi Kriteria — Istikmal"
+        val statusBadge = if (memenuhiKriteria) "Hilal Sudah Imkan" else "Hilal Belum Imkan"
 
         val bulanHijriyahLabel = HijriDateUtil.nextMonthLabel(calendarFromTime(ghurub))
         val tanggalGhurubLabel = formatLocalDate(ghurub)
