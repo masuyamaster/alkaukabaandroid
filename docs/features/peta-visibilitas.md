@@ -28,6 +28,14 @@ percakapan), diputuskan:
 
 - Layar: `PetaVisibilitasActivity` (layout `activity_peta_visibilitas.xml`,
   judul UI "Peta Visibilitas Hilal").
+- **Navigasi bulan** (ditambahkan 2026-09-17): dua `Spinner`
+  (`spinnerBulanHijriyah`, `spinnerTahunHijriyah`) di atas kartu info,
+  default = bulan Hijriyah terdekat ke depan (offset 0). Pola implementasi
+  identik dengan selector di `AwalBulanActivity` — baseline dari
+  `HijriDateUtil.nextMonthYearMonth()`, `currentMonthOffset` dihitung dari
+  selisih (tahun*12+bulan) pilihan spinner terhadap baseline, lalu
+  `viewModel.calculatePeta(currentMonthOffset)` dipanggil ulang tiap ganti
+  pilihan.
 - Terdaftar di `AndroidManifest.xml` (`exported="false"`).
 - Menu: ditaruh **tepat setelah "Hisab Awal Bulan Nasional"** di kedua
   tempat (permintaan eksplisit user):
@@ -112,10 +120,6 @@ list-based lain yang cukup `uiautomator dump`):
       / perlu alat optis / hanya dengan alat optis / tidak terlihat). Kalau
       nanti user minta kriteria Odeh 2006, itu implementasi klasifikasi
       baru dari nol (formula ARCV/lag time), bukan sekadar ubah tampilan.
-- [ ] **Tidak ada monthOffset selector** — selalu bulan Hijriyah terdekat
-      ke depan (`monthOffset=0`). `WorldVisibilityCalculator.calculate()`
-      sudah menerima parameter `monthOffset` supaya gampang disambung ke
-      UI selector kalau nanti dibutuhkan (pola sama dengan Hisab Nasional).
 - [ ] **Performa**: 240 pemanggilan `EphemerisCalculator.calculate()`
       sekuensial, tiap panggilan independen menghitung ulang ijtima' dari
       nol (`findIjtimaAtOffset` di `EphemerisCalculator`) walau hasilnya
