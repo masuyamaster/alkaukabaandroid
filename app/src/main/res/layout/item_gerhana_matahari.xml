@@ -40,6 +40,7 @@
             android:background="@color/divider_soft" />
 
         <LinearLayout
+            android:id="@+id/rowPartialBegin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -88,6 +89,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/rowPartialEnd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
@@ -137,6 +139,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/rowMagnitude"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
@@ -172,6 +175,15 @@
             android:textColor="@color/pill_green_text"
             android:textSize="12sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvVisibleRegions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🌍 Terlihat dari: Asia, Australia"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

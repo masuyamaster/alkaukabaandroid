@@ -108,7 +108,7 @@ class EphemerisCalculatorTest {
         val seharusnyaMemenuhi = result.tinggiHilal >= 3.0 && result.elongasi >= 6.4
         assertEquals(seharusnyaMemenuhi, result.hilalMemenuhiKriteria)
         assertEquals(
-            if (seharusnyaMemenuhi) "Hilal Mungkin Terlihat" else "Belum Memenuhi Kriteria — Istikmal",
+            if (seharusnyaMemenuhi) "Hilal Sudah Imkan" else "Hilal Belum Imkan",
             result.statusBadge
         )
     }

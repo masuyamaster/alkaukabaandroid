@@ -13,7 +13,7 @@ data class HilalInput(
 data class HilalResult(
     val bulanHijriyahLabel: String, // Label bulan Hijriyah yang dicek, mis. "Menjelang Ramadhan 1447 H"
     val tanggalGhurubLabel: String, // Tanggal Masehi ghurub markaz yang dipakai, mis. "29 Februari 2026"
-    val statusBadge: String, // "Hilal Mungkin Terlihat" / "Belum Memenuhi Kriteria — Istikmal"
+    val statusBadge: String, // "Hilal Sudah Imkan" / "Hilal Belum Imkan"
     val hilalMemenuhiKriteria: Boolean,
     val tinggiHilal: Double, // Tinggi hilal mar'i (topocentric, derajat)
     val elongasi: Double, // Elongasi bulan-matahari (derajat)

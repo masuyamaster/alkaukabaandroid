@@ -25,10 +25,30 @@ class SolarEclipseAdapter : RecyclerView.Adapter<SolarEclipseAdapter.ViewHolder>
             val context = binding.root.context
             binding.tvTitle.text = "☀️ Gerhana Matahari ${item.kindLabel}"
             binding.tvDate.text = "📅 ${item.peakDateLabel}"
-            binding.tvPartialBegin.text = "${item.partialBeginLabel.substringAfter(", ")} WIB"
             binding.tvPeakTime.text = "${item.peakTimeLabel.substringAfter(", ")} WIB"
-            binding.tvPartialEnd.text = "${item.partialEndLabel.substringAfter(", ")} WIB"
-            binding.tvMagnitude.text = "%.1f%%".format(Locale.US, item.magnitudePercent)
+
+            // partialBegin/End & magnitude null kalau event ini tidak punya sirkumstansi lokal
+            // di markaz (lihat EclipseCalculator) -> sembunyikan baris terkait, bukan tampilkan "-".
+            if (item.partialBeginLabel != null) {
+                binding.rowPartialBegin.visibility = View.VISIBLE
+                binding.tvPartialBegin.text = "${item.partialBeginLabel.substringAfter(", ")} WIB"
+            } else {
+                binding.rowPartialBegin.visibility = View.GONE
+            }
+
+            if (item.partialEndLabel != null) {
+                binding.rowPartialEnd.visibility = View.VISIBLE
+                binding.tvPartialEnd.text = "${item.partialEndLabel.substringAfter(", ")} WIB"
+            } else {
+                binding.rowPartialEnd.visibility = View.GONE
+            }
+
+            if (item.magnitudePercent != null) {
+                binding.rowMagnitude.visibility = View.VISIBLE
+                binding.tvMagnitude.text = "%.1f%%".format(Locale.US, item.magnitudePercent)
+            } else {
+                binding.rowMagnitude.visibility = View.GONE
+            }
 
             if (item.totalBeginLabel != null && item.totalEndLabel != null) {
                 binding.rowTotalRange.visibility = View.VISIBLE
@@ -47,6 +67,12 @@ class SolarEclipseAdapter : RecyclerView.Adapter<SolarEclipseAdapter.ViewHolder>
                 binding.tvVisibility.text = "🚫 Tidak terlihat dari lokasimu"
                 binding.tvVisibility.setBackgroundResource(R.drawable.bg_pill_red)
                 binding.tvVisibility.setTextColor(ContextCompat.getColor(context, R.color.pill_red_text))
+            }
+
+            binding.tvVisibleRegions.text = if (item.visibleRegions.isNotEmpty()) {
+                "🌍 Terlihat dari: ${item.visibleRegions.joinToString(", ")}"
+            } else {
+                "🌍 Di luar wilayah acuan (kemungkinan cuma teramati di kutub/lautan)"
             }
         }
     }

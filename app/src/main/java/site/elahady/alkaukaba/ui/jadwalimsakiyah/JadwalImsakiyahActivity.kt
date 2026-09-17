@@ -134,7 +134,7 @@ class JadwalImsakiyahActivity : AppCompatActivity() {
             cellBinding.root.setTypeface(null, Typeface.BOLD)
         } else {
             val colorEven = ContextCompat.getColor(this, R.color.white)
-            val colorOdd = ContextCompat.getColor(this, R.color.input_inline_bg)
+            val colorOdd = ContextCompat.getColor(this, R.color.card_gold_tint)
             cellBinding.root.setBackgroundColor(if (rowIndex % 2 == 0) colorEven else colorOdd)
         }
         return cellBinding.root
@@ -162,7 +162,7 @@ class JadwalImsakiyahActivity : AppCompatActivity() {
     private fun buildDataRow(row: ImsakiyahRow, index: Int): View {
         val rowBinding = ItemImsakiyahRowBinding.inflate(layoutInflater, binding.layoutImsakiyahTable, false)
         val colorEven = ContextCompat.getColor(this, R.color.white)
-        val colorOdd = ContextCompat.getColor(this, R.color.input_inline_bg)
+        val colorOdd = ContextCompat.getColor(this, R.color.card_gold_tint)
 
         rowBinding.rowRoot.setBackgroundColor(if (index % 2 == 0) colorEven else colorOdd)
         val timeViews = listOf(
