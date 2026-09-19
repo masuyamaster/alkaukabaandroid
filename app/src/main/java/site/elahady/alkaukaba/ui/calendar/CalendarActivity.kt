@@ -1,12 +1,16 @@
 package site.elahady.alkaukaba.ui.calendar
 
+import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.HolidayAdapter
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.NationalHolidayRetrofitClient
 import site.elahady.alkaukaba.api.RetrofitClient
 import site.elahady.alkaukaba.databinding.ActivityCalendarBinding
+import site.elahady.alkaukaba.model.EventJenis
+import site.elahady.alkaukaba.utils.AstronomicalEventCalculator
 import site.elahady.alkaukaba.utils.HijriHolidayTranslator
+import site.elahady.alkaukaba.utils.toHolidayItem
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.Editable
@@ -14,6 +18,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
@@ -35,6 +40,7 @@ class CalendarActivity : AppCompatActivity() {
     private var originalList: List<HolidayItem> = listOf()
     private var filterStartDate: Date? = null
     private var filterEndDate: Date? = null
+    private var selectedJenis: EventJenis? = null // null = Semua
 
     private val repository by lazy {
         PrayerRepository(RetrofitClient.instance, applicationContext)
@@ -106,6 +112,31 @@ class CalendarActivity : AppCompatActivity() {
             binding.btnResetDate.visibility = View.GONE
             applyFilter()
         }
+
+        // 5. Filter Jenis Event
+        binding.chipSemua.setOnClickListener { selectJenis(null) }
+        binding.chipHariBesar.setOnClickListener { selectJenis(EventJenis.HARI_BESAR) }
+        binding.chipAstronomi.setOnClickListener { selectJenis(EventJenis.ASTRONOMI) }
+        updateJenisChips()
+    }
+
+    private fun selectJenis(jenis: EventJenis?) {
+        selectedJenis = jenis
+        updateJenisChips()
+        applyFilter()
+    }
+
+    private fun updateJenisChips() {
+        val chips = listOf(
+            binding.chipSemua to null,
+            binding.chipHariBesar to EventJenis.HARI_BESAR,
+            binding.chipAstronomi to EventJenis.ASTRONOMI
+        )
+        chips.forEach { (chip, jenis) ->
+            val active = jenis == selectedJenis
+            chip.setBackgroundResource(if (active) R.drawable.bg_tab_gold_active else R.drawable.bg_input_pill_light)
+            chip.setTextColor(ContextCompat.getColor(this, if (active) R.color.navy_dongker else R.color.text_secondary))
+        }
     }
 
     private fun showDatePicker(onDateSelected: (Date) -> Unit) {
@@ -148,8 +179,11 @@ class CalendarActivity : AppCompatActivity() {
                 }
             }
 
+            // 3. Filter Jenis (Semua / Hari Besar / Astronomi)
+            val matchJenis = selectedJenis == null || item.jenis == selectedJenis
+
             // Gabungkan kondisi (AND)
-            matchName && matchDate
+            matchName && matchDate && matchJenis
         }
 
         adapter.setData(filteredList)
@@ -173,31 +207,37 @@ class CalendarActivity : AppCompatActivity() {
             val todayStr = outputDateFormat.format(today.time)
 
             try {
-                for (month in currentMonth..12) {
-                    val response = repository.getIslamicHolidays(lat, lng, month, currentYear)
-                    if (response.isSuccessful && response.body() != null) {
-                        val rawData = response.body()!!.data
-                        val monthlyHolidays = rawData
-                            .filter { it.date.hijri.holidays.isNotEmpty() }
-                            .mapNotNull { data ->
-                                try {
-                                    val dateObj = apiDateFormat.parse(data.date.readable)
-                                    if (dateObj != null) {
-                                        val holidayNames = HijriHolidayTranslator.translateJoined(
-                                            data.date.hijri.holidays.joinToString(", ")
-                                        )
-                                        val hijriString = "${data.date.hijri.day} ${data.date.hijri.month.en} ${data.date.hijri.year} H"
-                                        HolidayItem(
-                                            tanggal = outputDateFormat.format(dateObj),
-                                            tanggalHijriah = hijriString,
-                                            keterangan = holidayNames,
-                                            is_cuti = true
-                                        )
-                                    } else null
-                                } catch (e: Exception) { null }
-                            }
-                        allHolidays.addAll(monthlyHolidays)
+                try {
+                    for (month in currentMonth..12) {
+                        val response = repository.getIslamicHolidays(lat, lng, month, currentYear)
+                        if (response.isSuccessful && response.body() != null) {
+                            val rawData = response.body()!!.data
+                            val monthlyHolidays = rawData
+                                .filter { it.date.hijri.holidays.isNotEmpty() }
+                                .mapNotNull { data ->
+                                    try {
+                                        val dateObj = apiDateFormat.parse(data.date.readable)
+                                        if (dateObj != null) {
+                                            val holidayNames = HijriHolidayTranslator.translateJoined(
+                                                data.date.hijri.holidays.joinToString(", ")
+                                            )
+                                            val hijriString = "${data.date.hijri.day} ${data.date.hijri.month.en} ${data.date.hijri.year} H"
+                                            HolidayItem(
+                                                tanggal = outputDateFormat.format(dateObj),
+                                                tanggalHijriah = hijriString,
+                                                keterangan = holidayNames,
+                                                is_cuti = true
+                                            )
+                                        } else null
+                                    } catch (e: Exception) { null }
+                                }
+                            allHolidays.addAll(monthlyHolidays)
+                        }
                     }
+                } catch (e: Exception) {
+                    // Aladhan gagal (offline dsb.) — event astronomi di bawah dihitung lokal,
+                    // jadi daftar tetap tidak kosong.
+                    e.printStackTrace()
                 }
 
                 // Hari libur nasional Indonesia (non-Islam: Natal, Tahun Baru Masehi, dll)
@@ -222,10 +262,33 @@ class CalendarActivity : AppCompatActivity() {
                     e.printStackTrace()
                 }
 
+                // Fenomena astronomi (Hari Tanpa Bayangan, ekuinoks, oposisi, dll) — hisab lokal,
+                // sampai akhir tahun berjalan seperti hari besar di atas.
+                try {
+                    val zone = TimeZone.getDefault()
+                    val startOfToday = Calendar.getInstance(zone).apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    val startOfNextYear = Calendar.getInstance(zone).apply {
+                        clear()
+                        set(currentYear + 1, Calendar.JANUARY, 1)
+                    }
+                    allHolidays.addAll(
+                        AstronomicalEventCalculator
+                            .calculate(lat, lng, 0.0, startOfToday.timeInMillis, startOfNextYear.timeInMillis, zone)
+                            .map { it.toHolidayItem(zone) }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
 
-                    // Hanya tampilkan hari besar dari hari ini dan seterusnya
+                    // Hanya tampilkan event dari hari ini dan seterusnya
                     val upcomingHolidays = allHolidays
                         .filter { it.tanggal >= todayStr }
                         .sortedBy { it.tanggal }
@@ -234,8 +297,8 @@ class CalendarActivity : AppCompatActivity() {
                         // SIMPAN KE ORIGINAL LIST
                         originalList = upcomingHolidays
 
-                        // Tampilkan semua data pertama kali (tanpa filter)
-                        adapter.setData(originalList)
+                        // Tampilkan data dengan filter yang sedang aktif (default: semua)
+                        applyFilter()
                     } else {
                         Toast.makeText(this@CalendarActivity, "Tidak ada data", Toast.LENGTH_SHORT).show()
                     }

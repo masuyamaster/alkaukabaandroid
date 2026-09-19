@@ -4,11 +4,13 @@ import site.elahady.alkaukaba.repo.PrayerRepository
 import site.elahady.alkaukaba.adapter.DayUIModel
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.api.Timings
+import site.elahady.alkaukaba.utils.AstronomicalEventCalculator
 import site.elahady.alkaukaba.utils.HijriCalendarEngine
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.HijriHolidayTranslator
 import site.elahady.alkaukaba.utils.JavaneseCalendarUtil
 import site.elahady.alkaukaba.utils.Resource
+import site.elahady.alkaukaba.utils.toHolidayItem
 import android.location.Geocoder
 import io.github.cosinekitty.astronomy.Observer
 import androidx.lifecycle.LiveData
@@ -191,74 +193,88 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         return cal.time
     }
 
-    fun fetchUpcomingIslamicHolidays(lat: Double, lng: Double) {
+    /**
+     * Preview "Event Besar Segera" di beranda: 3 event terdekat dari hari besar Islam (Aladhan,
+     * bulan berjalan + bulan depan) digabung dengan fenomena astronomi 60 hari ke depan
+     * (dihitung lokal). Kalau Aladhan gagal, event astronomi tetap tampil.
+     */
+    fun fetchUpcomingEvents(lat: Double, lng: Double) {
         _holidayPreview.postValue(Resource.Loading())
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val cal = Calendar.getInstance()
-                val currentMonth = cal.get(Calendar.MONTH) + 1
-                val currentYear = cal.get(Calendar.YEAR)
+            val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
+            val outputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val todayStr = outputDateFormat.format(Date())
 
-                val response = repository.getIslamicHolidays(lat, lng, currentMonth, currentYear)
+            val events = mutableListOf<HolidayItem>()
+            var failureMessage: String? = null
 
-                if (response.isSuccessful && response.body() != null) {
-                    val rawData = response.body()!!.data
-                    val apiDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
-                    val outputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            // 1. Hari besar Islam. Bulan depan ikut diambil supaya "segera" tidak kosong di
+            // akhir bulan; kegagalan satu bulan tidak membatalkan yang lain.
+            for (monthOffset in 0..1) {
+                try {
+                    val cal = Calendar.getInstance()
+                    cal.set(Calendar.DAY_OF_MONTH, 1)
+                    cal.add(Calendar.MONTH, monthOffset)
 
-                    val today = Date()
+                    val response = repository.getIslamicHolidays(
+                        lat, lng, cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR)
+                    )
+                    if (response.isSuccessful && response.body() != null) {
+                        response.body()!!.data
+                            .filter { it.date.hijri.holidays.isNotEmpty() }
+                            .forEach { data ->
+                                val dateObj = try {
+                                    apiDateFormat.parse(data.date.readable)
+                                } catch (e: Exception) { null } ?: return@forEach
 
-                    val islamicHolidays = rawData
-                        .asSequence()
-                        .filter {
-                            it.date.hijri.holidays.isNotEmpty()
-                        }
-                        .map { data ->
-                            val dateObj = try {
-                                apiDateFormat.parse(data.date.readable)
-                            } catch (e: Exception) { null }
-
-                            if (dateObj == null) return@map null
-
-                            val holidayNames = HijriHolidayTranslator.translateJoined(
-                                data.date.hijri.holidays.joinToString(", ")
-                            )
-                            val hijriDay = data.date.hijri.day
-                            val hijriMonth = data.date.hijri.month.en
-                            val hijriYear = data.date.hijri.year
-                            val hijriString = "$hijriDay $hijriMonth $hijriYear H"
-
-                            HolidayItem(
-                                tanggal = outputDateFormat.format(dateObj),
-                                tanggalHijriah = hijriString,
-                                keterangan = holidayNames,
-                                is_cuti = true
-                            )
-                        }
-                        .filterNotNull() // Hapus data yang null akibat gagal parsing
-                        .filter {
-                            // Logic filter tanggal (Convert string balik ke Date untuk compare)
-                            val itemDate = outputDateFormat.parse(it.tanggal)
-                            itemDate != null && !itemDate.before(today)
-                        }
-                        .sortedBy { it.tanggal }
-                        .take(3)
-                        .toList()
-
-                    if (islamicHolidays.isEmpty()) {
-                        _holidayPreview.postValue(Resource.Error("Tidak ada hari besar Islam bulan ini."))
+                                events.add(
+                                    HolidayItem(
+                                        tanggal = outputDateFormat.format(dateObj),
+                                        tanggalHijriah = "${data.date.hijri.day} ${data.date.hijri.month.en} ${data.date.hijri.year} H",
+                                        keterangan = HijriHolidayTranslator.translateJoined(
+                                            data.date.hijri.holidays.joinToString(", ")
+                                        ),
+                                        is_cuti = true
+                                    )
+                                )
+                            }
                     } else {
-                        _holidayPreview.postValue(Resource.Success(islamicHolidays))
+                        failureMessage = response.message()
                     }
-
-                } else {
-                    _holidayPreview.postValue(Resource.Error(response.message()))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    failureMessage = e.message ?: "Gagal memuat data"
+                    println("error vm :: " + e.message)
                 }
+            }
+
+            // 2. Fenomena astronomi (hisab lokal, tanpa API)
+            try {
+                val zone = TimeZone.getDefault()
+                val startOfToday = Calendar.getInstance(zone).apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                val endMillis = startOfToday + TimeUnit.DAYS.toMillis(UPCOMING_ASTRONOMY_DAYS)
+
+                AstronomicalEventCalculator.calculate(lat, lng, 0.0, startOfToday, endMillis, zone)
+                    .mapTo(events) { it.toHolidayItem(zone) }
             } catch (e: Exception) {
                 e.printStackTrace()
-                _holidayPreview.postValue(Resource.Error(e.message ?: "Gagal memuat data"))
-                println("error vm :: " + e.message)
+            }
+
+            val upcoming = events
+                .filter { it.tanggal >= todayStr }
+                .sortedBy { it.tanggal }
+                .take(3)
+
+            if (upcoming.isEmpty()) {
+                _holidayPreview.postValue(Resource.Error(failureMessage ?: "Tidak ada event besar dalam waktu dekat."))
+            } else {
+                _holidayPreview.postValue(Resource.Success(upcoming))
             }
         }
     }
@@ -401,6 +417,10 @@ class MainViewModel(private val repository: PrayerRepository) : ViewModel() {
         _monthYearTitle.postValue(format.format(currentCalendar.time))
     }
 
+    private companion object {
+        /** Jendela event astronomi di preview beranda (hari ke depan dari hari ini). */
+        const val UPCOMING_ASTRONOMY_DAYS = 60L
+    }
 }
 
 data class PrayerUIModel(

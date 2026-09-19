@@ -1,14 +1,21 @@
-# Kalender & Hari Besar Islam
+# Kalender & Event Besar
 
 ## 1. Ringkasan
 
 **Fitur**: Kalender — widget kalender bulanan (grid tanggal Masehi + Hijriah)
-di beranda, plus daftar Hari Besar Islam mendatang (preview di beranda dan
-halaman "lihat semua" berupa list yang bisa dicari/difilter).
+di beranda, plus daftar **Event Besar** mendatang (preview "Event Besar
+Segera" di beranda dan halaman "lihat semua" berupa list yang bisa
+dicari/difilter). "Event Besar" = hari besar Islam + hari libur nasional +
+**fenomena astronomi** (Hari Tanpa Bayangan, ekuinoks/solstis, Purnama Panen,
+oposisi planet, puncak hujan meteor, gerhana) dalam satu daftar, dibedakan
+lewat filter jenis (Semua / Hari Besar / Astronomi).
 
 Fitur ini memberi user gambaran tanggal Hijriah hari ini/bulan berjalan tanpa
 buka app kalender terpisah, sekaligus mengingatkan hari besar Islam yang akan
-datang (mis. Isra Mi'raj, Maulid Nabi) supaya user tidak kelewatan.
+datang (mis. Isra Mi'raj, Maulid Nabi) dan fenomena falak yang bisa diamati
+(mis. hari saat Matahari tepat di atas kepala) supaya user tidak kelewatan.
+Nama fitur sebelumnya "Kalender & Hari Besar Islam"; nama file dokumen ini
+tetap `kalender.md`.
 
 ## 2. Entry point & prasyarat
 
@@ -16,7 +23,7 @@ datang (mis. Isra Mi'raj, Maulid Nabi) supaya user tidak kelewatan.
   teratas) tampil langsung di `MainActivity` (beranda), dipicu otomatis saat
   lokasi user didapat (lihat `fetchDataByCoordinate()` yang memanggil
   `viewModel.initCalendar(lat, lon)` dan
-  `viewModel.fetchUpcomingIslamicHolidays(lat, lon)`).
+  `viewModel.fetchUpcomingEvents(lat, lon)`).
 - Tombol prev/next bulan (`btnPrevMonth`/`btnNextMonth`) di widget beranda
   memanggil `viewModel.changeMonth(-1/+1)` — hanya mengubah grid kalender,
   tidak mempengaruhi preview hari besar (preview selalu "bulan berjalan saat
@@ -26,11 +33,11 @@ datang (mis. Isra Mi'raj, Maulid Nabi) supaya user tidak kelewatan.
   `fetchDataByCoordinate()`) mendeteksi hari ini ada di daftar hari libur
   Hijriah dari response Aladhan, atau (fallback) ada di map hardcode
   `checkNationalHoliday()` (cuma 2 entri: 17 Agustus & 1 Januari).
-- Halaman "lihat semua hari besar" (`CalendarActivity`) dibuka dari 3 tempat
-  di `MainActivity`: `tvLabelCalendar`, `tvLabelDetailCalendar` (lewat
-  `openCalendarPage()`), dan `btnSeeAllHolidays` (lewat listener terpisah di
-  `setupHolidayPreview()`) — lihat section 3 untuk perbedaan extra yang
-  dibawa masing-masing.
+- Halaman "lihat semua event besar" (`CalendarActivity`) dibuka dari 3 tempat
+  di `MainActivity`: `tvLabelCalendar`, `tvLabelDetailCalendar`, dan
+  `btnSeeAllHolidays` — ketiganya lewat `openCalendarPage()` sehingga selalu
+  membawa extra `LATITUDE`/`LONGITUDE` (penting: Hari Tanpa Bayangan dihitung
+  per koordinat).
 - Prasyarat: permission lokasi (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`,
   sudah diminta di alur umum `MainActivity`) — dipakai untuk parameter
   `lat`/`lng` ke Aladhan API karena posisi Hijriah/metode hisab dipengaruhi
@@ -42,9 +49,11 @@ datang (mis. Isra Mi'raj, Maulid Nabi) supaya user tidak kelewatan.
 - `MainViewModel.initCalendar(lat, lng)` / `changeMonth(amount)` /
   `fetchMonthlyCalendar()` (private) — mengisi grid kalender bulanan
   (`calendarData`, `hijriTitle`, `monthYearTitle`) di widget beranda.
-- `MainViewModel.fetchUpcomingIslamicHolidays(lat, lng)` — mengisi preview
-  hari besar (`holidayPreview`, 3 item teratas, bulan berjalan saja) di
-  beranda.
+- `MainViewModel.fetchUpcomingEvents(lat, lng)` — mengisi preview "Event Besar
+  Segera" (`holidayPreview`, 3 item teratas) di beranda: hari besar Islam
+  bulan berjalan + bulan depan (Aladhan) digabung dengan fenomena astronomi
+  60 hari ke depan (`UPCOMING_ASTRONOMY_DAYS`), diurut menurut tanggal.
+  Sebelumnya bernama `fetchUpcomingIslamicHolidays` dan hanya bulan berjalan.
 - `PrayerRepository.getIslamicHolidays(lat, lng, month, year)` — **satu-satunya**
   jalur data untuk grid kalender maupun preview/list hari besar (lihat
   penjelasan section 4). Method ini murni memanggil `api.getCalendar(...)` ke
@@ -55,14 +64,24 @@ datang (mis. Isra Mi'raj, Maulid Nabi) supaya user tidak kelewatan.
   berulang untuk tiap bulan dari bulan berjalan sampai Desember tahun
   berjalan, lalu digabung jadi satu list hari besar mendatang. Ini titik
   colok kalau mau ubah rentang tahun (mis. lanjut ke tahun depan juga).
+  Event astronomi ditambahkan dari `AstronomicalEventCalculator` untuk
+  rentang yang sama (hari ini s.d. 31 Desember), dan filter jenis
+  (`selectedJenis`, chip Semua/Hari Besar/Astronomi) ikut diterapkan di
+  `applyFilter()`.
+- `utils/AstronomicalEventCalculator.calculate(lat, lng, height, startMillis,
+  endMillis, zone)` — hisab lokal semua fenomena astronomi dalam rentang;
+  dipanggil dari `MainViewModel.fetchUpcomingEvents()` dan
+  `CalendarActivity.fetchYearlyHolidays()`. Ekstensi
+  `AstronomicalEvent.toHolidayItem(zone)` mengubah hasilnya jadi `HolidayItem`
+  untuk adapter yang sama dengan hari besar.
 - Navigasi:
   - `MainActivity.tvLabelCalendar` / `tvLabelDetailCalendar` →
     `openCalendarPage()` → `Intent` ke `CalendarActivity` **dengan** extra
     `LATITUDE`/`LONGITUDE` (double, dari `MainActivity.latitude/longitude`
     yang sudah terisi dari lokasi user).
-  - `MainActivity.btnSeeAllHolidays` (di `setupHolidayPreview()`) → `Intent`
-    ke `CalendarActivity` **tanpa** extra apa pun — lihat known issue di
-    section 7.
+  - `MainActivity.btnSeeAllHolidays` (di `setupHolidayPreview()`) →
+    `openCalendarPage()` juga (sebelumnya `Intent` polos tanpa extra
+    lat/lng; sudah diperbaiki bersamaan fitur Event Besar).
   - `CalendarActivity.btnBack` → `finish()` (kembali ke `MainActivity`).
 
 ## 4. Struktur & alur data
@@ -82,14 +101,62 @@ dengan cara berbeda:
 - `MainViewModel.fetchMonthlyCalendar()` mengubah tiap hari jadi `DayUIModel`
   (dipakai `CalendarAdapter`, grid 7 kolom) — termasuk hari tanpa hari besar
   (`isHoliday = false`, cuma tampil titik/dot kalau `isHoliday = true`).
-- `MainViewModel.fetchUpcomingIslamicHolidays()` **memfilter** hanya hari
-  yang `hijri.holidays` tidak kosong, ambil 3 teratas ke depan → jadi
+- `MainViewModel.fetchUpcomingEvents()` **memfilter** hanya hari
+  yang `hijri.holidays` tidak kosong (bulan berjalan + bulan depan), digabung
+  dengan event astronomi, ambil 3 teratas ke depan → jadi
   `HolidayItem` (dipakai `HolidayAdapter`, list card).
 - `CalendarActivity.fetchYearlyHolidays()` melakukan filter yang sama
   (`hijri.holidays` tidak kosong) tapi memanggil `getIslamicHolidays()`
   berulang untuk semua bulan sisa tahun berjalan, tanpa batas jumlah item,
   plus fitur cari (`etSearch`) dan filter rentang tanggal
   (`btnStartDate`/`btnEndDate`).
+
+### Event Besar: fenomena astronomi (`AstronomicalEventCalculator`)
+
+Dua sumber data berbeda hidup berdampingan dalam satu list: hari besar
+(Aladhan/Nager.Date, butuh internet) dan fenomena astronomi (hisab lokal
+memakai Astronomy Engine `utils/Astronomy.kt`, **tanpa API**, jadi tetap
+tampil offline — kalau Aladhan gagal, `CalendarActivity` & preview beranda
+tidak lagi error total, event astronomi tetap muncul). Keduanya dibedakan
+lewat `HolidayItem.jenis` (`EventJenis.HARI_BESAR` / `ASTRONOMI`, default
+`HARI_BESAR` supaya semua pemanggil lama tetap valid) dan `HolidayItem.catatan`
+(baris penjelasan tambahan, hanya diisi event astronomi; `tvNote` di
+`item_holiday.xml`, disembunyikan kalau kosong). Keputusan desain (dari
+pertanyaan terbuka di task Notion): **satu daftar dengan filter jenis**, bukan
+dua halaman terpisah.
+
+Cakupan `calculate()`:
+
+| Kategori (`AstronomiKategori`) | Cara hitung | Bergantung lokasi? |
+|---|---|---|
+| `HARI_TANPA_BAYANGAN` | Tiap hari lokal disampel pada kulminasi Matahari (`searchHourAngle(Sun, hourAngle=0)`), lalu dicari hari dengan \|lintang − deklinasi Matahari\| minimum lokal ≤ 0,27° (jari-jari sudut Matahari) | **Ya** — hanya muncul di lintang tropis (dua kali setahun; Tokyo/Melbourne tidak dapat) |
+| `EKUINOKS_SOLSTIS` | `seasons(year)` | Tidak |
+| `PURNAMA` | Purnama (`searchMoonPhase(180°)`) terdekat ke ekuinoks September = Purnama Panen / Harvest Moon | Tidak |
+| `OPOSISI_PLANET` | `searchRelativeLongitude(planet, 0°)` untuk Mars, Jupiter, Saturnus, Uranus, Neptunus | Tidak |
+| `HUJAN_METEOR` | Tanggal Matahari mencapai λ☉ puncak (`searchSunLongitude`) untuk 12 hujan meteor utama; tabel λ☉ mengacu kalender IMO 2026 | Tidak |
+| `GERHANA` | `lunarEclipsesAfter` + `globalSolarEclipsesAfter` (global; keterlihatan per lokasi tetap di menu Gerhana) | Tidak |
+
+Catatan penting:
+
+- Jam pada keterangan diformat di zona waktu perangkat. Singkatan zona
+  Indonesia (`Asia/Jakarta`/`Pontianak` → WIB, `Makassar` → WITA, `Jayapura` →
+  WIT) dipetakan manual karena emulator/perangkat tanpa data locale `id`
+  mengembalikan "GMT+07:00". Zona lain jatuh ke nama bawaan sistem.
+- Puncak hujan meteor adalah **perkiraan** dari λ☉ (waktu puncak nyata bisa
+  meleset) — jam sengaja tidak ditampilkan untuk kategori ini.
+- **Hujan Meteor Sextantid**: sumber tidak konsisten. Kalender IMO 2022 memberi
+  puncak 27 September (λ☉ 184,3°), sedangkan kalender IMO 2026 (dan daftar
+  Wikipedia) memberi 1 Oktober (λ☉ 188°). Kode memakai nilai IMO 2026 (188°);
+  task Notion asli menyebut 27 September. Tandai "puncaknya tidak pasti" di
+  keterangannya. Ganti `METEOR_SHOWERS` kalau kelak ada rujukan yang lebih
+  pasti.
+- **Okultasi Venus oleh Bulan sengaja belum digabung.** `OccultationCalculator`
+  memindai konjungsi tiap 6 jam dengan paralaks topocentric — terlalu berat
+  dijalankan tiap kali beranda dibuka, dan API-nya berhenti di 3 konjungsi
+  pertama (termasuk yang bukan okultasi nyata), bukan per rentang tanggal.
+  Fenomena itu tetap hanya ada di menu Okultasi.
+- Kata "Purnama Panen" mengikuti istilah belahan bumi utara; secara astronomi
+  cuma "purnama terdekat ke ekuinoks September".
 
 ### `CalendarActivity` = halaman list "lihat semua", bukan grid bulan penuh
 
@@ -109,7 +176,7 @@ variasi namanya sangat banyak. `utils/HijriHolidayTranslator.kt`
 menerjemahkannya sebelum ditampilkan, dipanggil dari tiga tempat yang
 sebelumnya masing-masing melakukan `joinToString(", ")` mentah:
 `MainViewModel.fetchPrayerData()` (toast `holidayAlert`),
-`MainViewModel.fetchUpcomingIslamicHolidays()` (preview beranda), dan
+`MainViewModel.fetchUpcomingEvents()` (preview beranda), dan
 `CalendarActivity.fetchYearlyHolidays()` (list lengkap). Dua lapis aturan:
 
 - `exactTranslations`: map manual presisi untuk hari besar Islam umum (Idul
@@ -144,15 +211,15 @@ dan hari besar Islam (Idul Fitri, dll) tetap dari Aladhan seperti biasa
 (tidak dobel karena Nager.Date tidak menyertakannya). Fetch ini dibungkus
 `try/catch` terpisah — kalau gagal (API down dsb.), hari besar Islam tetap
 tampil normal. Panggilan ini **hanya** ada di `CalendarActivity`, belum di
-preview beranda (`MainViewModel.fetchUpcomingIslamicHolidays()`) maupun
+preview beranda (`MainViewModel.fetchUpcomingEvents()`) maupun
 `checkNationalHoliday()` (lihat known issue terkait di bawah, belum berubah).
 
 File yang terlibat:
 
 | File | Peran |
 |---|---|
-| `MainActivity.kt` | Host widget kalender bulanan (`rvWeeklyCalendar`) & preview hari besar (`rvHolidayPreview`) di beranda; trigger `initCalendar`/`fetchUpcomingIslamicHolidays` saat lokasi didapat; navigasi ke `CalendarActivity` |
-| `viewmodel/MainViewModel.kt` | State beranda: `calendarData`/`hijriTitle`/`monthYearTitle` (grid), `holidayPreview` (list 3 item), `holidayAlert` (toast hari ini); logic `fetchMonthlyCalendar()` & `fetchUpcomingIslamicHolidays()`; menerjemahkan nama hari besar lewat `HijriHolidayTranslator` |
+| `MainActivity.kt` | Host widget kalender bulanan (`rvWeeklyCalendar`) & preview hari besar (`rvHolidayPreview`) di beranda; trigger `initCalendar`/`fetchUpcomingEvents` saat lokasi didapat; navigasi ke `CalendarActivity` |
+| `viewmodel/MainViewModel.kt` | State beranda: `calendarData`/`hijriTitle`/`monthYearTitle` (grid), `holidayPreview` (list 3 item), `holidayAlert` (toast hari ini); logic `fetchMonthlyCalendar()` & `fetchUpcomingEvents()`; menerjemahkan nama hari besar lewat `HijriHolidayTranslator` |
 | `repo/PrayerRepository.kt` (`getIslamicHolidays`) | Jembatan tunggal ke Aladhan `api.getCalendar(lat, lng, method, month, year, methodSettings)` — dipakai oleh grid kalender, preview hari besar, dan `CalendarActivity` |
 | `adapter/CalendarAdapter.kt` | Adapter grid 7 kolom (`DayUIModel`: tanggal Masehi, tanggal Hijriah, flag hari ini/hari besar/slot kosong) — dipakai di `MainActivity` saja |
 | `adapter/HolidayAdapter.kt` | Adapter list card hari besar (`HolidayItem`: tanggal, tanggal Hijriah, keterangan) — dipakai di `MainActivity` (preview) dan `CalendarActivity` (list lengkap) |
@@ -160,6 +227,9 @@ File yang terlibat:
 | `api/HolidayApiService.kt` | Berisi `HolidayItem` (data class, dipakai luas). Dead code `HolidayApi`/`HolidayRetrofitClient` sudah dihapus |
 | `api/NationalHolidayApiService.kt` | `NationalHolidayApi`/`NationalHolidayRetrofitClient` ke Nager.Date (`date.nager.at`) untuk hari libur nasional Indonesia |
 | `utils/HijriHolidayTranslator.kt` | Terjemahan nama hari besar Hijriah Inggris → Indonesia (exact map + pattern replace) |
+| `utils/AstronomicalEventCalculator.kt` | Hisab lokal fenomena astronomi (Hari Tanpa Bayangan, ekuinoks/solstis, Purnama Panen, oposisi planet, hujan meteor, gerhana) + ekstensi `toHolidayItem()` |
+| `model/EventBesarModels.kt` | `EventJenis`, `AstronomiKategori`, `AstronomicalEvent` |
+| `app/src/test/.../utils/AstronomicalEventCalculatorTest.kt` | Golden test terhadap data riset Notion (Sept–Okt 2026) + invariant |
 | `res/layout/activity_calendar.xml` | Layout `CalendarActivity`: header, search box, date range filter, `RecyclerView` list — tanpa grid |
 
 Alur data (grid kalender beranda): `MainActivity.fetchDataByCoordinate()` →
@@ -170,18 +240,23 @@ minggu) → LiveData `calendarData` → `MainActivity` bind ke `CalendarAdapter`
 lewat `GridLayoutManager(7)`. Navigasi bulan (`changeMonth`) mengulang alur
 yang sama dengan `currentCalendar` yang sudah digeser.
 
-Alur data (preview hari besar beranda): `fetchDataByCoordinate()` →
-`viewModel.fetchUpcomingIslamicHolidays(lat, lng)` → panggil
-`getIslamicHolidays()` untuk bulan berjalan → filter hari yang punya
-`hijri.holidays`, filter tanggal >= hari ini, urutkan, `take(3)` →
+Alur data (preview event besar beranda): `fetchDataByCoordinate()` →
+`viewModel.fetchUpcomingEvents(lat, lng)` → panggil
+`getIslamicHolidays()` untuk bulan berjalan dan bulan depan (masing-masing
+`try/catch` sendiri) → filter hari yang punya `hijri.holidays`; lalu
+`AstronomicalEventCalculator.calculate()` untuk 60 hari ke depan → gabung,
+filter tanggal >= hari ini, urutkan, `take(3)` →
 `List<HolidayItem>` → LiveData `holidayPreview` → `MainActivity` bind ke
-`HolidayAdapter` di `rvHolidayPreview`.
+`HolidayAdapter` di `rvHolidayPreview`. `Resource.Error` hanya kalau
+gabungannya kosong.
 
 Alur data (halaman lihat semua): `CalendarActivity.onCreate()` → baca extra
 `LATITUDE`/`LONGITUDE` dari `Intent` (default Jakarta kalau tidak ada) →
 `fetchYearlyHolidays()` → loop `getIslamicHolidays()` per bulan (bulan
 berjalan s.d. Desember tahun berjalan) → gabung semua hasil, filter tanggal
->= hari ini, urutkan → `originalList` → `HolidayAdapter` di `rvHolidays`.
+>= hari ini, urutkan → `originalList` → `applyFilter()` → `HolidayAdapter` di
+`rvHolidays` (event astronomi ditambahkan ke `allHolidays` sebelum langkah
+ini, dari hari ini s.d. 1 Januari tahun depan).
 Search (`etSearch`) dan filter tanggal (`btnStartDate`/`btnEndDate`) bekerja
 di atas `originalList` yang sudah ada di memori (`applyFilter()`), tidak
 memanggil API lagi.
@@ -195,10 +270,14 @@ di `CalendarActivity`.
 
 ## 6. Testing
 
-Belum ada test otomatis untuk fitur ini — project cuma punya boilerplate
-`ExampleUnitTest.kt` (`app/src/test`) dan `ExampleInstrumentedTest.kt`
-(`app/src/androidTest`), tidak ada test nyata untuk kalender/hari besar sama
-sekali. Verifikasi saat ini manual:
+Bagian **event astronomi** punya test otomatis: `AstronomicalEventCalculatorTest`
+(16 test, golden/reference tanpa mock — lihat `docs/strategi-unit-test.md`
+Jalur 1). Contoh yang dicek: Hari Tanpa Bayangan Pontianak 23 Sep 2026,
+Jakarta ±9 Okt, Surabaya ±12 Okt; ekuinoks 23 Sep; Purnama Panen & oposisi
+Neptunus 26 Sep; tidak ada Hari Tanpa Bayangan di Tokyo/Melbourne; deteksi di
+tepi jendela; label zona WIB/WITA. Bagian hari besar Islam/nasional (Aladhan,
+Nager.Date, `HijriHolidayTranslator`) dan UI **belum** punya test otomatis.
+Verifikasi manual:
 
 1. Build & install debug APK (lihat `CLAUDE.md` root untuk perintah
    `gradlew`).
@@ -219,21 +298,19 @@ sekali. Verifikasi saat ini manual:
 6. Di `CalendarActivity`: coba search nama hari besar, filter rentang
    tanggal, dan reset filter → pastikan list ter-update sesuai tanpa network
    call baru (semua di memori).
+7. Tap chip "Astronomi" / "Hari Besar" / "Semua" → list hanya berisi jenis
+   yang dipilih (kartu astronomi punya ikon kilau + baris catatan jam
+   puncak). Buka dengan extra lokasi lain (mis. `adb shell am start -n
+   site.elahady.alkaukaba/.ui.calendar.CalendarActivity --ed LATITUDE -0.0267
+   --ed LONGITUDE 109.3425` untuk Pontianak) → tanggal Hari Tanpa Bayangan
+   berubah sesuai lintang.
 
 ## 7. Known issues & TODOs
 
-- [ ] **Extra `LATITUDE`/`LONGITUDE` hilang di jalur `btnSeeAllHolidays`.**
-      `MainActivity.setupHolidayPreview()` membuka `CalendarActivity` lewat
-      `Intent` polos tanpa extra lat/lng (baris ~239-242), sedangkan jalur
-      `tvLabelCalendar`/`tvLabelDetailCalendar` via `openCalendarPage()`
-      selalu membawa keduanya. `CalendarActivity` sendiri punya fallback
-      (`intent.getDoubleExtra("LATITUDE", -6.2088)` / default Jakarta), jadi
-      tidak crash — tapi kalau lokasi user jauh dari Jakarta, data hari besar
-      yang tampil dari tombol "lihat semua" di preview bisa beda (secara
-      astronomis, tergantung metode hisab) dari yang dilihat lewat label
-      kalender. Perbaikan: sertakan extra lat/lng juga di listener
-      `btnSeeAllHolidays`, idealnya pakai helper `openCalendarPage()` yang
-      sudah ada supaya tidak duplikasi.
+- [x] ~~**Extra `LATITUDE`/`LONGITUDE` hilang di jalur `btnSeeAllHolidays`.**~~
+      Sudah diperbaiki: listener-nya sekarang memakai `openCalendarPage()`
+      seperti dua jalur lain. Penting sejak ada Hari Tanpa Bayangan, karena
+      tanpa extra itu `CalendarActivity` jatuh ke default Jakarta.
 - [x] ~~**`api/HolidayApiService.kt` berisi dead code.**~~ Sudah diganti:
       dead code `HolidayApi`/`HolidayRetrofitClient` (API mati
       `api-harilibur.vercel.app`) dihapus, diganti
@@ -259,9 +336,21 @@ sekali. Verifikasi saat ini manual:
       dibuka di bulan Desember dan sudah tidak ada hari besar tersisa tahun
       itu, list akan kosong (toast "Tidak ada data") — tidak otomatis lanjut
       ke tahun berikutnya.
-- [ ] Preview hari besar (`holidayPreview`) hanya mengambil bulan berjalan
-      (tidak loop ke bulan berikutnya seperti `CalendarActivity`), jadi kalau
-      bulan ini kebetulan tidak ada hari besar Islam, preview di beranda
-      kosong meskipun bulan depan ada — beda perilaku dari halaman "lihat
-      semua" yang mencari sampai akhir tahun.
-- [ ] Belum ada test otomatis (lihat bagian Testing di atas).
+- [x] ~~Preview hari besar hanya mengambil bulan berjalan.~~ Sekarang bulan
+      berjalan + bulan depan (`fetchUpcomingEvents()`), digabung event
+      astronomi 60 hari. Sisa keterbatasan: hari besar Islam >1 bulan ke depan
+      tidak masuk preview (mereka tetap ada di halaman "lihat semua").
+- [ ] Belum ada test otomatis untuk sisi hari besar Islam/nasional dan UI
+      (lihat bagian Testing di atas; event astronomi sudah ter-test).
+- [ ] **Okultasi Venus belum masuk daftar Event Besar** — lihat catatan di
+      section 4 (butuh varian `OccultationCalculator` yang per-rentang tanggal
+      dan lebih ringan).
+- [ ] **Nilai puncak Sextantid perlu dikonfirmasi** ke sumber IMO terbaru
+      (27 Sep λ☉ 184,3° vs 1 Okt λ☉ 188°) — lihat section 4.
+- [ ] **Event astronomi ikut berhenti di akhir tahun berjalan**, sama seperti
+      hari besar — kalau known issue Desember di atas diperbaiki, ubah juga
+      `startOfNextYear` di `CalendarActivity.fetchYearlyHolidays()`.
+- [ ] Belum ada notifikasi/toast untuk event astronomi hari ini (toast
+      `holidayAlert` masih khusus hari besar Islam/nasional).
+- [ ] Zona waktu jam pada event memakai zona perangkat, bukan zona lokasi
+      override (mis. pilih lokasi di zona lain lewat Konfigurasi).

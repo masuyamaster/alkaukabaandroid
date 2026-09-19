@@ -1,8 +1,11 @@
 package site.elahady.alkaukaba.adapter
 
+import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.api.HolidayItem
 import site.elahady.alkaukaba.databinding.ItemHolidayBinding
+import site.elahady.alkaukaba.model.EventJenis
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
@@ -32,6 +35,14 @@ class HolidayAdapter : RecyclerView.Adapter<HolidayAdapter.ViewHolder>() {
 
             // Logika sederhana untuk label tipe (API ini dominan nasional/cuti bersama)
             binding.tvType.text = item.tanggalHijriah
+
+            // Catatan hanya diisi event astronomi (jam puncak + penjelasan singkat)
+            binding.tvNote.text = item.catatan
+            binding.tvNote.visibility = if (item.catatan.isNullOrBlank()) View.GONE else View.VISIBLE
+
+            binding.ivHolidayIcon.setImageResource(
+                if (item.jenis == EventJenis.ASTRONOMI) R.drawable.ic_sparkle else R.drawable.ic_menu_star
+            )
         }
     }
 

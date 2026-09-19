@@ -274,7 +274,7 @@ class MainActivity : AppCompatActivity() {
         latitude = lat
         longitude = lon
         viewModel.fetchPrayerData(lat, lon)
-        viewModel.fetchUpcomingIslamicHolidays(lat, lon)
+        viewModel.fetchUpcomingEvents(lat, lon)
         viewModel.initCalendar(lat, lon)
         updateMoonPhaseCardTilt(lat, lon)
         updateHeaderHijriDate(lat, lon)
@@ -405,10 +405,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnSeeAllHolidays.setOnClickListener {
-            val intent = Intent(this, CalendarActivity::class.java)
-            startActivity(intent)
-        }
+        // Lewat openCalendarPage() supaya lat/lng ikut terbawa — Hari Tanpa Bayangan
+        // dihitung per koordinat, tanpa extra ini jatuh ke default Jakarta.
+        binding.btnSeeAllHolidays.setOnClickListener { openCalendarPage() }
     }
 
     private fun setupMonthlyCalendar() {
