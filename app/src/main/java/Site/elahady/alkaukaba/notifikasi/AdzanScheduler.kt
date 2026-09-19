@@ -13,11 +13,12 @@ import java.util.Calendar
 object AdzanScheduler {
 
     const val EXTRA_PRAYER_NAME = "prayer_name"
+    const val PRAYER_SUBUH = "Subuh"
 
     // requestCode PendingIntent per waktu sholat, supaya alarm lama otomatis ter-replace
     // (bukan menumpuk) tiap kali dijadwalkan ulang.
     private val PRAYER_REQUEST_CODES = mapOf(
-        "Subuh" to 4101,
+        PRAYER_SUBUH to 4101,
         "Dzuhur" to 4102,
         "Ashar" to 4103,
         "Maghrib" to 4104,
@@ -27,7 +28,7 @@ object AdzanScheduler {
     // requestCode terpisah untuk alarm pengingat pra-adzan, supaya tidak bentrok dengan
     // PRAYER_REQUEST_CODES di atas (alarm adzan & reminder berjalan independen).
     private val PRE_ADZAN_REMINDER_REQUEST_CODES = mapOf(
-        "Subuh" to 5101,
+        PRAYER_SUBUH to 5101,
         "Dzuhur" to 5102,
         "Ashar" to 5103,
         "Maghrib" to 5104,
@@ -36,7 +37,7 @@ object AdzanScheduler {
 
     fun scheduleFromTimings(context: Context, timings: TimingPrayers) {
         val prayers = linkedMapOf(
-            "Subuh" to timings.subuh,
+            PRAYER_SUBUH to timings.subuh,
             "Dzuhur" to timings.dzuhur,
             "Ashar" to timings.ashar,
             "Maghrib" to timings.maghrib,

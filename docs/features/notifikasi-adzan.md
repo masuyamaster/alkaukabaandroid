@@ -73,7 +73,7 @@ kecuali `AlKaukabaApplication.kt` (root package):
 | `AdzanRefreshWorker.kt` | `CoroutineWorker` — fetch jadwal hari ini via `PrayerRepository`, resolve lokasi (manual/GPS/fallback Jakarta), lalu panggil `AdzanScheduler` |
 | `AdzanScheduler.kt` | Pasang `AlarmManager.setExactAndAllowWhileIdle` per waktu sholat, `PendingIntent` ke `AdzanAlarmReceiver` |
 | `AdzanAlarmReceiver.kt` | Diterima tepat saat alarm bunyi — baca `SessionManager.getAdzanSoundMode()` lalu branch ke Service/NotificationHelper |
-| `AdzanPlaybackService.kt` | Foreground service (`mediaPlayback`) — `MediaPlayer` play `res/raw/adzan_marrakesh.mp3` untuk mode Adzan Penuh, ada tombol Stop di notifikasi |
+| `AdzanPlaybackService.kt` | Foreground service (`mediaPlayback`) — `MediaPlayer` play `res/raw/adzan_mekkah_subuh.mp3` untuk Subuh, `res/raw/adzan_mekkah.mp3` untuk 4 waktu lain (dipilih dari `prayerName == AdzanScheduler.PRAYER_SUBUH`) di mode Adzan Penuh, ada tombol Stop di notifikasi |
 | `NotificationHelper.kt` | Definisi `NotificationChannel` + post notifikasi untuk mode Beep/Senyap/Pengingat Pra-Adzan |
 | `PreAdzanReminderReceiver.kt` | Diterima `reminderMinutes` sebelum waktu sholat — cek `SessionManager.isPreAdzanReminderEnabled()` lalu post notifikasi via `NotificationHelper.postPreAdzanReminderNotification()` |
 | `BootReceiver.kt` | `BOOT_COMPLETED`/`MY_PACKAGE_REPLACED` — jadwalkan ulang alarm (hilang saat reboot), termasuk alarm reminder |
@@ -145,13 +145,26 @@ di kelas itu, SharedPreferences biasa, bukan DataStore).
   yang baru (lihat lewat `adb shell dumpsys alarm | grep alkaukaba`).
 
 ### 7. Known issues & TODOs
-- Hanya **1 pilihan "Adzan Penuh"** (rekaman CC0 "EveningCallToPrayer
-  Marrakesh 5.1" oleh blaukreuz, freesound.org/people/blaukreuz/sounds/520233,
-  durasi 3:36) — bukan multi-muadzin seperti rencana awal di Notion. Nama qari
-  terkenal (Mishary Alafasy dll.) yang beredar di GitHub tidak punya lisensi
-  jelas, jadi sengaja tidak dipakai. Kalau mau tambah pilihan lain, cari
-  rekaman CC0 terverifikasi (cek langsung halaman lisensinya di Freesound,
-  jangan percaya hasil pencarian saja) sebelum dibundel ke `res/raw`.
+- Hanya **1 pilihan "Adzan Penuh"**, bukan multi-muadzin seperti rencana awal di
+  Notion. Sejak 2026-09-19 sumbernya adalah **rekaman pribadi pemilik project di
+  Masjidil Haram, Mekkah** (bukan lagi Marrakesh): `adzan_mekkah_subuh.mp3` (192
+  kbps, 44,1 kHz, ~3:25) untuk Subuh karena memuat "as-shalatu khairun
+  minan-naum", dan `adzan_mekkah.mp3` (192 kbps, 44,1 kHz, ~3:02) untuk
+  Dzuhur/Ashar/Maghrib/Isya. Lisensi bukan masalah karena rekaman sendiri —
+  tapi jangan menyebut nama muadzin di app kalau tidak yakin siapa orangnya.
+  Alasan ganti: rekaman Marrakesh (CC0, "EveningCallToPrayer Marrakesh 5.1"
+  oleh blaukreuz, freesound.org/people/blaukreuz/sounds/520233) terdengar
+  kurang jelas (rekaman lapangan, jauh & bergema). `adzan_marrakesh.mp3`
+  **masih ada di `res/raw` tapi tidak dirujuk kode lagi** (`shrinkResources`
+  membuangnya dari APK release).
+  Nama qari terkenal (Mishary Alafasy dll.) yang beredar di GitHub/YouTube tidak
+  punya lisensi jelas, jadi sengaja tidak dipakai. Kalau mau tambah pilihan lain,
+  cari rekaman CC0 terverifikasi (cek langsung halaman lisensinya, jangan
+  percaya hasil pencarian saja) atau rekaman sendiri sebelum dibundel ke `res/raw`.
+- **Kejelasan suara rekaman Mekkah belum diukur** — belum diproses (denoise/EQ/
+  normalisasi) dan belum didengar di speaker HP. Kedua file ~9 MB total di APK;
+  bisa dikecilkan dengan re-encode bitrate lebih rendah kalau ukuran APK jadi
+  masalah.
 - **Battery optimization OEM** (Xiaomi/Oppo/Vivo dkk.) belum ditangani — alarm
   exact bisa saja tetap di-kill di background pada device tertentu meski app
   sudah pakai `setExactAndAllowWhileIdle`. Perlu diarahkan ke pengaturan

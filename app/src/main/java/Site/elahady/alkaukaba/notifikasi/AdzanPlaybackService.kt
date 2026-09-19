@@ -45,7 +45,7 @@ class AdzanPlaybackService : Service() {
 
         val prayerName = intent?.getStringExtra(EXTRA_PRAYER_NAME) ?: "Sholat"
         startForeground(NOTIF_ID, buildNotification(prayerName))
-        playAdzan()
+        playAdzan(prayerName)
         return START_NOT_STICKY
     }
 
@@ -68,7 +68,9 @@ class AdzanPlaybackService : Service() {
             .build()
     }
 
-    private fun playAdzan() {
+    /** Subuh punya rekaman sendiri karena adzannya memuat "as-shalatu khairun minan-naum". */
+    private fun playAdzan(prayerName: String) {
+        val rawRes = if (prayerName == AdzanScheduler.PRAYER_SUBUH) R.raw.adzan_mekkah_subuh else R.raw.adzan_mekkah
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
@@ -77,7 +79,7 @@ class AdzanPlaybackService : Service() {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
             )
-            val afd = resources.openRawResourceFd(R.raw.adzan_marrakesh)
+            val afd = resources.openRawResourceFd(rawRes)
             setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
             afd.close()
             setOnCompletionListener { stopPlaybackAndSelf() }
