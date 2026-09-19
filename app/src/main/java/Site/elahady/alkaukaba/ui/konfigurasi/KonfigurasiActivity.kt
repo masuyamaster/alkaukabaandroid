@@ -9,12 +9,16 @@ import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
@@ -31,6 +35,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import site.elahady.alkaukaba.notifikasi.AdzanRefreshWorker
+import site.elahady.alkaukaba.notifikasi.AdzanSound
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
@@ -44,6 +49,11 @@ class KonfigurasiActivity : AppCompatActivity() {
     // Referensi field lat/lon aktif selagi dialog_lokasi terbuka, dipakai callback GPS/permission.
     private var etManualLatRef: EditText? = null
     private var etManualLngRef: EditText? = null
+
+    // Pratinjau suara adzan (menu "Putar Suara Adzan"): satu pemutar, satu rekaman aktif sekali waktu.
+    private var previewPlayer: MediaPlayer? = null
+    private var previewingRawRes: Int? = null
+    private var adzanPreviewSheet: BottomSheetDialog? = null
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -90,6 +100,7 @@ class KonfigurasiActivity : AppCompatActivity() {
         binding.rowQiblaSource.setOnClickListener { showQiblaSourceSheet() }
         binding.rowPrayerMethod.setOnClickListener { showPrayerMethodSheet() }
         binding.rowNotifikasiAdzan.setOnClickListener { showAdzanSoundSheet() }
+        binding.rowPutarAdzan.setOnClickListener { showAdzanPreviewSheet() }
         binding.rowHisabMethod.setOnClickListener { showHisabMethodSheet() }
         binding.rowPreAdzanReminder.setOnClickListener { showPreAdzanReminderSheet() }
 
@@ -386,6 +397,85 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
 
         bottomSheetDialog.show()
+    }
+
+    // --- Putar Suara Adzan (pratinjau) ---
+
+    private fun showAdzanPreviewSheet() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_putar_adzan, null)
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.volumeControlStream = AudioManager.STREAM_MUSIC
+
+        val btnStandard = view.findViewById<ImageView>(R.id.btnPlayAdzanStandard)
+        val btnSubuh = view.findViewById<ImageView>(R.id.btnPlayAdzanSubuh)
+
+        fun refreshIcons() {
+            btnStandard.setImageResource(
+                if (previewingRawRes == AdzanSound.STANDARD) R.drawable.ic_pause else R.drawable.ic_play
+            )
+            btnSubuh.setImageResource(
+                if (previewingRawRes == AdzanSound.SUBUH) R.drawable.ic_pause else R.drawable.ic_play
+            )
+        }
+
+        fun toggle(rawRes: Int) {
+            if (previewingRawRes == rawRes) stopAdzanPreview() else startAdzanPreview(rawRes, ::refreshIcons)
+            refreshIcons()
+        }
+
+        btnStandard.setOnClickListener { toggle(AdzanSound.STANDARD) }
+        btnSubuh.setOnClickListener { toggle(AdzanSound.SUBUH) }
+
+        bottomSheetDialog.setOnDismissListener {
+            stopAdzanPreview()
+            adzanPreviewSheet = null
+        }
+        adzanPreviewSheet = bottomSheetDialog
+        bottomSheetDialog.show()
+    }
+
+    /** [onStopped] dipanggil saat rekaman selesai sendiri, supaya ikon di sheet kembali ke "play". */
+    private fun startAdzanPreview(rawRes: Int, onStopped: () -> Unit) {
+        stopAdzanPreview()
+        val player = MediaPlayer.create(
+            this,
+            rawRes,
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build(),
+            AudioManager.AUDIO_SESSION_ID_GENERATE
+        )
+        if (player == null) {
+            Toast.makeText(this, "Gagal memutar suara adzan", Toast.LENGTH_SHORT).show()
+            return
+        }
+        player.setOnCompletionListener {
+            stopAdzanPreview()
+            onStopped()
+        }
+        player.start()
+        previewPlayer = player
+        previewingRawRes = rawRes
+    }
+
+    private fun stopAdzanPreview() {
+        previewPlayer?.release()
+        previewPlayer = null
+        previewingRawRes = null
+    }
+
+    override fun onStop() {
+        // Tutup sheet (sekaligus hentikan suara) saat app ke background, supaya adzan tidak
+        // terus terdengar dan ikon di sheet tidak basi saat user kembali.
+        adzanPreviewSheet?.dismiss()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        stopAdzanPreview()
+        super.onDestroy()
     }
 
     /** Minta izin POST_NOTIFICATIONS (Android 13+) dan arahkan ke Settings kalau izin

@@ -68,9 +68,8 @@ class AdzanPlaybackService : Service() {
             .build()
     }
 
-    /** Subuh punya rekaman sendiri karena adzannya memuat "as-shalatu khairun minan-naum". */
     private fun playAdzan(prayerName: String) {
-        val rawRes = if (prayerName == AdzanScheduler.PRAYER_SUBUH) R.raw.adzan_mekkah_subuh else R.raw.adzan_mekkah
+        val rawRes = AdzanSound.forPrayer(prayerName)
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(

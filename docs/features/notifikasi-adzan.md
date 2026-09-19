@@ -31,6 +31,15 @@
   ulang di sini. Row "Pengingat Sebelum Waktu Sholat" (fungsi
   `showPreAdzanReminderSheet()`) memakai pola yang sama, ditambah satu
   `SwitchCompat` on/off yang menampilkan/menyembunyikan pilihan durasi.
+- **Putar Suara Adzan (pratinjau)**, ditambahkan 2026-09-19: row "Putar Suara Adzan"
+  di `KonfigurasiActivity` (`showAdzanPreviewSheet()`, layout
+  `dialog_putar_adzan.xml`) — bottom sheet dengan dua tombol play/pause: adzan
+  biasa (Dzuhur/Ashar/Maghrib/Isya) dan adzan Subuh. Pratinjau memutar file yang
+  sama dengan adzan asli lewat `AdzanSound`, tapi lewat `USAGE_MEDIA` (volume
+  media), bukan `USAGE_NOTIFICATION_RINGTONE` (volume dering) seperti
+  `AdzanPlaybackService` — sengaja, supaya tetap terdengar walau HP mode dering
+  senyap; teks di sheet menjelaskan perbedaannya. Suara otomatis berhenti saat
+  sheet ditutup atau app ke background (`onStop`).
 - **Prasyarat runtime**:
   - `POST_NOTIFICATIONS` (Android 13+) — diminta lewat
     `ensureNotificationPrerequisites()` saat user membuka section ini.
@@ -74,6 +83,7 @@ kecuali `AlKaukabaApplication.kt` (root package):
 | `AdzanScheduler.kt` | Pasang `AlarmManager.setExactAndAllowWhileIdle` per waktu sholat, `PendingIntent` ke `AdzanAlarmReceiver` |
 | `AdzanAlarmReceiver.kt` | Diterima tepat saat alarm bunyi — baca `SessionManager.getAdzanSoundMode()` lalu branch ke Service/NotificationHelper |
 | `AdzanPlaybackService.kt` | Foreground service (`mediaPlayback`) — `MediaPlayer` play `res/raw/adzan_mekkah_subuh.mp3` untuk Subuh, `res/raw/adzan_mekkah.mp3` untuk 4 waktu lain (dipilih dari `prayerName == AdzanScheduler.PRAYER_SUBUH`) di mode Adzan Penuh, ada tombol Stop di notifikasi |
+| `AdzanSound.kt` | Satu-satunya tempat yang memetakan waktu sholat → file `res/raw` (Subuh vs lainnya), dipakai `AdzanPlaybackService` dan pratinjau di Konfigurasi |
 | `NotificationHelper.kt` | Definisi `NotificationChannel` + post notifikasi untuk mode Beep/Senyap/Pengingat Pra-Adzan |
 | `PreAdzanReminderReceiver.kt` | Diterima `reminderMinutes` sebelum waktu sholat — cek `SessionManager.isPreAdzanReminderEnabled()` lalu post notifikasi via `NotificationHelper.postPreAdzanReminderNotification()` |
 | `BootReceiver.kt` | `BOOT_COMPLETED`/`MY_PACKAGE_REPLACED` — jadwalkan ulang alarm (hilang saat reboot), termasuk alarm reminder |
@@ -128,6 +138,12 @@ di kelas itu, SharedPreferences biasa, bukan DataStore).
   (`adb shell am broadcast -a android.intent.action.BOOT_COMPLETED -n
   site.elahady.alkaukaba/.notifikasi.BootReceiver` atau reboot device
   sungguhan) untuk pastikan `BootReceiver` jalan.
+- Menu "Putar Suara Adzan" (2026-09-19): hanya diverifikasi `compileDebugKotlin`
+  BUILD SUCCESSFUL. **Belum dicoba di device** (`adb` tidak ada di mesin
+  pengembangan saat itu). Yang perlu dicek manual: kedua tombol memutar file yang
+  benar, tombol yang sama menghentikan, memencet tombol lain berpindah rekaman,
+  ikon kembali ke "play" saat selesai, suara berhenti saat sheet ditutup / app ke
+  background.
 - Pengingat pra-adzan (2026-09-15): sama seperti di atas, belum ada test
   otomatis. Verifikasi manual yang sudah dilakukan: `compileDebugKotlin` dan
   `assembleDebug` — BUILD SUCCESSFUL. **Belum dilakukan** (perlu sebelum
