@@ -138,9 +138,13 @@ di kelas itu, SharedPreferences biasa, bukan DataStore).
   (`adb shell am broadcast -a android.intent.action.BOOT_COMPLETED -n
   site.elahady.alkaukaba/.notifikasi.BootReceiver` atau reboot device
   sungguhan) untuk pastikan `BootReceiver` jalan.
-- Menu "Putar Suara Adzan" (2026-09-19): hanya diverifikasi `compileDebugKotlin`
-  BUILD SUCCESSFUL. **Belum dicoba di device** (`adb` tidak ada di mesin
-  pengembangan saat itu). Yang perlu dicek manual: kedua tombol memutar file yang
+- Menu "Putar Suara Adzan" (2026-09-19): `compileDebugKotlin` BUILD SUCCESSFUL;
+  APK release (ditandatangani kunci debug) terpasang & terbuka di emulator tanpa
+  crash, dan baris menu + bottom sheet dengan kedua tombol tampil (dicek lewat
+  `uiautomator dump`). **Pemutaran audionya belum terkonfirmasi** — pengecekan
+  `dumpsys audio` di emulator tidak menunjukkan player MediaPlayer aktif, tapi
+  hasil itu tidak konklusif (bisa karena emulator/ketukan meleset), jadi anggap
+  belum diverifikasi. Perlu dicek manual di HP: kedua tombol memutar file yang
   benar, tombol yang sama menghentikan, memencet tombol lain berpindah rekaman,
   ikon kembali ke "play" saat selesai, suara berhenti saat sheet ditutup / app ke
   background.
