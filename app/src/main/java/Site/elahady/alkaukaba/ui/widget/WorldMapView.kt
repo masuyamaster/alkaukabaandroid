@@ -36,6 +36,10 @@ class WorldMapView @JvmOverloads constructor(
         // bentuknya kasar/tidak akurat (lihat known limitation lama di
         // docs/features/peta-visibilitas.md).
         private const val LAND_ASSET = "world_land_110m.json"
+
+        private const val STATE_UNKNOWN = 0
+        private const val STATE_MEMENUHI = 1
+        private const val STATE_BELUM = 2
     }
 
     // Lazy (bukan di constructor) supaya baca+parse asset (~66KB, sekali saja) tidak menunda
@@ -75,9 +79,7 @@ class WorldMapView @JvmOverloads constructor(
     // filter (lihat gridBitmapPaint) -- trik standar untuk dapat gradasi warna halus antar titik
     // grid tanpa menambah jumlah titik hisab (opsi B.3 di rencana peta-visibilitas.md 6a).
     private var gridBitmap: Bitmap? = null
-    private var gridMinLat = 0.0
-    private var gridMaxLat = 0.0
-    private var gridMinLng = 0.0
+    private var gridLatStep = 0.0
     private var gridLngStep = 0.0
     private val gridBitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
 
@@ -88,47 +90,78 @@ class WorldMapView @JvmOverloads constructor(
 
     /**
      * Susun titik grid (renggang, tersebar per [VisibilityGridPoint]) jadi bitmap kecil
-     * numLng x numLat (1 piksel = 1 titik), lalu digambar ter-scale di [onDraw] dengan bilinear
-     * filter -- Android otomatis menginterpolasi warna antar piksel bitmap saat di-scale,
-     * sehingga transisi memenuhi/belum kriteria terlihat gradasi halus, bukan kotak-kotak
-     * tegas, tanpa perlu menghitung titik grid lebih rapat. Sel yang gagal dihitung (skip di
-     * WorldVisibilityCalculator) jadi piksel transparan -- ikut diinterpolasi jadi fade lembut
-     * ke arah transparan, bukan lubang tegas seperti versi kotak-kotak sebelumnya.
+     * (1 piksel = 1 titik) yang membentang dari lintang 90° s/d -90° dan bujur -180° s/d 180°,
+     * lalu digambar ter-scale di [onDraw] dengan bilinear filter -- Android otomatis
+     * menginterpolasi warna antar piksel bitmap saat di-scale, sehingga transisi memenuhi/belum
+     * kriteria terlihat gradasi halus, bukan kotak-kotak tegas, tanpa perlu menghitung titik
+     * grid lebih rapat.
+     *
+     * Sel yang tidak punya hasil (di luar rentang lintang yang dihitung, atau gagal dihitung
+     * dan di-skip WorldVisibilityCalculator, mis. dekat kutub) diisi dari sel terdekat
+     * ([fillUnknownFromNearest]) supaya zona memenuhi/belum menutup seluruh peta tanpa celah.
      */
     private fun buildGridBitmap(points: List<VisibilityGridPoint>): Bitmap? {
         val lats = points.map { it.latitude }.distinct().sorted()
         val lngs = points.map { it.longitude }.distinct().sorted()
         if (lats.size < 2 || lngs.size < 2) return null
 
-        val resultByCoord = points.associateBy { it.latitude to it.longitude }
-        val numLat = lats.size
-        val numLng = lngs.size
+        val latStep = lats[1] - lats[0]
+        val lngStep = lngs[1] - lngs[0]
+        val numLat = Math.round(180.0 / latStep).toInt() + 1
+        val numLng = Math.round(360.0 / lngStep).toInt()
+
+        val state = Array(numLat) { IntArray(numLng) }
+        for (p in points) {
+            val row = Math.round((90.0 - p.latitude) / latStep).toInt()
+            val col = Math.round((p.longitude + 180.0) / lngStep).toInt()
+            if (row in 0 until numLat && col in 0 until numLng) {
+                state[row][col] = if (p.memenuhiKriteria) STATE_MEMENUHI else STATE_BELUM
+            }
+        }
+        fillUnknownFromNearest(state)
 
         // +1 kolom di kanan = duplikat kolom pertama, merepresentasikan bujur 180° (~ -180°) --
         // grid dunia selalu lingkaran penuh, jadi ini menyambungkan interpolasi di seam
         // meridian ±180 alih-alih terpotong tegas di tepi peta.
         val bitmap = Bitmap.createBitmap(numLng + 1, numLat, Bitmap.Config.ARGB_8888)
-        for (latIndex in 0 until numLat) {
-            val lat = lats[latIndex]
-            // Baris bitmap 0 = lintang tertinggi (atas peta); baris terakhir = lintang terendah.
-            val py = numLat - 1 - latIndex
-            for (lngIndex in 0..numLng) {
-                val lng = lngs[lngIndex % numLng]
-                val result = resultByCoord[lat to lng]
-                val color = when {
-                    result == null -> Color.TRANSPARENT
-                    result.memenuhiKriteria -> memenuhiColor
-                    else -> belumColor
-                }
-                bitmap.setPixel(lngIndex, py, color)
+        for (row in 0 until numLat) {
+            for (col in 0..numLng) {
+                val color = if (state[row][col % numLng] == STATE_MEMENUHI) memenuhiColor else belumColor
+                bitmap.setPixel(col, row, color)
             }
         }
 
-        gridMinLat = lats.first()
-        gridMaxLat = lats.last()
-        gridMinLng = lngs.first()
-        gridLngStep = lngs[1] - lngs[0]
+        gridLatStep = latStep
+        gridLngStep = lngStep
         return bitmap
+    }
+
+    // BFS multi-sumber dari semua sel berhasil: tiap sel kosong dapat nilai sel terisi terdekat.
+    // Kolom pertama & terakhir bertetangga (bujur melingkar); baris tidak melingkar (kutub).
+    private fun fillUnknownFromNearest(state: Array<IntArray>) {
+        val numLat = state.size
+        val numLng = state[0].size
+        val queue = ArrayDeque<Int>()
+        for (r in 0 until numLat) {
+            for (c in 0 until numLng) {
+                if (state[r][c] != STATE_UNKNOWN) queue.add(r * numLng + c)
+            }
+        }
+        val neighbors = arrayOf(intArrayOf(-1, 0), intArrayOf(1, 0), intArrayOf(0, -1), intArrayOf(0, 1))
+        while (queue.isNotEmpty()) {
+            val cur = queue.removeFirst()
+            val r = cur / numLng
+            val c = cur % numLng
+            for (d in neighbors) {
+                val nr = r + d[0]
+                if (nr < 0 || nr >= numLat) continue
+                val nc = (c + d[1] + numLng) % numLng
+                if (state[nr][nc] == STATE_UNKNOWN) {
+                    state[nr][nc] = state[r][c]
+                    queue.add(nr * numLng + nc)
+                }
+            }
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -167,11 +200,13 @@ class WorldMapView @JvmOverloads constructor(
 
         gridBitmap?.let { bitmap ->
             val src = Rect(0, 0, bitmap.width, bitmap.height)
+            // Titik grid = pusat piksel, jadi bitmap melebar setengah sel melewati tepi peta
+            // (±180°/±90°) dan dipotong oleh batas View -- seluruh peta tertutup zona.
             val dst = RectF(
-                lngToX(gridMinLng, w),
-                latToY(gridMaxLat, h),
-                lngToX(gridMinLng + gridLngStep * bitmap.width, w),
-                latToY(gridMinLat, h)
+                lngToX(-180.0 - gridLngStep / 2, w),
+                latToY(90.0 + gridLatStep / 2, h),
+                lngToX(180.0 + gridLngStep / 2, w),
+                latToY(-90.0 - gridLatStep / 2, h)
             )
             canvas.drawBitmap(bitmap, src, dst, gridBitmapPaint)
         }

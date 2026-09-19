@@ -58,7 +58,7 @@ percakapan), diputuskan:
 |---|---|
 | `ui/petavisibilitas/PetaVisibilitasActivity.kt` + `activity_peta_visibilitas.xml` | UI: kartu info (bulan Hijriyah + ijtima') + `WorldMapView` + legenda + disclaimer |
 | `viewmodel/petavisibilitas/PetaVisibilitasViewModel.kt` | `LiveData<WorldVisibilityResult>`, jembatan ke `WorldVisibilityCalculator` |
-| `utils/WorldVisibilityCalculator.kt` | Generate grid 28 lintang (-60..75, step 5°) x 72 bujur (-180..175, step 5°) = 2016 titik, hitung ijtima' sekali (`EphemerisCalculator.findIjtima()`) lalu panggil `EphemerisCalculator.calculate(input, ijtima)` per titik (`heightMeters=0`), skip (try/catch) titik yang gagal dihitung (mis. kasus tepi ekstrem dekat kutub saat mentari/bulan tidak terbenam) |
+| `utils/WorldVisibilityCalculator.kt` | Generate grid 35 lintang (-85..85, step 5°) x 72 bujur (-180..175, step 5°) = 2520 titik (sebelum 2026-09-19: -60..75 = 2016 titik, lihat 6a poin 5), hitung ijtima' sekali (`EphemerisCalculator.findIjtima()`) lalu panggil `EphemerisCalculator.calculate(input, ijtima)` per titik (`heightMeters=0`), skip (try/catch) titik yang gagal dihitung (mis. kasus tepi ekstrem dekat kutub saat mentari/bulan tidak terbenam) |
 | `model/WorldVisibilityModels.kt` | `VisibilityGridPoint` (lat, lng, `memenuhiKriteria`) dan `WorldVisibilityResult` (label bulan + ijtima' + list titik) |
 | `ui/widget/WorldMapView.kt` | Custom `View`: gambar poligon benua (tangan-gambar, lihat section 4) + overlay warna per sel grid, proyeksi equirectangular sederhana (`x=(lng+180)/360*width`, `y=(90-lat)/180*height`) |
 
@@ -218,6 +218,25 @@ sudah dikerjakan sebagian:
    posisi titik-titik yang dikirim).
 4. **Ganti poligon benua ke data GeoJSON asli** (selesai, sama hari) — lihat
    section 4 untuk detail sumber data & proses minifikasi.
+
+5. **Zona menutup seluruh peta** (selesai 2026-09-19, permintaan user) —
+   sebelumnya overlay hanya menutupi lintang -60°..75° (sesuai rentang grid)
+   sehingga pita kutub tidak berwarna, dan sel yang gagal dihitung jadi
+   celah transparan. Perbaikan: (a) `LATITUDES` diperluas ke -85..85
+   (bukan ±90: di kutub persis bujur degenerate & matahari tidak terbenam);
+   (b) `WorldMapView.buildGridBitmap()` sekarang membentuk bitmap penuh
+   lintang 90..-90 x bujur -180..180, lalu sel tanpa hasil (di luar rentang
+   hitung, atau gagal dihitung/skip) diisi nilai sel terdekat lewat BFS
+   multi-sumber (`fillUnknownFromNearest`, bujur melingkar, lintang tidak);
+   (c) rect tujuan `drawBitmap` digeser setengah sel supaya titik grid jatuh
+   tepat di pusat piksel (sebelumnya seluruh overlay bergeser ~2.5°) dan
+   bitmap melebar melewati tepi peta lalu dipotong batas View. **Catatan
+   akurasi**: warna di sekitar kutub (>85°) & sel skip adalah ekstrapolasi
+   dari tetangga terdekat, bukan hasil hisab langsung — memang disengaja
+   agar tidak ada celah, tapi bukan klaim visibilitas hilal di sana.
+   Diverifikasi visual di emulator (screenshot): zona hijau/merah menutup
+   peta dari tepi ke tepi, tanpa celah putih. Test unit tidak ditambahkan
+   (perubahan murni rendering `View`).
 
 Verifikasi: `EphemerisCalculatorTest` full suite tetap pass; full unit test
 suite project (`testDebugUnitTest`) punya 4 failure pre-existing & tidak

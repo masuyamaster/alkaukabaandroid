@@ -21,7 +21,10 @@ object WorldVisibilityCalculator {
     // 5° step (naik dari 15° semula) -- feasible setelah pencarian ijtima' tidak lagi diulang per
     // titik (lihat calculate() di bawah): benchmark JVM 1960 titik (5°) ~0.4 detik, vs 240 titik
     // (15°) versi lama yang terasa "beberapa detik" karena redundansi ijtima' per titik.
-    private val LATITUDES = (-60..75 step 5).map { it.toDouble() }
+    // Lintang dihitung sampai +-85 (bukan +-90: di kutub persis, bujur degenerate dan matahari
+    // tidak terbenam). Sisa 85..90 dan sel yang gagal dihitung diisi WorldMapView dari sel
+    // terdekat supaya zona memenuhi/belum menutup seluruh peta.
+    private val LATITUDES = (-85..85 step 5).map { it.toDouble() }
     private val LONGITUDES = (-180..175 step 5).map { it.toDouble() }
 
     fun calculate(monthOffset: Int = 0): WorldVisibilityResult {
