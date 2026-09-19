@@ -99,4 +99,7 @@ dependencies {
     // Notifikasi adzan (alarm harian + refresh jadwal di background)
     implementation "androidx.work:work-runtime-ktx:2.8.1"
 
+    // Peta OpenStreetMap untuk pilih lokasi manual via pin (tanpa API key, lihat docs/features/konfigurasi.md)
+    implementation "org.osmdroid:osmdroid-android:6.1.20"
+
 }

@@ -55,6 +55,18 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
     }
 
+    private val pickFromMapLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data ?: return@registerForActivityResult
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val lat = data.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LAT, Double.NaN)
+        val lng = data.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LNG, Double.NaN)
+        if (lat.isNaN() || lng.isNaN()) return@registerForActivityResult
+        etManualLatRef?.setText(lat.toString())
+        etManualLngRef?.setText(lng.toString())
+    }
+
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -116,6 +128,7 @@ class KonfigurasiActivity : AppCompatActivity() {
         val etLat = view.findViewById<EditText>(R.id.etManualLat)
         val etLng = view.findViewById<EditText>(R.id.etManualLng)
         val btnUseGps = view.findViewById<AppCompatButton>(R.id.btnUseCurrentGps)
+        val btnPickFromMap = view.findViewById<AppCompatButton>(R.id.btnPickFromMap)
         val btnSave = view.findViewById<AppCompatButton>(R.id.btnSaveLocation)
 
         val isManual = sessionManager.getLocationMode() == SessionManager.LOCATION_MODE_MANUAL
@@ -135,6 +148,14 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
 
         btnUseGps.setOnClickListener { fetchGpsIntoManualFields() }
+
+        // Titik awal peta = angka yang sedang tertulis di field (kalau valid), supaya user bisa
+        // menggeser pin dari koordinat sebelumnya alih-alih mulai dari nol.
+        btnPickFromMap.setOnClickListener {
+            val lat = etLat.text.toString().toDoubleOrNull()?.takeIf { it in -90.0..90.0 }
+            val lng = etLng.text.toString().toDoubleOrNull()?.takeIf { it in -180.0..180.0 }
+            pickFromMapLauncher.launch(PilihLokasiPetaActivity.newIntent(this, lat, lng))
+        }
 
         btnSave.setOnClickListener {
             if (radioGroup.checkedRadioButtonId == R.id.radioLocationManual) {

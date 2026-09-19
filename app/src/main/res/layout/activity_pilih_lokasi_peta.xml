@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_home_warm"
+    tools:context=".ui.konfigurasi.PilihLokasiPetaActivity">
+
+    <include
+        android:id="@+id/includeToolbar"
+        layout="@layout/view_toolbar_default" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Pin tetap di tengah peta: ujung runcing pin tepat di titik tengah - user menggeser
+             peta, bukan pin-nya. FrameLayout menaruh child gravity=center di
+             (H-h)/2 + topMargin - bottomMargin, jadi dasar view = H/2 + 24dp - marginBottom.
+             Ujung runcing path ada 4dp di atas dasar view (y=22 dari viewport 24), maka
+             marginBottom = 24dp - 4dp = 20dp membuat ujung jatuh persis di H/2. -->
+        <ImageView
+            android:id="@+id/imgPin"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
+            android:src="@drawable/ic_map_pin"
+            android:contentDescription="Pin lokasi terpilih" />
+
+        <ImageView
+            android:id="@+id/btnMyLocation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:padding="12dp"
+            android:elevation="4dp"
+            android:background="@drawable/bg_circle_button"
+            android:src="@drawable/ic_my_location"
+            android:contentDescription="Ke lokasi saya" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="4dp"
+            android:paddingHorizontal="4dp"
+            android:background="#B3FFFFFF"
+            android:text="© OpenStreetMap contributors"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@color/card_white"
+        android:elevation="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Geser peta hingga pin tepat di lokasi yang diinginkan"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvCoordinates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="-6.98220, 112.63040" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnConfirmLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Pilih lokasi ini"
+            android:textAllCaps="false"
+            android:background="@drawable/bg_btn_main_dark"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+</LinearLayout>

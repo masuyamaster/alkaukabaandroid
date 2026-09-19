@@ -64,6 +64,23 @@ internet).
   dipilih, tombol "Pakai lokasi GPS saat ini" (isi field dari
   `FusedLocationProviderClient.lastLocation` sekali, user masih bisa edit
   manual setelahnya), validasi rentang (-90..90 / -180..180) sebelum simpan.
+  Ada juga tombol "🗺️ Pilih dari peta" (2026-09-19) yang membuka
+  `PilihLokasiPetaActivity` (lihat di bawah) lewat `pickFromMapLauncher`
+  (`StartActivityForResult`); hasilnya cuma mengisi `etManualLat`/`etManualLng`,
+  belum menyimpan apa pun — user tetap harus menekan Simpan di sheet.
+- `PilihLokasiPetaActivity` (2026-09-19) — layar penuh berisi peta
+  OpenStreetMap (`osmdroid` `MapView`, tile Mapnik) dengan **pin tetap di
+  tengah**: user menggeser/zoom peta sampai pin tepat di titik yang dimau,
+  koordinat pusat peta tampil live di panel bawah, tombol "Pilih lokasi ini"
+  mengembalikan `EXTRA_LAT`/`EXTRA_LNG` lewat result Intent (dibulatkan 6
+  desimal, bujur dinormalisasi ke -180..180 karena peta osmdroid berulang
+  horizontal). Titik awal peta: koordinat di field sheet kalau valid, kalau
+  kosong dan izin lokasi sudah diberikan → lokasi GPS terakhir, kalau tidak →
+  tengah Indonesia zoom 5. Tombol target di kanan bawah = "ke lokasi saya"
+  (baru minta izin `ACCESS_FINE_LOCATION` saat ditekan). Cache tile ada di
+  `cacheDir/osmdroid` (bukan storage eksternal default osmdroid, supaya tak
+  butuh izin storage) dan `User-Agent` di-set ke package name — server tile OSM
+  menolak UA default library.
 - `KonfigurasiActivity.showQiblaSourceSheet()` — inflate
   `dialog_qibla_source.xml`, radio Aladhan/Rumus Manual, simpan langsung
   (tidak ada input tambahan).
@@ -111,7 +128,9 @@ File yang terlibat:
 | `ui/konfigurasi/KonfigurasiActivity.kt` | Satu-satunya Activity untuk layar ini: wiring 4 row + 4 sheet (tidak ada logout di sini lagi, lihat catatan 2026-08-30 di bawah) |
 | `utils/SessionManager.kt` | Persistensi semua setting (lokasi, sumber kiblat, metode hisab awal bulan, metode sholat) di `SharedPreferences "AppSession"` |
 | `res/layout/activity_konfigurasi.xml` | Layout utama: 4 section (LOKASI, HISAB AWAL BULAN, ARAH KIBLAT, WAKTU SHOLAT), masing-masing satu row card |
-| `res/layout/dialog_lokasi.xml` | Bottom sheet Lokasi: radio Otomatis/Manual, field lat/lon, tombol GPS, tombol Simpan |
+| `res/layout/dialog_lokasi.xml` | Bottom sheet Lokasi: radio Otomatis/Manual, field lat/lon, tombol GPS, tombol "Pilih dari peta", tombol Simpan |
+| `ui/konfigurasi/PilihLokasiPetaActivity.kt` + `res/layout/activity_pilih_lokasi_peta.xml` | Pemilih koordinat via peta OSM + pin tengah (2026-09-19), hasil lewat result Intent |
+| `res/drawable/ic_map_pin.xml`, `ic_my_location.xml` | Ikon pin & tombol "ke lokasi saya" untuk layar peta |
 | `res/layout/dialog_hisab_method.xml` | Bottom sheet Metode Hisab: radio Astronomy Engine/Ad-Durrul Aniq, tombol Simpan |
 | `res/layout/dialog_qibla_source.xml` | Bottom sheet Arah Kiblat: radio Aladhan/Rumus Manual, tombol Simpan |
 | `res/layout/dialog_prayer_method.xml` | Bottom sheet Waktu Sholat — sudah ada sebelumnya, tidak berubah |
@@ -161,8 +180,29 @@ di `onLocationReady()`, lihat detail lengkap di
 - `FusedLocationProviderClient` — dipakai untuk tombol "Pakai lokasi GPS
   saat ini" di sheet Lokasi; sama seperti yang dipakai fitur lain, tidak ada
   tambahan library baru.
+- `org.osmdroid:osmdroid-android:6.1.20` (2026-09-19) — untuk pemilih lokasi via
+  peta. Dipilih dibanding Google Maps SDK karena tidak butuh API key/billing
+  GCP (alasan yang sama dengan Overpass API di Masjid Terdekat). Konsekuensi:
+  butuh internet untuk memuat tile (offline hanya tile yang sudah ter-cache),
+  dan wajib menampilkan atribusi "© OpenStreetMap contributors" (sudah ada di
+  pojok kiri bawah peta). Manifest menambah `ACCESS_NETWORK_STATE` (dipakai
+  osmdroid untuk cek koneksi).
 - Tidak ada tambahan lain di luar stack umum app (`SharedPreferences`,
   `BottomSheetDialog`).
+
+### Catatan teknis peta (jebakan yang sudah ketemu)
+
+- **Jangan `setCenter` sebelum layout pertama.** osmdroid menyimpan pusat
+  sebagai posisi scroll piksel; `setCenter` yang jatuh saat `MapView` masih
+  berukuran 0 (kejadian di cold start lambat, mis. tepat setelah install)
+  bergeser setengah ukuran view begitu layout selesai — pada zoom 16 pin
+  meleset ±1 km. Karena itu zoom+pusat awal diterapkan di
+  `addOnFirstLayoutListener`. Gejalanya intermiten (1 dari ±4 cold start),
+  jadi tes ulang beberapa kali kalau menyentuh bagian ini.
+- **Posisi pin di layout**: `FrameLayout` menaruh child `gravity=center` di
+  `(H-h)/2 + topMargin - bottomMargin`, dan ujung runcing path `ic_map_pin`
+  ada 4dp di atas dasar view, jadi `marginBottom` pin = 20dp (bukan tinggi
+  pin). Salah hitung ini bikin ujung pin ~24dp di atas titik tengah peta.
 
 ## 6. Testing
 
@@ -177,6 +217,13 @@ manual:
    Otomatis/Manual + deskripsi masing-masing.
 4. Pilih Manual → pastikan field lat/lon + tombol GPS muncul; isi angka valid
    → Simpan → subtitle row berubah jadi `"Manual: lat, lng"`.
+4b. Di sheet Lokasi mode Manual tap "🗺️ Pilih dari peta" → peta terbuka
+   dengan pin di tengah, geser peta → koordinat di panel bawah ikut berubah →
+   "Pilih lokasi ini" → kembali ke sheet dengan field lat/lon terisi angka
+   yang sama (belum tersimpan sampai Simpan ditekan). Uji juga: field kosong
+   (peta mulai dari lokasi GPS/tengah Indonesia), field terisi (peta mulai
+   dari situ), dan cold start berulang untuk memastikan pusat awal tidak
+   bergeser (lihat catatan teknis peta di section 5).
 5. Tap row "Sumber Perhitungan" (Arah Kiblat) → pilih Rumus Manual → Simpan
    → subtitle berubah jadi "Rumus Manual (Al Hasib)".
 6. Buka `WaktuSholatActivity` dan `KiblatActivity` → pastikan keduanya
@@ -222,7 +269,18 @@ fisik masih disarankan sebelum dianggap 100% teruji secara interaktif.
 - [ ] **Kompas visual untuk mode Manual di Arah Kiblat masih placeholder
       generik**, bukan digambar sesuai sudut manual — lihat
       `docs/features/arah-kiblat.md` Known issues.
-- [ ] Input lokasi manual cuma angka lat/lon (`EditText` biasa) — tidak ada
-      pencarian nama tempat (forward geocoding). Ini keputusan sadar (lihat
-      diskusi desain), bukan keterbatasan teknis yang belum sempat.
+- [ ] Input lokasi manual = angka lat/lon atau pin di peta
+      (`PilihLokasiPetaActivity`, 2026-09-19) — tetap tidak ada pencarian nama
+      tempat (forward geocoding). Ini keputusan sadar (lihat diskusi desain),
+      bukan keterbatasan teknis yang belum sempat.
+- [ ] Pemilih peta baru diverifikasi otomatis sampai tahap tampil + geser +
+      label koordinat (emulator `Pixel6_API34`). Langkah "Pilih lokasi ini" →
+      field sheet terisi belum terkonfirmasi lewat UI otomatis (tap koordinat
+      meleset, lihat aturan di `CLAUDE.md` root) — perlu dicek manual.
+- [ ] Sheet lokasi khusus halaman di Gerhana (`dialog_lokasi_halaman.xml`)
+      punya field lat/lon manual sendiri dan belum dapat tombol "Pilih dari
+      peta".
+- [ ] Build release (R8/minify) lolos dengan osmdroid, tapi belum dijalankan
+      di device (APK release belum ditandatangani) — cek peta di build rilis
+      sebelum upload Play Store berikutnya.
 - [ ] Belum ada test otomatis sama sekali untuk fitur ini (lihat section 6).
