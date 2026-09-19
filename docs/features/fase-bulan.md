@@ -272,6 +272,19 @@ yang juga sinkron. `setupMoonPhaseCard()` (dipanggil duluan di `onCreate`,
 sebelum lokasi resolve) tetap pakai `setPhase()` biasa sebagai tampilan awal
 sebelum lokasi siap — sama seperti perilaku `FaseBulanActivity`.
 
+Per 2026-09-19 — baris "Lokasi" di kartu Detail Astronomis (`tvMoonLocation`):
+menampilkan sumber lokasi (`GPS`/`Manual`, dari `SessionManager.isManualLocationMode()`)
+plus koordinat desimal yang dipakai `onLocationReady()` (`"GPS: -7.2000, 112.8000"`,
+`Locale.US` supaya titik desimal tidak jadi koma di locale Indonesia). Alasan:
+mode lokasi manual di Konfigurasi berlaku global, dan pernah bikin Az/Alt,
+terbit/terbenam, serta kemiringan limb ilustrasi dihitung untuk Ka'bah padahal
+pengamat di Jawa Timur — hasilnya ilustrasi beda dari Stellarium, dan tidak ada
+petunjuk di layar bahwa lokasinya bukan posisi HP. Cross-check (Astronomy Engine
+vs Stellarium, 18 Sep 2026 21:56 WIB) membuktikan perhitungannya sendiri benar;
+yang beda cuma lokasi pengamat. Catatan terkait: jam terbit/terbenam
+ditampilkan dalam zona waktu HP, bukan zona lokasi pengamat, dan semua nilai
+dihitung sekali saat layar dibuka (tidak live-refresh).
+
 Bug terkait yang ikut diperbaiki di perubahan yang sama:
 `MoonPhaseView.renderToBitmap()` (dipakai modal zoom, lihat baris
 `ZoomableImageView.kt` di tabel atas) sebelumnya gambar langsung ke `Canvas`

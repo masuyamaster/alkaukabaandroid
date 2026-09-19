@@ -191,6 +191,7 @@ class FaseBulanActivity : AppCompatActivity() {
             } else {
                 binding.tvMoonAzAlt.text = "-"
                 binding.tvMoonRiseSet.text = "-"
+                binding.tvMoonLocation.text = "-"
             }
         }
 
@@ -261,6 +262,10 @@ class FaseBulanActivity : AppCompatActivity() {
                 val riseText = moonrise?.let { timeFormat.format(Date(it.toMillisecondsSince1970())) } ?: "-"
                 val setText = moonset?.let { timeFormat.format(Date(it.toMillisecondsSince1970())) } ?: "-"
                 binding.tvMoonRiseSet.text = "Terbit $riseText — Terbenam $setText"
+                // Sumber lokasi ditampilkan eksplisit: mode manual (Konfigurasi) berlaku global,
+                // jadi tanpa label ini mudah tidak sadar Az/Alt & tilt dihitung untuk titik lain.
+                val source = if (sessionManager.isManualLocationMode()) "Manual" else "GPS"
+                binding.tvMoonLocation.text = "%s: %.4f, %.4f".format(Locale.US, source, lat, lon)
             }
         }
     }
