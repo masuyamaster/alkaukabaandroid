@@ -111,4 +111,8 @@
     <color name="bg_lime_light">#ECFCCB</color>
     <color name="icon_lime">#4D7C0F</color>
 
+    <!-- Konversi Hijriyah - Masehi (2026-09) -->
+    <color name="bg_fuchsia_light">#FAE8FF</color>
+    <color name="icon_fuchsia">#A21CAF</color>
+
 </resources>

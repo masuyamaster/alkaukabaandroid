@@ -92,6 +92,9 @@
             android:name="site.elahady.alkaukaba.ui.kalkulator.KalkulatorActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.konversitanggal.KonversiHijriyahActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.fasebulan.FaseBulanActivity"
             android:exported="false" />
         <activity
