@@ -2,6 +2,7 @@ package site.elahady.alkaukaba.ui.okultasi
 
 import site.elahady.alkaukaba.adapter.OccultationAdapter
 import site.elahady.alkaukaba.databinding.ActivityOkultasiBinding
+import site.elahady.alkaukaba.ui.konfigurasi.PageLocationOverride
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -35,6 +36,15 @@ class OkultasiActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private lateinit var occultationAdapter: OccultationAdapter
 
+    // Override lokasi khusus halaman Okultasi (prefs terpisah dari SessionManager) - lihat
+    // PageLocationOverride.
+    private val pageLocation = PageLocationOverride(
+        activity = this,
+        prefsName = PAGE_PREFS_NAME,
+        fallbackLocation = { currentLat to currentLng },
+        onSaved = { resolveLocationAndCalculate() }
+    )
+
     // Default Jakarta (fallback kalau GPS/manual tidak tersedia)
     private var currentLat = -6.2088
     private var currentLng = 106.8456
@@ -62,7 +72,7 @@ class OkultasiActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.includeToolbar.tvToolbarTitle.text = "Okultasi Benda Langit"
         binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-        binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
+        binding.btnRefreshLoc.setOnClickListener { pageLocation.showSheet() }
     }
 
     private fun setupRecyclerView() {
@@ -85,6 +95,13 @@ class OkultasiActivity : AppCompatActivity() {
     }
 
     private fun resolveLocationAndCalculate() {
+        if (pageLocation.hasOverride()) {
+            currentLat = pageLocation.lat()
+            currentLng = pageLocation.lng()
+            updateCoordinateDisplay()
+            runCalculation()
+            return
+        }
         if (sessionManager.isManualLocationMode()) {
             currentLat = sessionManager.getManualLat()
             currentLng = sessionManager.getManualLng()
@@ -165,5 +182,6 @@ class OkultasiActivity : AppCompatActivity() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 101
+        private const val PAGE_PREFS_NAME = "OkultasiPagePrefs"
     }
 }

@@ -278,11 +278,12 @@ fisik masih disarankan sebelum dianggap 100% teruji secara interaktif.
       (`PilihLokasiPetaActivity`, 2026-09-19) — tetap tidak ada pencarian nama
       tempat (forward geocoding). Ini keputusan sadar (lihat diskusi desain),
       bukan keterbatasan teknis yang belum sempat.
-- [ ] Halaman **Awal Bulan** dan **Okultasi** punya tombol "⟳ Ubah Lokasi"
-      yang cuma memanggil ulang `resolveLocationAndCalculate()` (refresh,
-      bukan sheet input) — jadi belum ada UI input lokasi yang bisa diberi
-      peta. Kalau mau, bisa diberi override per-halaman seperti Gerhana
-      (`gerhana.md`) dengan sheet + `PilihLokasiPetaContract` yang sama.
+- [x] (2026-09-19) Halaman **Gerhana, Awal Bulan, Okultasi** kini semuanya
+      punya override lokasi per-halaman lewat `PageLocationOverride` (sheet
+      "Lokasi untuk Halaman Ini", bisa isi manual/GPS/pin di peta), terpisah
+      dari setting global di sini. Halaman lain (Waktu Sholat, Kiblat, Masjid
+      Terdekat, Imsakiyah, Fase Bulan, Beranda) tetap hanya membaca setting
+      global.
 - [ ] Build release (R8/minify) lolos dengan osmdroid, tapi belum dijalankan
       di device (APK release belum ditandatangani) — cek peta di build rilis
       sebelum upload Play Store berikutnya.

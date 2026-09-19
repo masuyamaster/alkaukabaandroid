@@ -53,9 +53,18 @@ Berbeda dari rencana lama (user pilih tanggal bebas), alurnya sekarang
 2. Tombol "Hitung Ulang" (`btnCalculate`) tersedia untuk menghitung ulang
    dengan lokasi/ketinggian saat ini (mis. setelah ubah field ketinggian) —
    tetap pakai `currentMonthOffset` yang sedang aktif.
-3. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang,
-   tanpa mereset `currentMonthOffset` (ganti lokasi tidak mengubah bulan yang
-   sedang dilihat).
+3. `btnRefreshLoc` ("⟳ Ubah Lokasi") — sejak 2026-09-19 **tidak lagi sekadar
+   refresh**: membuka sheet "Lokasi untuk Halaman Ini"
+   (`PageLocationOverride`, prefs `AwalBulanPagePrefs`) dengan pilihan
+   "Ikuti pengaturan global" atau "Manual khusus halaman ini" (isi lat/lon,
+   GPS, atau pin di peta). Berguna untuk rukyat di markaz yang beda dari lokasi
+   HP tanpa mengubah lokasi global. Urutan prioritas lokasi di
+   `resolveLocationAndCalculate()`: override halaman → manual global
+   (`SessionManager`) → GPS. Setelah Simpan, hitung ulang otomatis tanpa
+   mereset `currentMonthOffset` (ganti lokasi tidak mengubah bulan yang sedang
+   dilihat). Detail mekanisme: lihat `gerhana.md` §2 dan `konfigurasi.md`.
+   (Konsekuensi: tombol ini tak lagi berfungsi sebagai "refresh GPS" satu-ketuk;
+   untuk itu pilih "Ikuti pengaturan global" → Simpan, yang memicu ambil ulang.)
 4. Per 2026-09-14: dua `Spinner` di atas kartu ringkasan —
    `spinnerBulanHijriyah` (12 nama bulan Hijriyah) dan `spinnerTahunHijriyah`
    (tahun baseline ±10) — biar user bisa pilih langsung bulan & tahun

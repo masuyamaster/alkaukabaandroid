@@ -4,25 +4,20 @@ import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.adapter.LunarEclipseAdapter
 import site.elahady.alkaukaba.adapter.SolarEclipseAdapter
 import site.elahady.alkaukaba.databinding.ActivityGerhanaBinding
-import site.elahady.alkaukaba.ui.konfigurasi.PilihLokasiPetaContract
+import site.elahady.alkaukaba.ui.konfigurasi.PageLocationOverride
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
 import site.elahady.alkaukaba.utils.applyStatusBarIconsForTheme
 import site.elahady.alkaukaba.viewmodel.gerhana.GerhanaViewModel
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -31,7 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,19 +40,14 @@ class GerhanaActivity : AppCompatActivity() {
     private lateinit var lunarAdapter: LunarEclipseAdapter
     private lateinit var solarAdapter: SolarEclipseAdapter
 
-    // SharedPreferences terpisah dari SessionManager (pengaturan lokasi global) -> override
-    // lokasi di sini murni lokal untuk layar Gerhana, tidak pernah menulis/membaca
-    // SessionManager punya konfigurasi lokasi.
-    private val pagePrefs by lazy { getSharedPreferences(PAGE_PREFS_NAME, Context.MODE_PRIVATE) }
-    private var etPageManualLatRef: EditText? = null
-    private var etPageManualLngRef: EditText? = null
-
-    private val pickFromMapLauncher = registerForActivityResult(PilihLokasiPetaContract()) { picked ->
-        picked?.let { (lat, lng) ->
-            etPageManualLatRef?.setText(lat.toString())
-            etPageManualLngRef?.setText(lng.toString())
-        }
-    }
+    // Override lokasi murni lokal untuk layar Gerhana (prefs terpisah dari SessionManager,
+    // tidak pernah menulis/membaca pengaturan lokasi global) - lihat PageLocationOverride.
+    private val pageLocation = PageLocationOverride(
+        activity = this,
+        prefsName = PAGE_PREFS_NAME,
+        fallbackLocation = { currentLat to currentLng },
+        onSaved = { resolveLocationAndCalculate() }
+    )
 
     // Default Jakarta (fallback kalau GPS/manual tidak tersedia)
     private var currentLat = -6.2088
@@ -88,7 +77,7 @@ class GerhanaActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.includeToolbar.tvToolbarTitle.text = "Gerhana"
         binding.includeToolbar.btnBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-        binding.btnRefreshLoc.setOnClickListener { showLocationSheet() }
+        binding.btnRefreshLoc.setOnClickListener { pageLocation.showSheet() }
     }
 
     private fun setupTabs() {
@@ -141,9 +130,9 @@ class GerhanaActivity : AppCompatActivity() {
     }
 
     private fun resolveLocationAndCalculate() {
-        if (hasPageLocationOverride()) {
-            currentLat = pagePrefs.getFloat(KEY_PAGE_LAT, 0f).toDouble()
-            currentLng = pagePrefs.getFloat(KEY_PAGE_LNG, 0f).toDouble()
+        if (pageLocation.hasOverride()) {
+            currentLat = pageLocation.lat()
+            currentLng = pageLocation.lng()
             updateCoordinateDisplay()
             runCalculation()
             return
@@ -156,102 +145,6 @@ class GerhanaActivity : AppCompatActivity() {
             return
         }
         getGpsLocation()
-    }
-
-    private fun hasPageLocationOverride(): Boolean =
-        pagePrefs.contains(KEY_PAGE_LAT) && pagePrefs.contains(KEY_PAGE_LNG)
-
-    /**
-     * Dialog "Ubah Lokasi" khusus layar Gerhana: pilihan "Ikuti pengaturan global" (default,
-     * sama seperti perilaku lama) atau "Manual khusus halaman ini". Pilihan manual disimpan ke
-     * [pagePrefs] (SharedPreferences terpisah dari [SessionManager]) sehingga tidak mengubah
-     * pengaturan lokasi global yang dipakai fitur lain.
-     */
-    private fun showLocationSheet() {
-        val bottomSheetDialog = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.dialog_lokasi_halaman, null)
-        bottomSheetDialog.setContentView(view)
-
-        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroupPageLocationMode)
-        val radioGlobal = view.findViewById<RadioButton>(R.id.radioPageLocationGlobal)
-        val radioManual = view.findViewById<RadioButton>(R.id.radioPageLocationManual)
-        val layoutManual = view.findViewById<View>(R.id.layoutPageManualLocation)
-        val etLat = view.findViewById<EditText>(R.id.etPageManualLat)
-        val etLng = view.findViewById<EditText>(R.id.etPageManualLng)
-        val btnUseGps = view.findViewById<AppCompatButton>(R.id.btnPageUseCurrentGps)
-        val btnPickFromMap = view.findViewById<AppCompatButton>(R.id.btnPagePickFromMap)
-        val btnSave = view.findViewById<AppCompatButton>(R.id.btnSavePageLocation)
-
-        val isOverride = hasPageLocationOverride()
-        radioManual.isChecked = isOverride
-        radioGlobal.isChecked = !isOverride
-        layoutManual.visibility = if (isOverride) View.VISIBLE else View.GONE
-        if (isOverride) {
-            etLat.setText(pagePrefs.getFloat(KEY_PAGE_LAT, 0f).toString())
-            etLng.setText(pagePrefs.getFloat(KEY_PAGE_LNG, 0f).toString())
-        }
-
-        etPageManualLatRef = etLat
-        etPageManualLngRef = etLng
-
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            layoutManual.visibility = if (checkedId == R.id.radioPageLocationManual) View.VISIBLE else View.GONE
-        }
-
-        btnUseGps.setOnClickListener { fetchGpsIntoPageManualFields() }
-
-        // Titik awal peta: angka valid di field, kalau tidak lokasi yang sedang dipakai Gerhana
-        // (currentLat/currentLng - hasil global/GPS/override sebelumnya), jadi peta tidak
-        // pernah mulai dari titik yang tidak berhubungan dengan konteks halaman ini.
-        btnPickFromMap.setOnClickListener {
-            val lat = etLat.text.toString().toDoubleOrNull()?.takeIf { it in -90.0..90.0 }
-            val lng = etLng.text.toString().toDoubleOrNull()?.takeIf { it in -180.0..180.0 }
-            pickFromMapLauncher.launch(if (lat != null && lng != null) lat to lng else currentLat to currentLng)
-        }
-
-        btnSave.setOnClickListener {
-            if (radioGroup.checkedRadioButtonId == R.id.radioPageLocationManual) {
-                val lat = etLat.text.toString().toDoubleOrNull()
-                val lng = etLng.text.toString().toDoubleOrNull()
-                if (lat == null || lng == null || lat !in -90.0..90.0 || lng !in -180.0..180.0) {
-                    Toast.makeText(this, "Isi lintang/bujur dengan angka yang valid", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                pagePrefs.edit()
-                    .putFloat(KEY_PAGE_LAT, lat.toFloat())
-                    .putFloat(KEY_PAGE_LNG, lng.toFloat())
-                    .apply()
-            } else {
-                pagePrefs.edit().remove(KEY_PAGE_LAT).remove(KEY_PAGE_LNG).apply()
-            }
-            Toast.makeText(this, "Lokasi disimpan", Toast.LENGTH_SHORT).show()
-            bottomSheetDialog.dismiss()
-            resolveLocationAndCalculate()
-        }
-
-        bottomSheetDialog.setOnDismissListener {
-            etPageManualLatRef = null
-            etPageManualLngRef = null
-        }
-
-        bottomSheetDialog.show()
-    }
-
-    private fun fetchGpsIntoPageManualFields() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PAGE_LOCATION_PERMISSION_REQUEST_CODE)
-            return
-        }
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                etPageManualLatRef?.setText(location.latitude.toString())
-                etPageManualLngRef?.setText(location.longitude.toString())
-            } else {
-                Toast.makeText(this, "Lokasi GPS tidak ditemukan, coba lagi", Toast.LENGTH_SHORT).show()
-            }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Gagal mengambil lokasi GPS", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun getGpsLocation() {
@@ -282,26 +175,14 @@ class GerhanaActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-        when (requestCode) {
-            PAGE_LOCATION_PERMISSION_REQUEST_CODE -> {
-                // Diminta dari dalam dialog "Ubah Lokasi" (tombol pakai GPS) -> isi field dialog,
-                // bukan langsung hitung ulang seperti alur permission utama.
-                if (granted) {
-                    fetchGpsIntoPageManualFields()
-                } else {
-                    Toast.makeText(this, "Izin lokasi ditolak", Toast.LENGTH_SHORT).show()
-                }
-            }
-            LOCATION_PERMISSION_REQUEST_CODE -> {
-                if (granted) {
-                    getGpsLocation()
-                } else {
-                    Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
-                    updateCoordinateDisplay()
-                    runCalculation()
-                }
-            }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
+            grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            getGpsLocation()
+        } else {
+            Toast.makeText(this, "Izin lokasi ditolak, menggunakan default Jakarta", Toast.LENGTH_SHORT).show()
+            updateCoordinateDisplay()
+            runCalculation()
         }
     }
 
@@ -336,9 +217,7 @@ class GerhanaActivity : AppCompatActivity() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 100
-        private const val PAGE_LOCATION_PERMISSION_REQUEST_CODE = 101
+        // Nama prefs lama - jangan diubah (override yang sudah tersimpan di device pengguna).
         private const val PAGE_PREFS_NAME = "GerhanaPagePrefs"
-        private const val KEY_PAGE_LAT = "PAGE_MANUAL_LAT"
-        private const val KEY_PAGE_LNG = "PAGE_MANUAL_LNG"
     }
 }

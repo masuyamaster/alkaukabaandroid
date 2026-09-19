@@ -3,6 +3,7 @@ package site.elahady.alkaukaba.ui.awalbulan
 import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.databinding.ActivityAwalBulanBinding
 import site.elahady.alkaukaba.databinding.ItemHilalBreakdownRowBinding
+import site.elahady.alkaukaba.ui.konfigurasi.PageLocationOverride
 import site.elahady.alkaukaba.utils.HijriDateUtil
 import site.elahady.alkaukaba.utils.MoonTilt
 import site.elahady.alkaukaba.utils.SessionManager
@@ -42,6 +43,15 @@ class AwalBulanActivity : AppCompatActivity() {
     private lateinit var viewModel: HilalViewModel
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var sessionManager: SessionManager
+
+    // Override lokasi khusus halaman Awal Bulan (prefs terpisah dari SessionManager) - lihat
+    // PageLocationOverride.
+    private val pageLocation = PageLocationOverride(
+        activity = this,
+        prefsName = PAGE_PREFS_NAME,
+        fallbackLocation = { currentLat to currentLng },
+        onSaved = { resolveLocationAndCalculate() }
+    )
 
     // Default Jakarta (fallback kalau GPS/manual tidak tersedia)
     private var currentLat = -6.2088
@@ -89,7 +99,7 @@ class AwalBulanActivity : AppCompatActivity() {
             setImageResource(R.drawable.ic_pdf_icon)
             setOnClickListener { openLaporanHisab() }
         }
-        binding.btnRefreshLoc.setOnClickListener { resolveLocationAndCalculate() }
+        binding.btnRefreshLoc.setOnClickListener { pageLocation.showSheet() }
         binding.btnCalculate.setOnClickListener { runCalculation() }
 
         setupBulanSelectors()
@@ -210,6 +220,13 @@ class AwalBulanActivity : AppCompatActivity() {
     }
 
     private fun resolveLocationAndCalculate() {
+        if (pageLocation.hasOverride()) {
+            currentLat = pageLocation.lat()
+            currentLng = pageLocation.lng()
+            updateCoordinateDisplay()
+            runCalculation()
+            return
+        }
         if (sessionManager.isManualLocationMode()) {
             currentLat = sessionManager.getManualLat()
             currentLng = sessionManager.getManualLng()
@@ -299,5 +316,6 @@ class AwalBulanActivity : AppCompatActivity() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 100
+        private const val PAGE_PREFS_NAME = "AwalBulanPagePrefs"
     }
 }

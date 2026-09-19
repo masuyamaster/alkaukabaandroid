@@ -51,7 +51,14 @@ konjungsi & kontak ditulis manual di atas primitif yang sudah ada
 3. Hasil dirender ke satu `RecyclerView` (`rvOccultation`); kalau kosong
    (tidak ada konjungsi ditemukan dalam rentang pencarian), `tvEmptyState`
    ditampilkan sebagai gantinya.
-4. `btnRefreshLoc` mengambil ulang lokasi lalu otomatis menghitung ulang.
+4. `btnRefreshLoc` ("⟳ Ubah Lokasi") — sejak 2026-09-19 membuka sheet
+   "Lokasi untuk Halaman Ini" (`PageLocationOverride`, prefs
+   `OkultasiPagePrefs`): "Ikuti pengaturan global" atau "Manual khusus halaman
+   ini" (isi lat/lon, GPS, atau pin di peta), persis pola Gerhana (lihat
+   `gerhana.md` §2). Prioritas di `resolveLocationAndCalculate()`: override
+   halaman → manual global → GPS; setelah Simpan otomatis hitung ulang.
+   (Tombol ini tak lagi berfungsi sebagai "refresh GPS" satu-ketuk; pilih
+   "Ikuti pengaturan global" → Simpan untuk ambil ulang.)
 5. `btnBack` (toolbar) -> `finish()`.
 
 ## 4. Struktur & alur data

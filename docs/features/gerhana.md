@@ -84,6 +84,7 @@ Jawa Timur" (lokasi global tidak ikut berubah).
 | File | Peran |
 |---|---|
 | `ui/gerhana/GerhanaActivity.kt` + `activity_gerhana.xml` | UI: lokasi, tab switch, 2 RecyclerView |
+| `ui/konfigurasi/PageLocationOverride.kt` | Logika sheet "Ubah Lokasi" + prefs override + GPS + peta (2026-09-19: diekstrak dari `GerhanaActivity`, kini dipakai juga Awal Bulan & Okultasi) — lihat §2 |
 | `res/layout/dialog_lokasi_halaman.xml` | Bottom sheet "Ubah Lokasi" (global vs manual khusus halaman) — lihat §2 |
 | `viewmodel/gerhana/GerhanaViewModel.kt` | `LiveData<GerhanaResult> result` + `LiveData<Boolean> isLoading`; jembatan Activity -> `EclipseCalculator` (dijalankan di `Dispatchers.Default` via `viewModelScope`) |
 | `model/GerhanaModels.kt` | `LunarEclipseItem`, `SolarEclipseItem` (model tampilan siap-render), `GerhanaResult` (bungkus keduanya) |
@@ -203,6 +204,23 @@ Per 2026-09-17, diverifikasi manual tambahan di emulator Pixel 4 XL API 36
   07:38:04/magnitude 88.7% di Jakarta) — sementara layar Waktu Sholat (fitur
   lain) tetap menampilkan "Surabaya, Jawa Timur", membuktikan override tidak
   bocor ke pengaturan lokasi global.
+
+Per 2026-09-19 (refactor): seluruh logika sheet ini (baca/tulis prefs,
+GPS→field, izin lokasi, tombol peta) dipindah ke kelas bersama
+`ui/konfigurasi/PageLocationOverride` dan dipakai juga oleh `AwalBulanActivity`
+(prefs `AwalBulanPagePrefs`) dan `OkultasiActivity` (`OkultasiPagePrefs`);
+`GerhanaActivity` tinggal membuat instance-nya (`PAGE_PREFS_NAME =
+"GerhanaPagePrefs"` dan key `PAGE_MANUAL_LAT`/`PAGE_MANUAL_LNG` **tidak boleh
+diubah** — override yang sudah tersimpan di device pengguna akan hilang).
+Permission GPS di sheet kini lewat `ActivityResultContracts.RequestPermission`
+di dalam helper (bukan lagi `onRequestPermissionsResult` + kode 101 di
+Activity). **Jebakan**: `PageLocationOverride` dibuat sebagai property
+initializer Activity (jalan di constructor, sebelum `attachBaseContext`), jadi
+`getSharedPreferences`/klien lokasi di dalamnya harus `lazy` — versi pertama
+yang tidak `lazy` membuat ketiga halaman crash NPE saat dibuka.
+Diverifikasi di emulator: override Jakarta → nama lokasi "Kota Jakarta
+Selatan"; override dihapus → kembali ke GPS; `AppSession` (global) tidak
+berubah; prefs format lama tetap terbaca.
 
 Per 2026-09-19: tombol "🗺️ Pilih dari peta" di sheet ini diverifikasi di
 emulator lewat dump UI teks (bukan koordinat buta): Ubah Lokasi → Manual
