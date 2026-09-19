@@ -115,4 +115,8 @@
     <color name="bg_fuchsia_light">#FAE8FF</color>
     <color name="icon_fuchsia">#A21CAF</color>
 
+    <!-- Peringatan Hari Wafat (2026-09) -->
+    <color name="bg_slate_light">#E2E8F0</color>
+    <color name="icon_slate">#475569</color>
+
 </resources>

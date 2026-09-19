@@ -110,4 +110,5 @@ HTML/Markdown pakai Dokka kalau suatu saat dibutuhkan.
 | Masjid Terdekat | [features/masjid-terdekat.md](features/masjid-terdekat.md) | Terdokumentasi (perlu re-verifikasi end-to-end di emulator, lihat Known issues) |
 | Tasbih Digital | [features/tasbih-digital.md](features/tasbih-digital.md) | Terdokumentasi (belum diverifikasi visual di emulator) |
 | Jadwal Imsakiyah | [features/jadwal-imsakiyah.md](features/jadwal-imsakiyah.md) | Terdokumentasi |
+| Peringatan Hari Wafat (7/40/100/1.000 hari) | [features/peringatan-kematian.md](features/peringatan-kematian.md) | Terdokumentasi (DatePicker & mode gelap belum diverifikasi visual, lihat §7) |
 | Konversi Hijriyah - Masehi | [features/konversi-hijriyah-masehi.md](features/konversi-hijriyah-masehi.md) | Terdokumentasi (pesan validasi & date picker belum dicek visual) |

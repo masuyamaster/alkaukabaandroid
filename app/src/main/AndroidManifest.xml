@@ -134,6 +134,9 @@
             android:name="site.elahady.alkaukaba.ui.zakat.ZakatActivity"
             android:exported="false" />
         <activity
+            android:name="site.elahady.alkaukaba.ui.peringatankematian.PeringatanKematianActivity"
+            android:exported="false" />
+        <activity
             android:name="site.elahady.alkaukaba.ui.menu.SemuaMenuActivity"
             android:exported="false" />
 
