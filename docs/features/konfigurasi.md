@@ -72,7 +72,10 @@ internet).
   OpenStreetMap (`osmdroid` `MapView`, tile Mapnik) dengan **pin tetap di
   tengah**: user menggeser/zoom peta sampai pin tepat di titik yang dimau,
   koordinat pusat peta tampil live di panel bawah, tombol "Pilih lokasi ini"
-  mengembalikan `EXTRA_LAT`/`EXTRA_LNG` lewat result Intent (dibulatkan 6
+  mengembalikan `EXTRA_LAT`/`EXTRA_LNG` lewat result Intent — dibungkus
+  `PilihLokasiPetaContract` (input: titik awal `Pair<Double,Double>?`, output:
+  titik terpilih atau `null` kalau batal) yang juga dipakai sheet lokasi
+  Gerhana (dibulatkan 6
   desimal, bujur dinormalisasi ke -180..180 karena peta osmdroid berulang
   horizontal). Titik awal peta: koordinat di field sheet kalau valid, kalau
   kosong dan izin lokasi sudah diberikan → lokasi GPS terakhir, kalau tidak →
@@ -220,7 +223,9 @@ manual:
 4b. Di sheet Lokasi mode Manual tap "🗺️ Pilih dari peta" → peta terbuka
    dengan pin di tengah, geser peta → koordinat di panel bawah ikut berubah →
    "Pilih lokasi ini" → kembali ke sheet dengan field lat/lon terisi angka
-   yang sama (belum tersimpan sampai Simpan ditekan). Uji juga: field kosong
+   yang sama (belum tersimpan sampai Simpan ditekan). Sudah diverifikasi
+   otomatis di emulator (2026-09-19) lewat dump UI teks; hasil: label peta
+   -7.12670, 112.42269 → field -7.126699 / 112.422688. Uji juga: field kosong
    (peta mulai dari lokasi GPS/tengah Indonesia), field terisi (peta mulai
    dari situ), dan cold start berulang untuk memastikan pusat awal tidak
    bergeser (lihat catatan teknis peta di section 5).
@@ -273,13 +278,11 @@ fisik masih disarankan sebelum dianggap 100% teruji secara interaktif.
       (`PilihLokasiPetaActivity`, 2026-09-19) — tetap tidak ada pencarian nama
       tempat (forward geocoding). Ini keputusan sadar (lihat diskusi desain),
       bukan keterbatasan teknis yang belum sempat.
-- [ ] Pemilih peta baru diverifikasi otomatis sampai tahap tampil + geser +
-      label koordinat (emulator `Pixel6_API34`). Langkah "Pilih lokasi ini" →
-      field sheet terisi belum terkonfirmasi lewat UI otomatis (tap koordinat
-      meleset, lihat aturan di `CLAUDE.md` root) — perlu dicek manual.
-- [ ] Sheet lokasi khusus halaman di Gerhana (`dialog_lokasi_halaman.xml`)
-      punya field lat/lon manual sendiri dan belum dapat tombol "Pilih dari
-      peta".
+- [ ] Halaman **Awal Bulan** dan **Okultasi** punya tombol "⟳ Ubah Lokasi"
+      yang cuma memanggil ulang `resolveLocationAndCalculate()` (refresh,
+      bukan sheet input) — jadi belum ada UI input lokasi yang bisa diberi
+      peta. Kalau mau, bisa diberi override per-halaman seperti Gerhana
+      (`gerhana.md`) dengan sheet + `PilihLokasiPetaContract` yang sama.
 - [ ] Build release (R8/minify) lolos dengan osmdroid, tapi belum dijalankan
       di device (APK release belum ditandatangani) — cek peta di build rilis
       sebelum upload Play Store berikutnya.

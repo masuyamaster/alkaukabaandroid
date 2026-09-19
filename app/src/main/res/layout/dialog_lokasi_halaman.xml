@@ -124,6 +124,17 @@
                 android:textSize="13sp"
                 android:textColor="@color/text_primary"
                 android:background="@drawable/bg_input_outline"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPagePickFromMap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="🗺️ Pilih dari peta"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:textColor="@color/text_primary"
+                android:background="@drawable/bg_input_outline"/>
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton

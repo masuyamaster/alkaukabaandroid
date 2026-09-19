@@ -39,7 +39,11 @@ sekarang membuka bottom sheet `dialog_lokasi_halaman.xml` dengan 2 opsi:
    `SessionManager` punya lokasi (manual global atau GPS), persis sama
    dengan fitur lain.
 2. **"Manual khusus halaman ini"** — lat/lng yang diisi (atau diambil dari
-   GPS lewat tombol "Pakai lokasi GPS saat ini" di dalam dialog) disimpan
+   GPS lewat tombol "Pakai lokasi GPS saat ini", atau ditunjuk di peta lewat
+   tombol "🗺️ Pilih dari peta" — 2026-09-19, memakai
+   `PilihLokasiPetaContract`/`PilihLokasiPetaActivity` yang sama dengan sheet
+   Lokasi di Konfigurasi, lihat `konfigurasi.md`; titik awal peta = angka
+   valid di field, kalau kosong = lokasi yang sedang dipakai Gerhana) disimpan
    ke `SharedPreferences` **terpisah** (`GerhanaPagePrefs`, key
    `PAGE_MANUAL_LAT`/`PAGE_MANUAL_LNG`) — **bukan** ke `SessionManager`.
    Override ini murni lokal untuk `GerhanaActivity`: tidak pernah dibaca
@@ -199,6 +203,12 @@ Per 2026-09-17, diverifikasi manual tambahan di emulator Pixel 4 XL API 36
   07:38:04/magnitude 88.7% di Jakarta) — sementara layar Waktu Sholat (fitur
   lain) tetap menampilkan "Surabaya, Jawa Timur", membuktikan override tidak
   bocor ke pengaturan lokasi global.
+
+Per 2026-09-19: tombol "🗺️ Pilih dari peta" di sheet ini diverifikasi di
+emulator lewat dump UI teks (bukan koordinat buta): Ubah Lokasi → Manual
+khusus halaman ini → Pilih dari peta → geser peta → Pilih lokasi ini → field
+sheet terisi persis koordinat pusat peta (label -7.12706, 112.42288 → field
+-7.127061 / 112.422881).
 
 Per 2026-09-17 (lanjutan sesi yang sama), diverifikasi keterangan
 "🌍 Terlihat dari: ..." di kedua tab dengan lokasi override Jakarta Selatan:

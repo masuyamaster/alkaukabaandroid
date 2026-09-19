@@ -55,16 +55,11 @@ class KonfigurasiActivity : AppCompatActivity() {
         }
     }
 
-    private val pickFromMapLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val data = result.data ?: return@registerForActivityResult
-        if (result.resultCode != RESULT_OK) return@registerForActivityResult
-        val lat = data.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LAT, Double.NaN)
-        val lng = data.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LNG, Double.NaN)
-        if (lat.isNaN() || lng.isNaN()) return@registerForActivityResult
-        etManualLatRef?.setText(lat.toString())
-        etManualLngRef?.setText(lng.toString())
+    private val pickFromMapLauncher = registerForActivityResult(PilihLokasiPetaContract()) { picked ->
+        picked?.let { (lat, lng) ->
+            etManualLatRef?.setText(lat.toString())
+            etManualLngRef?.setText(lng.toString())
+        }
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -154,7 +149,7 @@ class KonfigurasiActivity : AppCompatActivity() {
         btnPickFromMap.setOnClickListener {
             val lat = etLat.text.toString().toDoubleOrNull()?.takeIf { it in -90.0..90.0 }
             val lng = etLng.text.toString().toDoubleOrNull()?.takeIf { it in -180.0..180.0 }
-            pickFromMapLauncher.launch(PilihLokasiPetaActivity.newIntent(this, lat, lng))
+            pickFromMapLauncher.launch(if (lat != null && lng != null) lat to lng else null)
         }
 
         btnSave.setOnClickListener {

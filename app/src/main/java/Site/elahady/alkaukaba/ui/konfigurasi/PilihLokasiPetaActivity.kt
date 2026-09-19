@@ -2,12 +2,14 @@ package site.elahady.alkaukaba.ui.konfigurasi
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -234,5 +236,21 @@ class PilihLokasiPetaActivity : AppCompatActivity() {
             !lat.isNaN() && !lng.isNaN() && lat in -90.0..90.0 && lng in -180.0..180.0
 
         private fun roundCoordinate(value: Double) = Math.round(value * 1_000_000.0) / 1_000_000.0
+    }
+}
+
+/** Contract untuk memanggil [PilihLokasiPetaActivity] dari sheet lokasi mana pun: input = titik
+ * awal peta (lat to lng, null kalau belum ada), output = titik terpilih (lat to lng) atau null
+ * kalau user membatalkan. */
+class PilihLokasiPetaContract : ActivityResultContract<Pair<Double, Double>?, Pair<Double, Double>?>() {
+
+    override fun createIntent(context: Context, input: Pair<Double, Double>?): Intent =
+        PilihLokasiPetaActivity.newIntent(context, input?.first, input?.second)
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Pair<Double, Double>? {
+        if (resultCode != Activity.RESULT_OK || intent == null) return null
+        val lat = intent.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LAT, Double.NaN)
+        val lng = intent.getDoubleExtra(PilihLokasiPetaActivity.EXTRA_LNG, Double.NaN)
+        return if (lat.isNaN() || lng.isNaN()) null else lat to lng
     }
 }

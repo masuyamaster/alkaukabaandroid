@@ -4,6 +4,7 @@ import site.elahady.alkaukaba.R
 import site.elahady.alkaukaba.adapter.LunarEclipseAdapter
 import site.elahady.alkaukaba.adapter.SolarEclipseAdapter
 import site.elahady.alkaukaba.databinding.ActivityGerhanaBinding
+import site.elahady.alkaukaba.ui.konfigurasi.PilihLokasiPetaContract
 import site.elahady.alkaukaba.utils.SessionManager
 import site.elahady.alkaukaba.utils.applySystemBarInsetsPadding
 import site.elahady.alkaukaba.utils.applyTopSystemBarInsetAsMargin
@@ -51,6 +52,13 @@ class GerhanaActivity : AppCompatActivity() {
     private val pagePrefs by lazy { getSharedPreferences(PAGE_PREFS_NAME, Context.MODE_PRIVATE) }
     private var etPageManualLatRef: EditText? = null
     private var etPageManualLngRef: EditText? = null
+
+    private val pickFromMapLauncher = registerForActivityResult(PilihLokasiPetaContract()) { picked ->
+        picked?.let { (lat, lng) ->
+            etPageManualLatRef?.setText(lat.toString())
+            etPageManualLngRef?.setText(lng.toString())
+        }
+    }
 
     // Default Jakarta (fallback kalau GPS/manual tidak tersedia)
     private var currentLat = -6.2088
@@ -171,6 +179,7 @@ class GerhanaActivity : AppCompatActivity() {
         val etLat = view.findViewById<EditText>(R.id.etPageManualLat)
         val etLng = view.findViewById<EditText>(R.id.etPageManualLng)
         val btnUseGps = view.findViewById<AppCompatButton>(R.id.btnPageUseCurrentGps)
+        val btnPickFromMap = view.findViewById<AppCompatButton>(R.id.btnPagePickFromMap)
         val btnSave = view.findViewById<AppCompatButton>(R.id.btnSavePageLocation)
 
         val isOverride = hasPageLocationOverride()
@@ -190,6 +199,15 @@ class GerhanaActivity : AppCompatActivity() {
         }
 
         btnUseGps.setOnClickListener { fetchGpsIntoPageManualFields() }
+
+        // Titik awal peta: angka valid di field, kalau tidak lokasi yang sedang dipakai Gerhana
+        // (currentLat/currentLng - hasil global/GPS/override sebelumnya), jadi peta tidak
+        // pernah mulai dari titik yang tidak berhubungan dengan konteks halaman ini.
+        btnPickFromMap.setOnClickListener {
+            val lat = etLat.text.toString().toDoubleOrNull()?.takeIf { it in -90.0..90.0 }
+            val lng = etLng.text.toString().toDoubleOrNull()?.takeIf { it in -180.0..180.0 }
+            pickFromMapLauncher.launch(if (lat != null && lng != null) lat to lng else currentLat to currentLng)
+        }
 
         btnSave.setOnClickListener {
             if (radioGroup.checkedRadioButtonId == R.id.radioPageLocationManual) {
