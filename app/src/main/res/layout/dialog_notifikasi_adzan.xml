@@ -30,7 +30,7 @@
                 android:id="@+id/radioAdzanFull"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Adzan Penuh\nRekaman azan Marrakesh, Maroko (CC0)"
+                android:text="Adzan Penuh"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary"
                 android:paddingTop="8dp"
